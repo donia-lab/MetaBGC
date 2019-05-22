@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+#####################################################################################
+#@author: francinecamacho
+# This file is a component of MetaBGC (Metagenomic identifier of Biosynthetic Gene Clusters)
+# (contact Francine Camacho at fcamacho@princeton.edu).
+#####################################################################################
+
 from Bio import SearchIO
 import os
 import pandas as pd
@@ -52,11 +58,11 @@ def createPandaDF(cyclase_dict, outdir, outfile):
 		outputDF.columns = ["readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window","interval"]  # rename column names
 		sorted_outputDF = outputDF.sort_values(by=['HMMScore'],
 											   ascending=[False])  # sort in decending order by Hit.counts column
-		sorted_outputDF.to_csv(outfile, index=False, sep='\t', header=False)  # write dataframe to csv format (text file)
+		sorted_outputDF.to_csv(outfile, index=False, sep='\t', header=False)
 	else:
 		outputDF_empty_columns = ["readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window", "interval"]  # rename column names
 		outputDF_empty = pd.DataFrame(columns=outputDF_empty_columns)
-		outputDF_empty.to_csv(outfile, index=False, sep='\t', header=False)  # write dataframe to csv format (text file)
+		outputDF_empty.to_csv(outfile, index=False, sep='\t', header=False)
 
 def main(hmmscan_file_dir, outdir, cyclase_type, window, interval, sampleID, sampleType):
 
