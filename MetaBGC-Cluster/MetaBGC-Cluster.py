@@ -1,5 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
+#####################################################################################
+#@author: shuowang
+# This file is a component of MetaBGC (Metagenomic identifier of Biosynthetic Gene Clusters)
+# (contact Francine Camacho at fcamacho@princeton.edu).
+#####################################################################################
 
 import pandas as pd
 from sklearn.cluster import DBSCAN
