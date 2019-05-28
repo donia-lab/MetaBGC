@@ -10,15 +10,15 @@ These instructions will get you a copy of the project up and running on your loc
 
 To run MetaBGC, you will need the following dependencies:
 
-* [Python] (https://www.python.org/downloads/) (version >= 3.6)
-* [Biopython] (https://biopython.org/wiki/Download) v1.72
+* [Python](https://www.python.org/downloads/) (version >= 3.6)
+* [Biopython](https://biopython.org/wiki/Download) v1.72
 * [scikit-learn](https://scikit-learn.org/stable/install.html) v0.20.1
-* [Pandas] (https://pandas.pydata.org/pandas-docs/stable/install.html) v0.19.2 
-* [rpy2] (https://pypi.org/project/rpy2/) v2.9.1
-* [EMBOSS Transeq] (http://emboss.sourceforge.net/download/) version 6.6.0.0
-* [HMMER] (http://hmmer.org/download.html) version 3.1b2
-* [CD-HIT-EST] (https://github.com/weizhongli/cdhit/releases) version 4.7
-* [ncbi-blast-2.7.1+] (https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
+* [Pandas](https://pandas.pydata.org/pandas-docs/stable/install.html) v0.19.2 
+* [rpy2](https://pypi.org/project/rpy2/) v2.9.1
+* [EMBOSS Transeq](http://emboss.sourceforge.net/download/) version 6.6.0.0
+* [HMMER](http://hmmer.org/download.html) version 3.1b2
+* [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.7
+* [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 
 ### Program Structure
 
