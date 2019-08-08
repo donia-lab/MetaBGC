@@ -48,12 +48,6 @@ MetaBGC conists of three main modules:
 1. Abundance profiles from the MetaBGC-Quantify module are clustered using DBSCAN clustering method with Pearson correlation distance metric and the following parameters: `.eps 2 min_samples 1.`
 2. Each bin from DBSCAN must contain at least 50 reads or more to count as a cluster to examine.
 
-
-## Assembly of bins from human metagenomes
-
-Samples with the highest abundance (as calculated by MetaBGC-Quantify) of a given bin were assembled using SPAdes 3.8 (12), and scaffolds of interest were identified using BLASTn with the bin reads as a query and the metagenomic scaffolds as a database. Contigs matching the bins were annotated by identifying the open reading frames in Geneious (28) and comparing their protein sequence to the non-redundant protein database (nr) on NCBI using BLASTp. When several or short scaffolds were produced by SPAdes, these scaffolds were extracted and used as seeds for targeted assemblies using PRICE (29).
-
-
 ## License
 
 This project is licensed under the GNU General Public License V3 - see the [LICENSE.md](LICENSE.md) file for details.
