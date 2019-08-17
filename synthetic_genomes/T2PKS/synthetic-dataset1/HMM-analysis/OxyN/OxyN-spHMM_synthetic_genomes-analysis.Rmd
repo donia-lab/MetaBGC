@@ -1,0 +1,465 @@
+---
+title: "OxyN-synthetic_genome-analysis"
+author: "Francine Camacho"
+date: "2/18/2019"
+output:
+  html_document: 
+    smart: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '/Users/francinecamacho/Google Drive/T2PKS-paper/computational_analysis/synthetic_genomes/HMM-analysis/OxyN/')
+```
+
+```{r, message = FALSE }
+# load neccessary packages 
+require(tidyverse) 
+require(ggsci)
+require(ggpubr)
+```
+
+### Load segmented profiled cyclase OxyN HMMs for synthetic genomes
+```{r, message = FALSE}
+#load OxyN HMM data and recode sampleType for the complexity of the synthetic sample (#of genomes in samples)
+cyclase_OxyN <- read_delim("combined-cyclase_OxyN-spHMM-synthetic_genomes-results.txt",col_names = F, delim = "\t") 
+names(cyclase_OxyN) <- c("readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window","interval")
+
+cyclase_OxyN$sampleType[str_detect(cyclase_OxyN$sampleID, "high") ==TRUE] <-"high"
+cyclase_OxyN$sampleType[str_detect(cyclase_OxyN$sampleID, "low") ==TRUE] <-"low"
+
+cyclase_OxyN$interval <- factor(cyclase_OxyN$interval,levels = c(
+  "0_30","10_40","20_50","30_60","40_70","50_80","60_90","70_100","80_110",
+  "90_120","100_130","110_140","120_150","130_160","140_170","150_180", "160_190",
+  "170_200", "180_210","190_220", "200_230", "210_240", "220_250", "230_260",
+  "240_270", "250_280"))
+```
+
+##### Remove the reading frame information from the readID. 
+```{r,message=FALSE}
+# Function to aggregate identitical sample reads located at different reading frames 
+# and take the frame with the highest HMM score
+formatHMM<-function(hmmdf){
+  hmmdfRecoded <- separate(hmmdf, readID, into = c("readIDOnly","F_R_read_frame"), sep = "/", extra = "merge")
+  hmmdfRecoded_FR <- separate(hmmdfRecoded, F_R_read_frame, into = c("F_R","frameNumb"), sep = "_", extra = "merge")
+  hmmdfRecodedDF<- within(hmmdfRecoded_FR, readID <- paste(readIDOnly,F_R, sep='/'))
+  hmmdfRecodedDFUnique<-aggregate(HMMScore ~ readID + sampleID + sampleType + cyclaseType + window + interval, hmmdfRecodedDF, max)
+  colnames(hmmdfRecodedDFUnique)<-c("readID","Sample", "sampleType", "cyclaseType", "window", "interval","HMMScore")
+  return(hmmdfRecodedDFUnique)
+}
+
+#Keep duplicated reads if they are in different reads
+cyclaseOxyN_recoded<-formatHMM(cyclase_OxyN)
+```
+
+##### Load the BLAST data for T2PKS cyclase genes against our synthetic dataset. 
+```{r, message=FALSE}
+#BLAST True positive reads mapped to the T2PKS cyclases genes 
+cyclase_metadata <- read_tsv("../T2PKS-pos_genomes-cyclase_gene-metadata.txt", col_names = T) %>% filter(used_in_synthetic_metagenome == "Y") %>% select(c(11:9))
+
+# BLAST unfiltered reads at 95% pident no readCoverage filter
+all_t2pksBlastDF <- read_delim("../../T2PKS-TP-reads/t2pksBlastDF_all-results.txt", col_names = T, delim = "\t") %>% inner_join(.,cyclase_metadata, by= c("qseqid" = "nucl_cyclase_target_name") )
+
+```
+
+##### Positional information about OxyN domains and their locations in respect to the OxyN 30_10 spHMM models 
+```{r, message=FALSE}
+#load cyclases interval positions data 
+oxyn_positions <- read_tsv("../../T2PKS-TP-reads/cyclases_genes-interval_position-data.txt",col_names = T) %>% filter(cyclase_type == "OxyN")
+```
+
+#### Positional read analysis in respect to location mapped to cyclase OxyN domain 
+##### Keep reads that map to the interval of a given model and covers the model 90% 
+```{r, message=FALSE}
+filter_blast <- function(df, pos_df){
+  results <- data.frame()
+  for (i in 1:nrow(pos_df)){
+    gene_data <- pos_df[i,]
+    #filters datatframe for edges and internal reads compared to model interval
+    interval_df_1 <- df %>% filter(qseqid ==gene_data$gene_name) %>%
+      filter(qstart %in% gene_data$start:gene_data$end | qend %in% gene_data$start:gene_data$end)
+    # need to get reads that are bigger than the interval 
+    interval_df_2 <- df %>% filter(qseqid ==gene_data$gene_name) %>% 
+      filter(qstart < gene_data$start & qend > gene_data$end)
+    interval_df <- rbind(interval_df_1,interval_df_2)
+    if (nrow(interval_df) > 0){
+      for (j in 1:nrow(interval_df)){
+        in_interval_count <- sum(interval_df[j,]$qstart:interval_df[j,]$qend %in% gene_data$start:gene_data$end)
+        interval_count <- length(gene_data$start:gene_data$end)
+        interval_cov <- (in_interval_count/interval_count) * 100
+        if (interval_cov >=90){
+          res_df<-interval_df[j,]
+          res_df$model_cov <- interval_cov
+          res_df$interval <- gene_data$interval
+          results <- rbind(results,res_df)
+        }
+      }
+      
+    }
+    
+  }
+  return(results)
+}
+```
+
+```{r, message=FALSE}
+#Filter BLAST reads that are within the OxyN genes intervals and cover 90% of the model interval
+oxyN_blast_intervals<- filter_blast(all_t2pksBlastDF %>% filter(cyclase_type == "OxyN"), oxyn_positions)
+```
+
+##### Determine manual cutoffs for each interval within the model
+
+```{r, message=FALSE}
+compare_reads <- function(hmm_df, blast_df){
+  names(blast_df)[names(blast_df)=="sseqid"] <-"readID"
+  names(blast_df)[names(blast_df)=="qseqid"] <-"bgcName"
+  names(hmm_df)[names(hmm_df)=="cyclaseType"] <-"cyclase_type"
+  
+  # remove columns to compare the two dataframe 
+  blastDF <- blast_df %>% select(-c(model_cov, interval))
+  common_reads <- hmm_df %>% semi_join(.,blastDF) 
+  common_reads$readCheck<-"common-read"
+  hmm_unique_reads <- hmm_df %>% anti_join(.,blastDF)
+  hmm_unique_reads$readCheck<-"hmm-unique-read"
+  compared_data <- rbind(common_reads, hmm_unique_reads)
+  return(compared_data)
+}
+
+cyclaseOxyN_bin <- compare_reads(cyclaseOxyN_recoded, oxyN_blast_intervals)
+names(cyclaseOxyN_bin)[names(cyclaseOxyN_bin)=="cyclase_type"] <-"cyclaseType"
+```
+
+##### Trying to determine the HMM cutoffs; calculate median 
+```{r, message=FALSE}
+cyclaseOxyN_bin %>% filter(readCheck == "common-read") %>% group_by(interval) %>% mutate(medianScore = round(median(HMMScore))) %>% distinct(interval, readCheck, medianScore) %>% ungroup()
+```
+
+##### Remove HMM unique reads that mapped to BLAST but didn't make the 90% interval model coverage cutoff imposed. These reads shouldn't be considered hmm-unique
+```{r, message=FALSE}
+#Function to find the hmm_unique reads that are also mapped using BLAST but didn't make 90% interval
+compare_hmm_unique <- function(hmm_df, blast_df, pos_df){
+
+  #hmm_unique_df <- hmm_df  %>% inner_join(.,blast_df, by = c("readID"="sseqid", "Sample", "sampleType","cyclaseType"= "cyclase_type"))
+   hmm_unique_df <- hmm_df  %>% inner_join(.,blast_df, by = c("readID"="sseqid", "Sample", "sampleType", "cyclase_type"))
+  intervals <- unique(hmm_unique_df$interval)
+  results <- data.frame()
+  #check that reads are in the same interval to throw out 
+  for (i in 1:length(intervals)){
+    gene_interval_data <- pos_df %>% filter(interval == intervals[i])
+    for (k in 1:nrow(gene_interval_data)){
+        gene_data <- gene_interval_data[k,]
+        #filters datatframe for edges and internal reads compared to model interval
+        interval_df  <- hmm_unique_df %>% filter(qseqid ==gene_data$gene_name) %>%
+          filter(qstart %in% gene_data$start:gene_data$end | qend %in% gene_data$start:gene_data$end)
+        if (nrow(interval_df) > 0 ){
+           results <- rbind(results,interval_df)
+        }
+    
+  }
+ }  
+  return(results%>% distinct())
+}
+```
+
+### Apply different HMM Scores cutoff to the HMM dataset
+```{r,message=FALSE}
+#Filter OxyN data with cutoffs to compare to BLAST interval reads 
+OxyN_filtered_median <- cyclaseOxyN_recoded %>% filter((interval == "0_30" & HMMScore>=30)|
+                                         (interval == "10_40" & HMMScore >=30)| 
+                                         (interval == "20_50" & HMMScore >=25)| 
+                                         (interval == "30_60" & HMMScore >=25)| 
+                                         (interval == "40_70" & HMMScore >=25 )|
+                                         (interval == "50_80" & HMMScore>=25)| 
+                                         (interval == "60_90" & HMMScore >=35 ) | 
+                                         (interval == "70_100" & HMMScore >=40 )| 
+                                         (interval == "80_110" & HMMScore >=40 )| 
+                                         (interval == "90_120" & HMMScore >=35 )| 
+                                         (interval == "100_130" & HMMScore >=35 )| 
+                                         (interval == "110_140" & HMMScore >=30 )| 
+                                         (interval == "120_150" & HMMScore >=25 )| 
+                                         (interval == "130_160" & HMMScore >=30 )| 
+                                         (interval == "140_170" & HMMScore >=30 )| 
+                                         (interval == "150_180" & HMMScore >=35 )| 
+                                         (interval == "160_190" & HMMScore >=30 )| 
+                                         (interval == "170_200" & HMMScore >=35 )|
+                                         (interval == "180_210" & HMMScore >=40 )| 
+                                         (interval == "190_220" & HMMScore >=35 )| 
+                                         (interval == "200_230" & HMMScore >=35 )| 
+                                         (interval == "210_240" & HMMScore >=40 )|
+                                         (interval == "220_250" & HMMScore >=40 )| 
+                                         (interval == "230_260" & HMMScore >=35 )|
+                                         (interval == "240_270" & HMMScore >=40 )|
+                                         (interval == "250_280" & HMMScore >=40 ))
+OxyN_filtered_median_subfive<-cyclaseOxyN_recoded %>% filter((interval == "0_30" & HMMScore>=25)|
+                                         (interval == "10_40" & HMMScore >=25)| 
+                                         (interval == "20_50" & HMMScore >=20)| 
+                                         (interval == "30_60" & HMMScore >=20)| 
+                                         (interval == "40_70" & HMMScore >=20 )|
+                                         (interval == "50_80" & HMMScore>=20)| 
+                                         (interval == "60_90" & HMMScore >=30 ) | 
+                                         (interval == "70_100" & HMMScore >=35 )| 
+                                         (interval == "80_110" & HMMScore >=35 )| 
+                                         (interval == "90_120" & HMMScore >=30 )| 
+                                         (interval == "100_130" & HMMScore >=30 )| 
+                                         (interval == "110_140" & HMMScore >=25 )| 
+                                         (interval == "120_150" & HMMScore >=20 )| 
+                                         (interval == "130_160" & HMMScore >=25 )| 
+                                         (interval == "140_170" & HMMScore >=25 )| 
+                                         (interval == "150_180" & HMMScore >=30 )| 
+                                         (interval == "160_190" & HMMScore >=25 )| 
+                                         (interval == "170_200" & HMMScore >=30 )|
+                                         (interval == "180_210" & HMMScore >=35 )| 
+                                         (interval == "190_220" & HMMScore >=30 )| 
+                                         (interval == "200_230" & HMMScore >=30 )| 
+                                         (interval == "210_240" & HMMScore >=35 )|
+                                         (interval == "220_250" & HMMScore >=35 )| 
+                                         (interval == "230_260" & HMMScore >=30 )|
+                                         (interval == "240_270" & HMMScore >=35 )|
+                                         (interval == "250_280" & HMMScore >=35 ))
+
+OxyN_filtered_median_plusfive <- cyclaseOxyN_recoded %>% filter((interval == "0_30" & HMMScore>=35)|
+                                         (interval == "10_40" & HMMScore >=35)| 
+                                         (interval == "20_50" & HMMScore >=30)| 
+                                         (interval == "30_60" & HMMScore >=30)| 
+                                         (interval == "40_70" & HMMScore >=30 )|
+                                         (interval == "50_80" & HMMScore>=30)| 
+                                         (interval == "60_90" & HMMScore >=40 ) | 
+                                         (interval == "70_100" & HMMScore >=45 )| 
+                                         (interval == "80_110" & HMMScore >=45 )| 
+                                         (interval == "90_120" & HMMScore >=40 )| 
+                                         (interval == "100_130" & HMMScore >=40 )| 
+                                         (interval == "110_140" & HMMScore >=35 )| 
+                                         (interval == "120_150" & HMMScore >=30 )| 
+                                         (interval == "130_160" & HMMScore >=35 )| 
+                                         (interval == "140_170" & HMMScore >=35 )| 
+                                         (interval == "150_180" & HMMScore >=40 )| 
+                                         (interval == "160_190" & HMMScore >=35 )| 
+                                         (interval == "170_200" & HMMScore >=40 )|
+                                         (interval == "180_210" & HMMScore >=45 )| 
+                                         (interval == "190_220" & HMMScore >=40 )| 
+                                         (interval == "200_230" & HMMScore >=40 )| 
+                                         (interval == "210_240" & HMMScore >=45 )|
+                                         (interval == "220_250" & HMMScore >=45 )| 
+                                         (interval == "230_260" & HMMScore >=40 )|
+                                         (interval == "240_270" & HMMScore >=45 )|
+                                         (interval == "250_280" & HMMScore >=45 ))
+
+```
+
+```{r, message=FALSE}
+#return the hmm-unique reads 
+return_hmm_unique <- function(hmm_df, blast_df){
+  oxyn_hmm_df <- hmm_df  %>% select(-c(window))
+  oxyn_hmm_df$interval <- as.character(oxyn_hmm_df$interval)
+  names(oxyn_hmm_df)[names(oxyn_hmm_df)=="cyclaseType"] <-"cyclase_type"
+  names(blast_df)[names(blast_df)=="sseqid"] <-"readID"
+  OxyN_hmm_unique <- oxyn_hmm_df %>% anti_join(.,blast_df, by= c("readID", "Sample", "sampleType", "interval"))
+  return(OxyN_hmm_unique)
+}
+
+median_oxyN_hmmunique <-return_hmm_unique(OxyN_filtered_median, oxyN_blast_intervals)
+
+median_OxyN_hmmunique_less_model_cov<-compare_hmm_unique(median_oxyN_hmmunique,all_t2pksBlastDF,oxyn_positions ) 
+
+median_remaining_hmm_oxyn<- median_oxyN_hmmunique %>% anti_join(.,median_OxyN_hmmunique_less_model_cov)
+table(median_remaining_hmm_oxyn$interval)
+
+pks_genomes_median_check <- c("gi|529222834|ref|NC_021985.1|", "LZZI01000003.1", " gi|1098137419|emb|FOXX01000002.1|", "gi|928416322|gb|LGKI01000367.1|", "gi|928420278|gb|LGKI01000101.1|", "gi|640937269|gb|JJOH01000002.1|", "gi|1081600317|emb|FMWJ01000012.1|")
+
+
+#median_remaining_hmm_oxyn %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% distinct(scaffold_id)
+
+remaining_hmm_oxyn_pos_median_check <- median_remaining_hmm_oxyn %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% pks_genomes_median_check)
+############################################################################################################################
+subfive_oxyN_hmmunique <-return_hmm_unique(OxyN_filtered_median_subfive, oxyN_blast_intervals)
+
+subfive_OxyN_hmmunique_less_model_cov<-compare_hmm_unique(subfive_oxyN_hmmunique,all_t2pksBlastDF,oxyn_positions ) 
+
+subfive_remaining_hmm_oxyn<- subfive_oxyN_hmmunique %>% anti_join(.,subfive_OxyN_hmmunique_less_model_cov)
+table(subfive_remaining_hmm_oxyn$interval)
+
+#subfive_remaining_hmm_oxyn %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% distinct(scaffold_id)
+pks_genomes_subfive_check <- c("gi|529222834|ref|NC_021985.1|","gi|1098137419|emb|FOXX01000002.1|", "gi|928416322|gb|LGKI01000367.1|", "LZZI01000003.1","gi|928420278|gb|LGKI01000101.1|", "gi|754859657|ref|NZ_CP009285.1|","gi|640937269|gb|JJOH01000002.1|", "gi|1081600317|emb|FMWJ01000012.1|", "gi|928414697|gb|LGKI01000478.1|")
+
+remaining_hmm_oxyn_pos_subfive_check <- subfive_remaining_hmm_oxyn %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% pks_genomes_subfive_check)
+
+###############################################################################################################################################
+
+plusfive_oxyN_hmmunique <-return_hmm_unique(OxyN_filtered_median_plusfive, oxyN_blast_intervals)
+
+plusfive_OxyN_hmmunique_less_model_cov<-compare_hmm_unique(plusfive_oxyN_hmmunique,all_t2pksBlastDF,oxyn_positions ) 
+
+plusfive_remaining_hmm_oxyn<- plusfive_oxyN_hmmunique %>% anti_join(.,plusfive_OxyN_hmmunique_less_model_cov)
+table(plusfive_remaining_hmm_oxyn$interval)
+
+#plusfive_remaining_hmm_oxyn %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% distinct(scaffold_id)
+
+pks_genomes_plusfive_check <- c("gi|1098137419|emb|FOXX01000002.1|", "gi|928420278|gb|LGKI01000101.1|", "gi|928416322|gb|LGKI01000367.1|", "LZZI01000003.1", "gi|1081600317|emb|FMWJ01000012.1|")
+
+remaining_hmm_oxyn_pos_plusfive_check <- plusfive_remaining_hmm_oxyn %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% pks_genomes_plusfive_check)
+
+```
+
+```{r}
+#Function to parse out HMM unique reads for each sample. 
+parseReads <- function(HMMdf, modelName, dirname){
+  setwd(dirname)
+  samples<-unique(HMMdf$Sample)
+  for (s in 1:length(samples)){
+    currentSample<-samples[s]
+    currentSampleResults<- HMMdf %>% filter(Sample == currentSample)
+    currentSampleReads<- unique(currentSampleResults$readID)
+    fileName<-paste0(currentSample,paste("-",modelName,"-hmm_unique",sep =""), ".txt", sep ="")
+    write.table(currentSampleReads,fileName, quote = F, row.names = F, col.names = F )
+  }
+}
+
+#parseReads(remaining_hmm_oxyn_pos_median_check, "cyclaseOxyN", "/Users/francinecamacho/Google Drive/T2PKS-paper/computational_analysis/synthetic_genomes/HMM-analysis/hmm-unique-analysis/median_score/")
+
+#parseReads(remaining_hmm_oxyn_pos_subfive_check, "cyclaseOxyN", "/Users/francinecamacho/Google Drive/T2PKS-paper/computational_analysis/synthetic_genomes/HMM-analysis/hmm-unique-analysis/minus_five_score/")
+
+#parseReads(remaining_hmm_oxyn_pos_plusfive_check, "cyclaseOxyN", "/Users/francinecamacho/Google Drive/T2PKS-paper/computational_analysis/synthetic_genomes/HMM-analysis/hmm-unique-analysis/plus_five_score/")
+
+```
+
+```{r, message=FALSE}
+
+calculate_F1 <- function(hmm_df, hmm_fp, blast_df, intervals){
+  #added this because factor vector 
+  hmm_df$interval <- as.character(hmm_df$interval)
+  hmm_df <- hmm_df %>% select(-c(window))
+  names(hmm_df)[names(hmm_df)=="cyclaseType"] <-"cyclase_type"
+  names(blast_df)[names(blast_df)=="sseqid"] <-"readID"
+  
+  results<-data.frame(interval=character(), F1=numeric())
+  for (i in 1:length(intervals)){
+    model <- intervals[i]
+    model_hmm <- hmm_df %>% filter(interval== model) # filter out model HMM results 
+    model_blast <- blast_df %>% filter(interval== model) 
+    model_hmm_fp <-hmm_fp %>% filter(interval== model) 
+    TP <- model_hmm %>% inner_join(.,model_blast) %>% nrow()
+    FP <- model_hmm_fp %>% nrow()
+    FN <- model_blast %>% anti_join(.,model_hmm) %>% nrow()
+    F1_metric <- (2*TP)/((2*TP)+FP+FN)
+    row <- data.frame(cbind(model, F1_metric))
+    results<- results %>% add_row(interval = model, F1 = F1_metric)
+  }
+  
+
+    return(results)
+  
+}
+
+
+remove_oxyN_reads_subfive <- c("gi|928414697|gb|LGKI01000478.1|-5428/2")
+
+subfive_false_postives <- subfive_remaining_hmm_oxyn %>% filter(!readID %in% remove_oxyN_reads_subfive)
+
+oxyn_f1_cutoff_median <- calculate_F1(OxyN_filtered_median, median_remaining_hmm_oxyn, oxyN_blast_intervals, unique(cyclaseOxyN_recoded$interval))
+oxyn_f1_cutoff_median$cutoff<- "median"
+oxyn_f1_cutoff_plusfive<- calculate_F1(OxyN_filtered_median_plusfive, plusfive_remaining_hmm_oxyn, oxyN_blast_intervals, unique(cyclaseOxyN_recoded$interval))
+oxyn_f1_cutoff_plusfive$cutoff<- "+5"
+oxyn_f1_cutoff_subfive<- calculate_F1(OxyN_filtered_median_subfive, subfive_false_postives, oxyN_blast_intervals, unique(cyclaseOxyN_recoded$interval))
+oxyn_f1_cutoff_subfive$cutoff<- "-5"
+
+oxyn_f1_df <- rbind(oxyn_f1_cutoff_median,oxyn_f1_cutoff_plusfive,oxyn_f1_cutoff_subfive )
+
+```
+
+### Plot graph to show the F1 metric at different cutoffs 
+
+```{r}
+supp_fig_oxyN_f1 <-ggplot(data = oxyn_f1_df, mapping = aes(x = interval, y = F1, group= cutoff, colour=cutoff )) + geom_point()+
+    geom_line() + ylim(0,1)+ geom_hline(yintercept=.50, linetype="dashed", 
+                color = "red", size=1) + theme_pubclean() +  scale_color_npg(name="HMM Score Cutoff")
+
+#ggsave(supp_fig_oxyN_f1, file="OxyN_synthetic_F1-supp.eps", device="eps", width = 17, height = 7)
+
+```
+
+## Make final OxyN with final cutoffs for the highest F1 for each interval 
+```{r}
+final_ggplot_oxyn<- oxyn_f1_df %>% group_by(interval) %>% top_n(1, F1) %>% ungroup() %>% ggplot(., mapping = aes(x = interval, y = F1, group= 1 )) + geom_point()+ ylim(0,1)+
+    geom_line() +  geom_hline(yintercept=.50, linetype="dashed", 
+                color = "red", size=1) + theme_pubclean()+ scale_color_npg()
+
+
+#ggsave(final_ggplot_oxyn, file="OxyN_synthetic_F1-final.eps", device="eps", width = 17, height = 7)
+```
+
+```{r}
+# Finalized cutoffs with intervals and cutoffs 
+OxyN_filtered_final <- cyclaseOxyN_recoded %>% filter((interval == "0_30" & HMMScore>=25)|
+                                         (interval == "50_80" & HMMScore>=25)| 
+                                         (interval == "60_90" & HMMScore >=40 ) | 
+                                         (interval == "80_110" & HMMScore >=45 )| 
+                                         (interval == "90_120" & HMMScore >=40 )| 
+                                         (interval == "130_160" & HMMScore >=30 )| 
+                                         (interval == "160_190" & HMMScore >=35 )| 
+                                         (interval == "170_200" & HMMScore >=40 )|
+                                         (interval == "180_210" & HMMScore >=45 )| 
+                                         (interval == "190_220" & HMMScore >=40 )| 
+                                         (interval == "200_230" & HMMScore >=30 )| 
+                                         (interval == "210_240" & HMMScore >=35 )|
+                                         (interval == "220_250" & HMMScore >=40 )| 
+                                         (interval == "240_270" & HMMScore >=45 ))
+
+### updated HMM scores to compare loss of TPs 
+
+OxyN_filtered_final_updated <- cyclaseOxyN_recoded %>% filter((interval == "0_30" & HMMScore>=30)|
+                                         (interval == "60_90" & HMMScore >=40 ) | 
+                                         (interval == "80_110" & HMMScore >=45 )| 
+                                         (interval == "90_120" & HMMScore >=40 )| 
+                                         (interval == "130_160" & HMMScore >=30 )| 
+                                         (interval == "160_190" & HMMScore >=35 )| 
+                                         (interval == "170_200" & HMMScore >=40 )|
+                                         (interval == "180_210" & HMMScore >=45 )| 
+                                         (interval == "190_220" & HMMScore >=40 )| 
+                                         (interval == "200_230" & HMMScore >=30 )| 
+                                         (interval == "210_240" & HMMScore >=35 )|
+                                         (interval == "220_250" & HMMScore >=40 )| 
+                                         (interval == "240_270" & HMMScore >=45 ))
+
+#OxyN_filtered_final%>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% distinct(scaffold_id)
+#write_tsv( OxyN_filtered_final %>% select(-c(window, interval))%>% group_by(readID,Sample) %>% arrange(desc(HMMScore)) %>% top_n(1, HMMScore) %>% filter(row_number() == 1) %>% ungroup(), "OxyN-final_data-raw.txt", col_names = T)
+#rename OxyN hmm_unique within the folder to detected_reads
+#parseReads(OxyN_filtered_final, "cyclaseOxyN", "/Users/francinecamacho/Google Drive/T2PKS-paper/computational_analysis/synthetic_genomes/read-quantification/OxyN/sample-readIDs-files")
+
+```
+## Make final OxyN with final cutoffs for the highest F1 for each interval and full version F1 
+```{r}
+final_ggplot_oxyn_full<- oxyn_f1_df %>% group_by(interval) %>% top_n(1, F1) %>% ungroup() %>% ggplot(., mapping = aes(x = interval, y = F1, group= 1 )) + geom_point()+ ylim(0,1)+
+    geom_line() +  geom_hline(yintercept=.50, linetype="dashed", 
+                color = "red", size=1) + geom_hline(yintercept=0.4344375, linetype="dashed", 
+                color = "green", size=1) +theme_pubclean()
+
+#ggsave(final_ggplot_oxyn_full, file="OxyN_synthetic_F1-final-with-Full-F1.eps", device="eps", width = 17, height = 7)
+```
+
+## Output FP/TP for HMM reads detected in final models with final cutoffs/ keep reads duplicated in multiple intervals with the highest HMM Score if, they are tied, then choose the first one. 
+
+```{r}
+
+OxyN_filtered_final_distinct <- OxyN_filtered_final %>% arrange(desc(HMMScore)) %>% group_by(readID, Sample) %>% top_n(1) %>% 
+  filter(row_number()==1) %>% ungroup() #4326
+#OxyN_filtered_final_distinct <- OxyN_filtered_final_updated %>% arrange(desc(HMMScore)) %>% group_by(readID, Sample) %>% top_n(1) %>%  filter(row_number()==1) %>% ungroup() #4326
+OxyN_filtered_final_distinct$interval <-as.character(OxyN_filtered_final_distinct$interval)
+names(OxyN_filtered_final_distinct)[names(OxyN_filtered_final_distinct)=="cyclaseType"] <-"cyclase_type"
+
+results_common<-OxyN_filtered_final_distinct %>% inner_join(., oxyN_blast_intervals, by = c("readID" = "sseqid", "Sample", "sampleType", "interval", "cyclase_type")) %>% select(-c(model_cov))
+results_hmm_unique<-OxyN_filtered_final_distinct %>% anti_join(., oxyN_blast_intervals, by = c("readID" = "sseqid", "Sample", "sampleType", "interval", "cyclase_type")) 
+results_hmm_unique_TP<-compare_hmm_unique(results_hmm_unique,all_t2pksBlastDF,oxyn_positions )
+
+results_hmm_unique_FP <- results_hmm_unique %>% anti_join(.,results_hmm_unique_TP)
+
+
+OxyN_filtered_final_distinct_TPs <- rbind(results_common, results_hmm_unique_TP) %>% select(-c(8:10,12:17))
+
+combined_OxyN_results <- OxyN_filtered_final_distinct_TPs %>% full_join(., results_hmm_unique_FP )
+
+#write_tsv(combined_OxyN_results,"OxyN-final_models-data.txt",col_names = T)
+```
+
+```{r}
+sessionInfo()
+```
