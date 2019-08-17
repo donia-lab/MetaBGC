@@ -26,9 +26,9 @@ MetaBGC conists of three main modules:
 
 **MetaBGC-Identify** - This modules includes running segmented profile Hidden Markov Models (spHMMs) on translated metagenomic reads and parsing the results to identify reads that are biosynthetic.
 
-**MetaBGC-Quantify** - This module includes de-replicating the results from MetaBGC-Identify module and quantifying 
+**MetaBGC-Quantify** - This module includes de-replicating the results from MetaBGC-Identify module and quantifying.
 
-**MetaBGC-Cluster** - This module generates bins of reads 
+**MetaBGC-Cluster** - This module generates bins of reads from MetaBGC-Quantify module.
 
 ### Running MetaBGC-Identify to detect biosynthetic-like reads
 
@@ -45,7 +45,7 @@ MetaBGC conists of three main modules:
 3. Produce an abundance profile using the results from step2 BLASTn. 
 
 ### Running MetaBGC-Cluster to generate BGCs
-1. Abundance profiles from the MetaBGC-Quantify module are clustered using DBSCAN clustering method with Pearson correlation distance metric and the following parameters: `.eps 2 min_samples 1.`
+1. Abundance profiles from the MetaBGC-Quantify module are clustered using DBSCAN clustering method with Pearson correlation distance metric and the following parameters: `eps .2 min_samples 1.`
 2. Each bin from DBSCAN must contain at least 50 reads or more to count as a cluster to examine.
 
 ## License
