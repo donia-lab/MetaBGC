@@ -32,20 +32,20 @@ MetaBGC conists of three main modules:
 
 ### Running MetaBGC-Identify to detect biosynthetic-like reads
 
-1. Translate metagenomic reads from nucleic acid to amino acid using EMBOSS:6.6.0.0 transeq tool in all six open reading frames: `-frame=6 - table=0 -sformat pearson`. 
-2. Run `hmmsearch` command from HMMER on the translated metagenomic data from step 1 using the heuristic filters: `--F1 0.02 --F2 0.02 --F3 0.02`. 
+1. Translate metagenomic reads from nucleic acid to amino acid using EMBOSS:6.6.0.0 transeq tool in all six open reading frames: `-frame=6 - table=0 -sformat pearson` 
+2. Run `hmmsearch` command from HMMER on the translated metagenomic data from step 1 using the heuristic filters: `--F1 0.02 --F2 0.02 --F3 0.02` 
 3. Parse results from step 2 using the parser script. 
 4. Filter the results with the cutoffs for each spHMM. 
 5. Extract read ids per sample from filtered results and extract sequences for read ids to create a fasta file for each sample. 
 
 ### Running MetaBGC-Quantify to profile biosynthetic-like reads
 
-1. Combine fasta files from MetaBGC-Identify module and de-replicate at 95% identity and 95% alignment coverage using CD-HIT- EST with the following parameters: `-c .95 -n 10 -d 0 -aS .95`. 
-2. Quantify de-replicated fasta file using BLASTn against all sample metagenomes using the following parameters: `-task blastn -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 window_size 11`. 
+1. Combine fasta files from MetaBGC-Identify module and de-replicate at 95% identity and 95% alignment coverage using CD-HIT- EST with the following parameters: `-c .95 -n 10 -d 0 -aS .95`
+2. Quantify de-replicated fasta file using BLASTn against all sample metagenomes using the following parameters: `-task blastn -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 window_size 11`
 3. Produce an abundance profile using the results from step2 BLASTn. 
 
 ### Running MetaBGC-Cluster to generate BGCs
-1. Abundance profiles from the MetaBGC-Quantify module are clustered using DBSCAN clustering method with Pearson correlation distance metric and the following parameters: `eps .2 min_samples 1.`
+1. Abundance profiles from the MetaBGC-Quantify module are clustered using DBSCAN clustering method with Pearson correlation distance metric and the following parameters: `eps .2 min_samples 1`
 2. Each bin from DBSCAN must contain at least 50 reads or more to count as a cluster to examine.
 
 ## License
