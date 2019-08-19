@@ -1,0 +1,21 @@
+default:
+    DataRoot: "C:/Users/ab50/Documents/MetaBGC-TIIPKS/benchmark_data/lantibiotics"
+    InputFiles.ProtAlnFasta: "lantibiotic.fasta"
+    InputFiles.HMMRun: "Combined_spHMM_Search.txt"
+    InputFiles.BLAST_FP: "blastx-fp-subfive.txt"
+    InputFiles.BLAST_TP_NoCov: "TP-reads/All_TP_Blast.txt"
+    InputFiles.GeneIntervalPos: "TP-reads/Gene_Interval_Pos.txt"
+    InputFiles.GeneIntervalBlast: "TP-reads/Gene_Interval_Blast.txt"
+    InputFiles.HMMUniqueBlast: "hmm-unique-analysis/HMM_Unique_Blast.txt"
+    InputParam.HMM_Model_Name: "lantibiotic"
+    InputParam.Seq_start: 1
+    InputParam.Seq_end: 459
+    InputParam.F1_Threshold: 0.5
+    OutputFiles.HMMOutDir: "output/spHMM"
+    OutputFiles.HMMHighPerfOutDir: "output/spHMM/HighPerf"
+    OutputFiles.SampleReadIdDir: "output/Sample_ReadIds"
+    OutputFiles.F1_Cutoff: "output/lantibiotics_F1_Cutoff.txt"
+    OutputFiles.Plot: "output/lantibiotics_synthetic_F1-final.eps"
+    OutputFiles.ModelData: "output/lantibiotics-final_models-data.txt"
+    OutputFiles.RawModelData: "output/lantibiotics-final_data-raw.txt"
+

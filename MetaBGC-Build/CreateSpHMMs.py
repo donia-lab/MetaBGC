@@ -56,24 +56,7 @@ def getKmers(k, interval, outdir, msaFile, modelName, start, end):
         j = j+interval
 
 def main(aln_file, window_len, kmer_len, outdir, hmmName, start, end ):
-
     getKmers(kmer_len, window_len, outdir, aln_file, hmmName, start, end)
 
-
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--aln_file', type= str,required=True) 
-    parser.add_argument('--window_len',type= int, required=False, default=10)
-    parser.add_argument('--kmer_len', type= int, required=True ) 
-    parser.add_argument('--outdir', type= str, required=True)
-    parser.add_argument('--hmmName', type= str, required=True)
-    parser.add_argument('--start', type = int, required=False)
-    parser.add_argument('--end', type = int, required=False)        
-
-
-    args = parser.parse_args()
-
-    main(args.aln_file, args.window_len, args.kmer_len, args.outdir, args.hmmName, args.start, args.end )
-
-
+def GenerateSpHMM(aln_file,window_len,kmer_len,outdir,hmmName,start,end):
+    main(aln_file,window_len,kmer_len,outdir,hmmName,start,end)

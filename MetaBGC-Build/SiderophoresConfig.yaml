@@ -1,0 +1,21 @@
+default:
+    DataRoot: "C:/Users/ab50/Documents/MetaBGC-TIIPKS/benchmark_data/siderophores"
+    InputFiles.ProtAlnFasta: "siderophore.fasta"
+    InputFiles.HMMRun: "Combined_spHMM_Search.txt"
+    InputFiles.BLAST_FP: "blastx-fp-subfive.txt"
+    InputFiles.BLAST_TP_NoCov: "TP-reads/All_TP_Blast.txt"
+    InputFiles.GeneIntervalPos: "TP-reads/Gene_Interval_Pos.txt"
+    InputFiles.GeneIntervalBlast: "TP-reads/Gene_Interval_Blast.txt"
+    InputFiles.HMMUniqueBlast: "hmm-unique-analysis/HMM_Unique_Blast.txt"
+    InputParam.HMM_Model_Name: "siderophore"
+    InputParam.Seq_start: 1
+    InputParam.Seq_end: 489
+    InputParam.F1_Threshold: 0.50
+    OutputFiles.HMMOutDir: "output/spHMM"
+    OutputFiles.HMMHighPerfOutDir: "output/spHMM/HighPerf"
+    OutputFiles.SampleReadIdDir: "output/Sample_ReadIds"
+    OutputFiles.F1_Cutoff: "output/siderophores_F1_Cutoff.txt"
+    OutputFiles.Plot: "output/siderophores_synthetic_F1-final.eps"
+    OutputFiles.ModelData: "output/siderophores-final_models-data.txt"
+    OutputFiles.RawModelData: "output/siderophores-final_data-raw.txt"
+
