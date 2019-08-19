@@ -7,6 +7,8 @@ default:
     InputFiles.GeneIntervalPos: "TP-reads/Gene_Interval_Pos.txt"
     InputFiles.GeneIntervalBlast: "TP-reads/Gene_Interval_Blast.txt"
     InputFiles.HMMUniqueBlast: "hmm-unique-analysis/HMM_Unique_Blast.txt"
+    InputFiles.HMM_Cutoff_Scores: "HMM_Score_Cutoff.txt" 
+    InputFiles.ScaffoldCheck: "ScaffoldChecks.txt"
     InputParam.HMM_Model_Name: "siderophore"
     InputParam.Seq_start: 1
     InputParam.Seq_end: 489

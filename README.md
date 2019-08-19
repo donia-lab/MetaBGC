@@ -20,7 +20,7 @@ To run MetaBGC, you will need the following dependencies:
 * [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.7
 * [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 * [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/)
-* [R Studio] (https://www.rstudio.com/products/rstudio/download/)
+* [R Studio](https://www.rstudio.com/products/rstudio/download/)
 
 ### Program Structure
 
@@ -36,29 +36,29 @@ MetaBGC conists of three main modules:
 
 ### Running MetaBGC-Build to build spHMMs
 
-1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclase that were used for benchmarking. These can be run with the data files in [benchmark data folder](https://drive.google.com/drive/folders/1MV88Qv4qMmYAtU159uFFwIczZYzPIRCK?usp=sharing). The config parameters are:
-```
-default:
-    DataRoot: "/home/metabgc/benchmark_data/siderophores"	# Root data directory. All the input paths and output paths are relative to this directory.(REQUIRED)
-    InputFiles.ProtAlnFasta: "siderophore.fasta"	# Alignment of the protein homologs in FASTA format. (REQUIRED)
-    InputFiles.HMMRun: "Combined_spHMM_Search.txt"	# 
-    InputFiles.BLAST_FP: "blastx-fp-subfive.txt"	# 
-    InputFiles.BLAST_TP_NoCov: "TP-reads/All_TP_Blast.txt"
-    InputFiles.GeneIntervalPos: "TP-reads/Gene_Interval_Pos.txt"
-    InputFiles.GeneIntervalBlast: "TP-reads/Gene_Interval_Blast.txt"
-    InputFiles.HMMUniqueBlast: "hmm-unique-analysis/HMM_Unique_Blast.txt"
-    InputParam.HMM_Model_Name: "siderophore"	# HMM model name.  
-    InputParam.Seq_start: 1	# Start position to build models.
-    InputParam.Seq_end: 489	# End position to build models.
-    InputParam.F1_Threshold: 0.50	# F1 cutoff threshold.
-    OutputFiles.HMMOutDir: "output/spHMM" 
-    OutputFiles.HMMHighPerfOutDir: "output/spHMM/HighPerf"
-    OutputFiles.SampleReadIdDir: "output/Sample_ReadIds"
-    OutputFiles.F1_Cutoff: "output/siderophores_F1_Cutoff.txt"
-    OutputFiles.Plot: "output/siderophores_synthetic_F1-final.eps"
-    OutputFiles.ModelData: "output/siderophores-final_models-data.txt"
-    OutputFiles.RawModelData: "output/siderophores-final_data-raw.txt"
-``` 
+1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclase that were used for benchmarking. A sample template EmptyTemplate.yaml is provided on the MetaBGC-Build directory. These can be run with the data files in the [benchmark data folder](https://drive.google.com/drive/folders/1MV88Qv4qMmYAtU159uFFwIczZYzPIRCK?usp=sharing). The config parameters are:
+	1.  DataRoot - REQUIRED : Root data directory. All the input paths and output paths are relative to this directory.
+	2.  InputFiles.ProtAlnFasta - REQUIRED: Alignment of protein homologs.  
+	3.  InputFiles.HMMRun - REQUIRED: HMMER search of the synthetic reads against all the spHMM models. 
+	4.  InputFiles.BLAST_TP_NoCov - REQUIRED: TP reads matched to the proteins with BLAST. 
+	5.  InputFiles.BLAST_FP - OPTIONAL: FP reads in the BLAST search.
+	6.  InputFiles.GeneIntervalPos - REQUIRED: antiSMASH output with the interval positions of each gene. 
+	7.  InputFiles.GeneIntervalBlast - REQUIRED: BLAST result of aligning the reads to the antiSMASH intervals in each protein. 
+	8.  InputFiles.HMMUniqueBlast - REQUIRED: Filtered blast search output that uniquely match the domain.
+	9.  InputFiles.HMM_Cutoff_Scores - REQUIRED: File with HMM cutoffs to compare to BLAST interval reads.
+	10. InputFiles.ScaffoldCheck - OPTIONAL: List of scaffolds for median, +5, and -5 checks.
+	11. InputParam.HMM_Model_Name - REQUIRED: Name of the PFAM. 
+	12. InputParam.Seq_start - REQUIRED: Start position in the PFAM alignment to start building spHMMs. 
+	13. InputParam.Seq_end - REQUIRED: End position in the PFAM alignment to start building spHMMs. 
+	14. InputParam.F1_Threshold - REQUIRED: F1 score threshold for eliminating low-performance models and tuning spHMMs. 
+	15. OutputFiles.HMMOutDir - REQUIRED: Output directory where the spHMMs are saved. 
+	16. OutputFiles.HMMHighPerfOutDir - REQUIRED: Output directory where the high performing spHMMs are saved. 
+	17. OutputFiles.SampleReadIdDir - REQUIRED: Output directory where read ids matched to spHMMs are saved. 
+	18. OutputFiles.F1_Cutoff - REQUIRED: Output file with list of spHMMs that pass the F1 threshold.  
+	19. OutputFiles.Plot - REQUIRED: Output plot of the F1 scores for each spHMM with threshold boundary lines.
+	20. OutputFiles.ModelData - REQUIRED: Output FP/TP for HMM reads detected in final models with final cutoffs that keep reads duplicated with the highest HMM Score. In case of a tie, then choose the first one. 
+	21. OutputFiles.RawModelData - REQUIRED: Output FP/TP for HMM reads detected in final models with final cutoffs duplicate reads in intervals. 
+ 
 2. Replace the config file in the R notebook MetaBGC-Build/SPHMM_Model.Rmd
 3. Run the R notebook. The output high performance spHMMs will be in OutputFiles.HMMHighPerfOutDir  
 
