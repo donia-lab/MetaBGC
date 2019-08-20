@@ -2,7 +2,7 @@ default:
     DataRoot: "/home/metabgc/benchmark_data/PFAMX"
     InputFiles.ProtAlnFasta: "PFAMX_alignment.fasta"
     InputFiles.HMMRun: "Combined_spHMM_Search.txt"
-    InputFiles.BLAST_FP: "blastx-fp-subfive.txt"
+    InputFiles.BLAST_IGNORE: "blastx-fp-subfive.txt"
     InputFiles.BLAST_TP_NoCov: "TP-reads/All_TP_Blast.txt"
     InputFiles.GeneIntervalPos: "TP-reads/Gene_Interval_Pos.txt"
     InputFiles.GeneIntervalBlast: "TP-reads/Gene_Interval_Blast.txt"

@@ -20,7 +20,7 @@ require(config)
 ### Load configuration. EDIT CONFIG FILE HERE. 
 ```{r setup, include=FALSE}
 exeDir <- getwd()
-config <- config::get(file = file.path(exeDir,"LanbioticsConfig.yaml"))
+config <- config::get(file = file.path(exeDir,"OxyNConfig.yaml"))
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = config$DataRoot)
 ```
@@ -62,8 +62,8 @@ lantibiotics_df <- lantibiotics %>% filter(!interval %in% ignored_intervals )
 # remove Tp+other genomes that antiSMASH failed to identify 
 ```{r}
 # We need to remove reads that are from TP+Other genomes that were missed by antiSMASH 
-if(file.exists(config$InputFiles.BLAST_FP)){
-  remove_reads <- read_tsv(config$InputFiles.BLAST_FP, col_names =  T) %>% filter(readCheck == "TP" & lanc_genome == "other") %>% select(c(readID, Sample))
+if(file.exists(config$InputFiles.BLAST_IGNORE)){
+  remove_reads <- read_tsv(config$InputFiles.BLAST_IGNORE, col_names =  T) %>% filter(readCheck == "TP" & lanc_genome == "other") %>% select(c(readID, Sample))
 } else {
   remove_reads <- data.frame(Sample=character(),
                  readID=character(),
@@ -112,7 +112,7 @@ filter_blast <- function(df, pos_df){
   results <- data.frame()
   for (i in 1:nrow(pos_df)){
     gene_data <- pos_df[i,]
-    print(gene_data$gene_name)
+    #print(gene_data$gene_name)
     #filters datatframe for edges and internal reads compared to model interval
     interval_df_1 <- df %>% filter(qseqid ==gene_data$gene_name) %>%
       filter(qstart %in% gene_data$start:gene_data$end | qend %in% gene_data$start:gene_data$end)
@@ -142,8 +142,11 @@ filter_blast <- function(df, pos_df){
 
 ```{r, message=FALSE}
 #Filter BLAST reads that are within the lantibiotics genes intervals and cover 90% of the model interval
-#lanc_blast_intervals<- filter_blast(all_lancBlastDF, lanc_positions)
-lanc_blast_intervals<- read_tsv(config$InputFiles.GeneIntervalBlast, col_names = T)%>% anti_join(.,remove_reads, by= c("sseqid"= "readID", "Sample"))
+if(file.exists(config$InputFiles.GeneIntervalBlast)){
+  lanc_blast_intervals<- read_tsv(config$InputFiles.GeneIntervalBlast, col_names = T) %>% anti_join(.,remove_reads, by= c("sseqid"= "readID", "Sample"))  
+} else {
+  lanc_blast_intervals<- filter_blast(all_lancBlastDF, lanc_positions)
+}
 ```
 
 ##### Determine manual cutoffs for each interval within the model
@@ -232,7 +235,12 @@ for (i in 1:nrow(df_hmm_cutoff_scores)) {
 
 ```{r, message=FALSE}
 #return the hmm-unique reads 
-genomes_check<- read_tsv(config$InputFiles.ScaffoldCheck, col_names = T)
+if(file.exists(config$InputFiles.ScaffoldCheck)){
+  genomes_check<- read_tsv(config$InputFiles.ScaffoldCheck, col_names = T)
+} else {
+  genomes_check <- data.frame(Type=character(),ScaffoldList=character())
+}
+
 return_hmm_unique <- function(hmm_df, blast_df){
   oxyn_hmm_df <- hmm_df  %>% select(-c(window))
   oxyn_hmm_df$interval <- as.character(oxyn_hmm_df$interval)
@@ -254,7 +262,12 @@ table(median_remaining_hmm_lanc$interval)
 genomes_median_check <- toString(genomes_check[which(genomes_check$Type=="median_check"),"ScaffoldList"])
 genomes_median_check <- unlist(strsplit(genomes_median_check,","))
 
-remaining_hmm_lanc_pos_median_check <- median_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% genomes_median_check)
+if(length(genomes_median_check) > 0) {
+  remaining_hmm_lanc_pos_median_check <- median_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% genomes_median_check)
+} else {
+    remaining_hmm_lanc_pos_median_check <- median_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F)
+}
+  
 ############################################################################################################################
 subfive_lanc_hmmunique <-return_hmm_unique(lanc_filtered_median_subfive, lanc_blast_intervals)
 
@@ -266,9 +279,13 @@ table(subfive_remaining_hmm_lanc$interval)
 genomes_subfive_check <- toString(genomes_check[which(genomes_check$Type=="subfive_check"),"ScaffoldList"])
 genomes_subfive_check <- unlist(strsplit(genomes_subfive_check,","))
 
-remaining_hmm_lanc_pos_subfive_check <- subfive_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% genomes_subfive_check)
+if(length(genomes_subfive_check) > 0) {
+  remaining_hmm_lanc_pos_subfive_check <- subfive_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% genomes_subfive_check)
+} else {
+  remaining_hmm_lanc_pos_subfive_check <- subfive_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F)
+}
 
-###############################################################################################################################################
+#############################################################################################################################
 
 plusfive_lanc_hmmunique <-return_hmm_unique(lanc_filtered_median_plusfive, lanc_blast_intervals)
 plusfive_lanc_hmmunique_less_model_cov<-compare_hmm_unique(plusfive_lanc_hmmunique,all_lancBlastDF,lanc_positions ) 
@@ -279,7 +296,11 @@ table(plusfive_remaining_hmm_lanc$interval)
 genomes_plusfive_check <- toString(genomes_check[which(genomes_check$Type=="plusfive_check"),"ScaffoldList"])
 genomes_plusfive_check <- unlist(strsplit(genomes_plusfive_check,","))
 
-remaining_hmm_lanc_pos_plusfive_check <- plusfive_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% genomes_plusfive_check)
+if(length(genomes_plusfive_check) > 0) {
+  remaining_hmm_lanc_pos_plusfive_check <- plusfive_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(scaffold_id %in% genomes_plusfive_check)
+} else {
+  remaining_hmm_lanc_pos_plusfive_check <- plusfive_remaining_hmm_lanc %>% separate(readID, c("scaffold_id", "rest_id"), sep = "-", remove = F)
+}
 
 ```
 
@@ -300,44 +321,86 @@ parseReads <- function(HMMdf, modelName, dirname){
 
 ```{r}
 
-blast_hmm_unique <- read_tsv(config$InputFiles.HMMUniqueBlast, col_names = T) %>% separate(qseqid, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(str_detect(sseqid, fixed(scaffold_id))) %>% select(-c(scaffold_id, rest_id))  %>% arrange(evalue) %>% group_by(qseqid, Sample, cutoff) %>% top_n(1) %>% ungroup()
+if(file.exists(config$InputFiles.HMMUniqueBlast)){
+  
+  blast_hmm_unique <- read_tsv(config$InputFiles.HMMUniqueBlast, col_names = T) %>% separate(qseqid, c("scaffold_id", "rest_id"), sep = "-", remove = F) %>% filter(str_detect(sseqid, fixed(scaffold_id))) %>% select(-c(scaffold_id, rest_id))  %>% arrange(evalue) %>% group_by(qseqid, Sample, cutoff) %>% top_n(1) %>% ungroup()
+  
+} else {
+  blast_hmm_unique <- data.frame(sseqid=character(),
+                      slen=character(),
+                      sstart=character(),
+                      send=character(),
+                      qseqid=character(),
+                      qlen=character(),
+                      qstart=character(),
+                      qend=character(),
+                      pident=character(),
+                      evalue=character(),
+                      Sample=character(),
+                      cutoff=character())
+  blast_hmm_unique[-1] <- lapply(blast_hmm_unique[-1], as.character)
+}
 
 
 filter_hmm_unique  <- function(df, pos_df){
   results <- data.frame()
-  for (i in 1:nrow(df)){
-    blast_data <- df[i,]
-    domain <- blast_data$sseqid
-    domain_interval <- blast_data$interval 
-    read_start <-blast_data$sstart
-    read_end <-blast_data$send
-    min_start <- min(read_start, read_end)
-    max_end <- max(read_start, read_end)
-    gene_data <- pos_df %>% filter( gene_name == domain  & interval == domain_interval)
-    #filters dataframe for edges and internal reads compared to model interval
-    interval_df_1 <- blast_data %>% filter(sseqid ==gene_data$gene_name) %>%
-      filter(min_start %in% gene_data$start:gene_data$end | max_end %in% gene_data$start:gene_data$end)
-    # need to get reads that are bigger than the interval 
-    interval_df_2 <- df %>% filter(sseqid ==gene_data$gene_name) %>% 
-      filter(min_start < gene_data$start & max_end > gene_data$end)
-    
-    results <- rbind(results,interval_df_1,interval_df_2)
+  if(nrow(df)>0){
+    for (i in 1:nrow(df)){
+      blast_data <- df[i,]
+      domain <- blast_data$sseqid
+      domain_interval <- blast_data$interval 
+      read_start <-blast_data$sstart
+      read_end <-blast_data$send
+      min_start <- min(read_start, read_end)
+      max_end <- max(read_start, read_end)
+      gene_data <- pos_df %>% filter( gene_name == domain  & interval == domain_interval)
+      #filters dataframe for edges and internal reads compared to model interval
+      interval_df_1 <- blast_data %>% filter(sseqid ==gene_data$gene_name) %>%
+        filter(min_start %in% gene_data$start:gene_data$end | max_end %in% gene_data$start:gene_data$end)
+      # need to get reads that are bigger than the interval 
+      interval_df_2 <- df %>% filter(sseqid ==gene_data$gene_name) %>% 
+        filter(min_start < gene_data$start & max_end > gene_data$end)
+      
+      results <- rbind(results,interval_df_1,interval_df_2)
+    }
   }
   return(results)
 }
 
 median_blast_df <- blast_hmm_unique %>% filter(cutoff== "median_score") %>% inner_join(., remaining_hmm_lanc_pos_median_check, by = c("qseqid" = "readID", "Sample"))
+
 subfive_blast_df <- blast_hmm_unique %>% filter(cutoff== "minus_five_score") %>% inner_join(., remaining_hmm_lanc_pos_subfive_check, by = c("qseqid" = "readID", "Sample"))
 
 plusfive_blast_df <- blast_hmm_unique %>% filter(cutoff== "plus_five_score") %>% inner_join(., remaining_hmm_lanc_pos_plusfive_check, by = c("qseqid" = "readID", "Sample"))
 
 
-remove_lanc_reads_median <- filter_hmm_unique(median_blast_df,lanc_positions) %>% as.data.frame() %>% distinct(qseqid,Sample)  
-names(remove_lanc_reads_median)[1]<-"readID"
+remove_lanc_reads_median <- filter_hmm_unique(median_blast_df,lanc_positions) %>% as.data.frame() %>% distinct(qseqid,Sample) 
+if (dim(remove_lanc_reads_median)[2] > 0) {
+  names(remove_lanc_reads_median)[1]<-"readID"
+} else {
+  remove_lanc_reads_median <- data.frame(readID=character(),
+                      Sample=character())
+  remove_lanc_reads_median[1] <- lapply(remove_lanc_reads_median[1], as.character)
+  remove_lanc_reads_median[2] <- lapply(remove_lanc_reads_median[2], as.character)
+}
 remove_lanc_reads_subfive <- filter_hmm_unique(subfive_blast_df,lanc_positions) %>% as.data.frame() %>% distinct(qseqid, Sample) 
-names(remove_lanc_reads_subfive)[1]<-"readID"
+if (dim(remove_lanc_reads_subfive)[2] > 0) {
+  names(remove_lanc_reads_subfive)[1]<-"readID"
+} else {
+  remove_lanc_reads_subfive <- data.frame(readID=character(),
+                      Sample=character())
+  remove_lanc_reads_subfive[1] <- lapply(remove_lanc_reads_subfive[1], as.character)
+  remove_lanc_reads_subfive[2] <- lapply(remove_lanc_reads_subfive[2], as.character)
+}
 remove_lanc_reads_plusfive <- filter_hmm_unique(plusfive_blast_df,lanc_positions) %>% as.data.frame()%>% distinct(qseqid, Sample)
-names(remove_lanc_reads_plusfive)[1]<-"readID"
+if (dim(remove_lanc_reads_plusfive)[2] > 0) {
+  names(remove_lanc_reads_plusfive)[1]<-"readID"
+} else {
+  remove_lanc_reads_plusfive <- data.frame(readID=character(),
+                      Sample=character())
+  remove_lanc_reads_plusfive[1] <- lapply(remove_lanc_reads_plusfive[1], as.character)
+  remove_lanc_reads_plusfive[2] <- lapply(remove_lanc_reads_plusfive[2], as.character)
+}
 ```
 
 ```{r}

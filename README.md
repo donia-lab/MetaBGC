@@ -41,12 +41,12 @@ MetaBGC conists of three main modules:
 	2.  InputFiles.ProtAlnFasta - REQUIRED: Alignment of protein homologs.  
 	3.  InputFiles.HMMRun - REQUIRED: HMMER search of the synthetic reads against all the spHMM models. 
 	4.  InputFiles.BLAST_TP_NoCov - REQUIRED: TP reads matched to the proteins with BLAST. 
-	5.  InputFiles.BLAST_FP - OPTIONAL: FP reads in the BLAST search.
+	5.  InputFiles.BLAST_IGNORE - OPTIONAL: Reads ignored in BLAST that were missed by antiSMASH.
 	6.  InputFiles.GeneIntervalPos - REQUIRED: antiSMASH output with the interval positions of each gene. 
-	7.  InputFiles.GeneIntervalBlast - REQUIRED: BLAST result of aligning the reads to the antiSMASH intervals in each protein. 
-	8.  InputFiles.HMMUniqueBlast - REQUIRED: Filtered blast search output that uniquely match the domain.
+	7.  InputFiles.GeneIntervalBlast - OPTIONAL: BLAST result of aligning the reads to the antiSMASH intervals in each protein. 
+	8.  InputFiles.HMMUniqueBlast - OPTIONAL: Filtered blast search output that uniquely match the domain.
 	9.  InputFiles.HMM_Cutoff_Scores - REQUIRED: File with HMM cutoffs to compare to BLAST interval reads.
-	10. InputFiles.ScaffoldCheck - OPTIONAL: List of scaffolds for median, +5, and -5 checks.
+	10. InputFiles.ScaffoldCheck - OPTIONAL: List of scaffold ids for median, +5, and -5 that are kmown to match the scaffolds that have the protein of interest. Reduces running time. 
 	11. InputParam.HMM_Model_Name - REQUIRED: Name of the PFAM. 
 	12. InputParam.Seq_start - REQUIRED: Start position in the PFAM alignment to start building spHMMs. 
 	13. InputParam.Seq_end - REQUIRED: End position in the PFAM alignment to start building spHMMs. 
