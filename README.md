@@ -36,7 +36,7 @@ MetaBGC conists of three main modules:
 
 ### Running MetaBGC-Build to build spHMMs
 
-1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclase that were used for benchmarking. A sample template EmptyTemplate.yaml is provided on the MetaBGC-Build directory. These can be run with the data files in the [benchmark data folder](https://drive.google.com/drive/folders/1MV88Qv4qMmYAtU159uFFwIczZYzPIRCK?usp=sharing). The config parameters are:
+1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclase that were used for benchmarking. These can be run with the data files in the [benchmark data folder](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/benchmark_data). A sample template EmptyTemplate.yaml is provided in the MetaBGC-Build directory for adding new datsets. The config parameters are:
 	1.  DataRoot - REQUIRED : Root data directory. All the input paths and output paths are relative to this directory.
 	2.  InputFiles.ProtAlnFasta - REQUIRED: Alignment of protein homologs.  
 	3.  InputFiles.HMMRun - REQUIRED: HMMER search of the synthetic reads against all the spHMM models. 
