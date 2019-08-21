@@ -8,7 +8,7 @@ These instructions will get you run MetaBGC on your local machine.
 
 ### Prerequisites
 
-To run MetaBGC, you will need the following dependencies:
+To run MetaBGC, you will need the following dependencies and data preprocessing:
 
 * [Python](https://www.python.org/downloads/) (version >= 3.6)
 * [Biopython](https://biopython.org/wiki/Download) v1.72
@@ -21,6 +21,9 @@ To run MetaBGC, you will need the following dependencies:
 * [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 * [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/)
 * [R Studio](https://www.rstudio.com/products/rstudio/download/)
+* Before using MetaBGC to either identify Type II Polyketides or other protein families of interest in metagenomic datasets, a user must prepare their datasets by translating the metagenomic reads from nucleic acid to amino acid using **EMBOSS:6.6.0.0 transeq** tool in all six open reading frames with the following parameters: `-frame=6 - table=0 -sformat pearson`. 
+
+
 
 ### Program Structure
 
@@ -28,11 +31,12 @@ MetaBGC consists of three main modules:
 
 **MetaBGC-Build** - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. If the BGC of interest commonly contains proteins of one of the pre-built high-performance spHMMs, this step can be skipped.
 
-**MetaBGC-Identify** - This modules includes running segmented profile Hidden Markov Models (spHMMs) on translated metagenomic reads and parsing the results to identify reads that are biosynthetic.
+**MetaBGC-Identify** - This module reformats HMMER results, filters the data using spHMMs cutoffs and parses out the read IDs for each sample that passes during the filtering stage.
 
-**MetaBGC-Quantify** - This module includes de-replicating the results from MetaBGC-Identify module and quantifying.
+**MetaBGC-Quantify** - This module takes reads identified and that scored above a defined cutoff by the MetaBGC-Identify module as "biosynthetic." A user must then combine these biosynthetic reads into a multi-FASTA file to run de-replication and BLAST which quantifies these de-replicated reads in all samples of the entire metagenomic dataset(s). An abundance matrix is generated for all unique reads against all samples. 
 
-**MetaBGC-Cluster** - This module generates bins of reads from MetaBGC-Quantify module.
+**MetaBGC-Cluster** - In this module, the abundance matrix file produced from MetaBGC-Quantify is the input for MetaBGC-Cluster. This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster reads with similar coverage profiles across different metagenomic samples into distinct bins. 
+
 ### Running MetaBGC-Build to build spHMMs
 
 1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclases that were used for benchmarking. These can be run with the data files in the [benchmark data folder](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/benchmark_data). A sample template EmptyTemplate.yaml is provided in the MetaBGC-Build directory for adding new datasets. The config parameters are:
