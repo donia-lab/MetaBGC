@@ -3,7 +3,7 @@
 #####################################################################################
 #@author: francinecamacho
 # This file is a component of MetaBGC (Metagenomic identifier of Biosynthetic Gene Clusters)
-# (contact Francine Camacho at fcamacho@princeton.edu).
+# (contact Francine Camacho at camachofrancine@gmail.com).
 #####################################################################################
 
 import os
