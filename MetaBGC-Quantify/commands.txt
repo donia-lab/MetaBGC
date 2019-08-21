@@ -1,2 +1,0 @@
-
-python MetaBGC-Quantify.py --blast_extension reads_against_combined-reads --sample_extension _ --blast_dirpath /Users/francinecamacho/Downloads/metabgc-data/T2D --outfile combined_test-T2D.txt --cohort_name T2D --outdir /Users/francinecamacho/Documents/Donia_analysis/MetaBGC-TIIPKS/MetaBGC-Quantify/

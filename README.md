@@ -87,16 +87,24 @@ MetaBGC consists of three main modules:
 	A. --hmm_file, required=True: Combined spHMM results file  
 	B. --outdir, required=True: PATH to save filtered results
 	C. --cutoff_file, required=True: Text file with HMM Score cutoffs per interval
-	D. --fasta_dir, required=True: PATH to save fasta files for each sample and their reads that passed the defined HMMER score cutoffs.
+	D. --fasta_dir, required=True: PATH to save FASTA files for each sample and their reads that passed the defined HMMER score cutoffs.
 	```
 	
  **If your protein of interest is not Type II PKS, then use the cutoffs defined from MetaBGC-build. Please be aware because these cutoffs were designated using synthetic genomes, you may need to manually re-tune the spHMM cutoffs after running MetaBGC on a metagenomic dataset(s).**
 
 ### Running MetaBGC-Quantify to profile biosynthetic-like reads
 
-1. Combine fasta files from MetaBGC-Identify module and de-replicate at 95% identity and 95% alignment coverage using CD-HIT- EST with the following parameters: `-c .95 -n 10 -d 0 -aS .95`
-2. Quantify de-replicated fasta file using BLASTn against all sample metagenomes using the following parameters: `-task blastn -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 window_size 11`
-3. Produce an abundance profile using the results from step2 BLASTn. 
+1. A user must combine each sample FASTA file from the MetaBGC-Identify module into one multi-FASTA which then can be used to de-replicate at 95% identity and 95% alignment coverage using **CD-HIT-EST** with the following parameters: `-c .95 -n 10 -d 0 -aS .95`.
+
+	**If a user is interested in adding metadata to the headers of the multiFASTA file such as sampletype, cyclasetype you can use this [python script] (https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/MetaBGC-Quantify).**
+
+2. To quantify these de-replicated reads, a users must use the multi-FASTA de-replicated file as query using BLASTn against all sample metagenomes using the following parameters: `-task blastn -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 window_size 11`
+3. To produce an abundance profile using the results from *step 2* a user must then use[MetaBGC-Quantify.py] (https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Quantify/MetaBGC-Quantify.py) with the following parameters: 
+
+```
+A. --blast_extension reads_against_combined-reads --sample_extension _ --blast_dirpath /Users/francinecamacho/Downloads/metabgc-data/T2D --outfile combined_test-T2D.txt --cohort_name T2D --outdir /Users/francinecamacho/Documents/Donia_analysis/MetaBGC-TIIPKS/MetaBGC-Quantify/
+
+```
 
 ### Running MetaBGC-Cluster to generate BGCs
 1. Abundance profiles from the MetaBGC-Quantify module are clustered using DBSCAN clustering method with Pearson correlation distance metric and the following parameters: `eps .2 min_samples 1`
