@@ -101,7 +101,7 @@ MetaBGC consists of three main modules:
 2. To quantify these de-replicated reads, a users must use the multi-FASTA de-replicated file as query using BLASTn against all sample metagenomes using the following parameters: `-task blastn -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 window_size 11`
 **Please name BLAST tabular files with the following synthax 
 {SAMPLE_\__ID}_\__{BLAST_\__extension}. For example: V1.UC48.0_\__reads_\__against_\__combined-reads**
-3. To produce an abundance profile using the results from *step 2* a user must then use[MetaBGC-Quantify.py] (https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Quantify/MetaBGC-Quantify.py) with the following parameters: 
+3. To produce an abundance profile using the results from *step 2* a user must then use [MetaBGC-Quantify.py] (https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Quantify/MetaBGC-Quantify.py) with the following parameters: 
 
 	```
 		A. --blast_extension, required=True: extension to combine BLAST results to search for all the BLAST tabular files in a directory  
