@@ -127,7 +127,7 @@ MetaBGC consists of three main modules:
 
 This project is licensed under the GNU General Public License V3 - see the [LICENSE.md](LICENSE.md) file for details.
 
-Please feel free to report bugs at our [github issue page](https://github.com/donia-lab/MetaBGC-TIIPKS/wiki)
+Please feel free to report bugs at our [github issue page](https://github.com/donia-lab/MetaBGC-TIIPKS/wiki).
 
 ## Contact
 If there are any questions please contact:
