@@ -20,7 +20,7 @@ require(config)
 ### Load configuration. EDIT CONFIG FILE HERE. 
 ```{r setup, include=FALSE}
 exeDir <- getwd()
-config <- config::get(file = file.path(exeDir,"OxyNConfig.yaml"))
+config <- config::get(file = file.path(exeDir,"TcmIConfig.yaml"))
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = config$DataRoot)
 ```

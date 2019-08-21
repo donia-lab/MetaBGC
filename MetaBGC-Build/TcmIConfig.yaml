@@ -1,5 +1,5 @@
 default:
-    DataRoot: "<ABSOLUTE_PATH>/MetaBGC-TIIPKS/benchmark_data/TcmI"
+    DataRoot: "C:/Users/ab50/Documents/MetaBGC-TIIPKS/benchmark_data/TcmI"
     InputFiles.ProtAlnFasta: "TcmI.fasta"
     InputFiles.HMMRun: "Combined_spHMM_Search.txt"
     InputFiles.BLAST_IGNORE: ""
@@ -17,7 +17,7 @@ default:
     OutputFiles.HMMHighPerfOutDir: "output/spHMM/HighPerf"
     OutputFiles.SampleReadIdDir: "output/Sample_ReadIds"
     OutputFiles.F1_Cutoff: "output/TcmI_F1_Cutoff.txt"
-    OutputFiles.Plot: "output/OxyN_synthetic_F1-final.eps"
+    OutputFiles.Plot: "output/TcmI_synthetic_F1-final.eps"
     OutputFiles.ModelData: "output/TcmI-final_models-data.txt"
     OutputFiles.RawModelData: "output/TcmI-final_data-raw.txt"
 

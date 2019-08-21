@@ -1,5 +1,5 @@
 default:
-    DataRoot: "<ABSOLUTE_PATH>/MetaBGC-TIIPKS/benchmark_data/TcmN"
+    DataRoot: "C:/Users/ab50/Documents/MetaBGC-TIIPKS/benchmark_data/TcmN"
     InputFiles.ProtAlnFasta: "TcmN.fasta"
     InputFiles.HMMRun: "Combined_spHMM_Search.txt"
     InputFiles.BLAST_IGNORE: ""

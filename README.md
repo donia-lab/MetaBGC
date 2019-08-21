@@ -40,27 +40,30 @@ MetaBGC consists of three main modules:
 ### Running MetaBGC-Build to build spHMMs
 
 1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclases that were used for benchmarking. These can be run with the data files in the [benchmark data folder](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/benchmark_data). A sample template EmptyTemplate.yaml is provided in the MetaBGC-Build directory for adding new dataset(s). The config parameters are:
-	1.  DataRoot - REQUIRED: Root data directory. All the input paths and output paths are relative to this directory.
-	2.  InputFiles.ProtAlnFasta - REQUIRED: Alignment of protein homologs.  
-	3.  InputFiles.HMMRun - REQUIRED: HMMER search of the synthetic reads against all the spHMM models. 
-	4.  InputFiles.BLAST_TP_NoCov - REQUIRED: TP reads matched to the proteins with BLAST. 
-	5.  InputFiles.BLAST_IGNORE - OPTIONAL: Reads ignored in BLAST that was missed by antiSMASH.
-	6.  InputFiles.GeneIntervalPos - REQUIRED: antiSMASH output with the interval positions of each gene. 
-	7.  InputFiles.GeneIntervalBlast - OPTIONAL: BLAST result of aligning the reads to the antiSMASH intervals in each protein. 
-	8.  InputFiles.HMMUniqueBlast - OPTIONAL: Filtered blast search output that uniquely matches the domain.
-	9.  InputFiles.HMM_Cutoff_Scores - REQUIRED: File with HMM cutoffs to compare to BLAST interval reads.
-	10. InputFiles.ScaffoldCheck - OPTIONAL: List of scaffold ids for the median, +5, and -5 that are known to match the scaffolds that have the protein of interest. Reduces running time. 
-	11. InputParam.HMM_Model_Name - REQUIRED: Name of the PFAM. 
-	12. InputParam.Seq_start - REQUIRED: Start position in the PFAM alignment to start building spHMMs. 
-	13. InputParam.Seq_end - REQUIRED: End position in the PFAM alignment to start building spHMMs. 
-	14. InputParam.F1_Threshold - REQUIRED: F1 score threshold for eliminating low-performance models and tuning spHMMs. 
-	15. OutputFiles.HMMOutDir - REQUIRED: Output directory where the spHMMs are saved. 
-	16. OutputFiles.HMMHighPerfOutDir - REQUIRED: Output directory where the high performing spHMMs are saved. 
-	17. OutputFiles.SampleReadIdDir - REQUIRED: Output directory where read ids matched to spHMMs are saved. 
-	18. OutputFiles.F1_Cutoff - REQUIRED: Output file with a list of spHMMs that pass the F1 threshold.  
-	19. OutputFiles.Plot - REQUIRED: Output plot of the F1 scores for each spHMM with threshold boundary lines.
-	20. OutputFiles.ModelData - REQUIRED: Output FP/TP for HMM reads detected in final models with final cutoffs that keep reads duplicated with the highest HMM Score. In case of a tie, then choose the first one. 
-	21. OutputFiles.RawModelData - REQUIRED: Output FP/TP for HMM reads detected in final models with final cutoffs duplicate reads in intervals. 
+
+	```
+	A.  DataRoot, required=True: Root data directory. All the input paths and output paths are relative to this directory.
+	B.  InputFiles.ProtAlnFasta, required=True: Alignment of protein homologs.  
+	C.  InputFiles.HMMRun, required=True: HMMER search of the synthetic reads against all the spHMM models. 
+	D.  InputFiles.BLAST_TP_NoCov, required=True: TP reads matched to the proteins with BLAST. 
+	E.  InputFiles.BLAST_IGNORE, required=False: Reads ignored in BLAST that was missed by antiSMASH.
+	F.  InputFiles.GeneIntervalPos, required=True: antiSMASH output with the interval positions of each gene. 
+	G.  InputFiles.GeneIntervalBlast, required=False: BLAST result of aligning the reads to the antiSMASH intervals in each protein. 
+	H.  InputFiles.HMMUniqueBlast, required=False: Filtered blast search output that uniquely matches the domain.
+	I.  InputFiles.HMM_Cutoff_Scores, required=True: File with HMM cutoffs to compare to BLAST interval reads.
+	J. InputFiles.ScaffoldCheck, required=False: List of scaffold ids for the median, +5, and -5 that are known to match the scaffolds that have the protein of interest. Reduces running time. 
+	K. InputParam.HMM_Model_Name, required=True: Name of the PFAM. 
+	L. InputParam.Seq_start, required=True: Start position in the PFAM alignment to start building spHMMs. 
+	M. InputParam.Seq_end, required=True: End position in the PFAM alignment to start building spHMMs. 
+	N. InputParam.F1_Threshold, required=True: F1 score threshold for eliminating low-performance models and tuning spHMMs. 
+	O. OutputFiles.HMMOutDir, required=True: Output directory where the spHMMs are saved. 
+	P. OutputFiles.HMMHighPerfOutDir, required=True: Output directory where the high performing spHMMs are saved. 
+	Q. OutputFiles.SampleReadIdDir, required=True: Output directory where read ids matched to spHMMs are saved. 
+	R. OutputFiles.F1_Cutoff, required=True: Output file with a list of spHMMs that pass the F1 threshold.  
+	S. OutputFiles.Plot, required=True: Output plot of the F1 scores for each spHMM with threshold boundary lines.
+	T. OutputFiles.ModelData, required=True: Output FP/TP for HMM reads detected in final models with final cutoffs that keep reads duplicated with the highest HMM Score. In case of a tie, then choose the first one. 
+	U. OutputFiles.RawModelData, required=True: Output FP/TP for HMM reads detected in final models with final cutoffs duplicate reads in intervals. 
+	```
  
 2. Replace the config file in the R notebook MetaBGC-Build/SPHMM_Model.Rmd
 3. Run the R notebook. The output high-performance spHMMs will be in OutputFiles.HMMHighPerfOutDir  

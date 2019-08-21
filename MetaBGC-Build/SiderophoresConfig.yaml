@@ -1,5 +1,5 @@
 default:
-    DataRoot: "<ABSOLUTE_PATH>/MetaBGC-TIIPKS/benchmark_data/siderophores"
+    DataRoot: "C:/Users/ab50/Documents/MetaBGC-TIIPKS/benchmark_data/siderophores"
     InputFiles.ProtAlnFasta: "siderophore.fasta"
     InputFiles.HMMRun: "Combined_spHMM_Search.txt"
     InputFiles.BLAST_IGNORE: "blastx-fp-subfive.txt"
