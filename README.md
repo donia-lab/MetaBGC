@@ -127,3 +127,14 @@ MetaBGC consists of three main modules:
 
 This project is licensed under the GNU General Public License V3 - see the [LICENSE.md](LICENSE.md) file for details.
 
+## Contact
+If there are any question please contact:
+
+**Mohamed Abou Donia, Ph.D.**
+ <br /> Assistant Professor
+ <br /> Department of Molecular Biology
+ <br /> Princeton University
+ <br /> Email: <donia@princeton.edu>
+
+
+
