@@ -90,7 +90,7 @@ MetaBGC consists of three main modules:
 	D. --fasta_dir, required=True: PATH to save FASTA files for each sample and their reads that passed the defined HMMER score cutoffs.
 	```
 	
- **If your protein of interest is not Type II PKS, then use the cutoffs defined from MetaBGC-build. Please be aware because these cutoffs were designated using synthetic genomes, you may need to manually re-tune the spHMM cutoffs after running MetaBGC on a metagenomic dataset(s).**
+	**If your protein of interest is not Type II PKS, then use the cutoffs defined from MetaBGC-build. Please be aware because these cutoffs were designated using synthetic genomes, you may need to manually re-tune the spHMM cutoffs after running MetaBGC on a metagenomic dataset(s).**
 
 4. MetaBGC-Identify will produce a text file of each sample and their read IDs that passed in *step 3*. Use the [extractFASTAfromLIST-2MultiFASTA.py](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Identify/extractFASTAfromLIST-2MultiFASTA.py) script to parse out the nucleotide sequences for those sample's reads that passed. 
 
@@ -120,7 +120,7 @@ MetaBGC consists of three main modules:
 
 2. We suggest for synthetic dataset to examine bins that contain at least 50 reads or more and at least 10 reads or more for metagenomic data. 
 
-**Please be aware these are suggested parameters and may have to be tuned depending on the metagenomic dataset(s).**
+	**Please be aware these are suggested parameters and may have to be tuned depending on the metagenomic dataset(s).**
 
 
 ## License
