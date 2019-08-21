@@ -118,7 +118,7 @@ MetaBGC consists of three main modules:
 ### Running MetaBGC-Cluster to generate BGCs bins 
 1. To generate BGC bins, users will use the abundance profile file **(abundance_table.txt)** produced from the MetaBGC-Quantify module as input for [MetaBGC-Cluster.py](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Cluster/MetaBGC-Cluster.py) with the following suggested parameters: `eps .2 min_samples 1`
 
-2. We suggest for synthetic dataset to examine bins that contain at least 50 reads or more and at least 10 reads for metagenomic data. 
+2. We suggest for synthetic dataset to examine bins that contain at least 50 reads or more and at least 10 reads or more for metagenomic data. 
 
 **Please be aware these are suggested parameters and may have to be tuned depending on the metagenomic dataset(s).**
 
