@@ -96,7 +96,7 @@ MetaBGC consists of three main modules:
 
 1. A user must combine each sample FASTA file from the MetaBGC-Identify module into one multi-FASTA which then can be used to de-replicate at 95% identity and 95% alignment coverage using **CD-HIT-EST** with the following parameters: `-c .95 -n 10 -d 0 -aS .95`.
 
-	**If a user is interested in adding metadata to the headers of the multiFASTA file such as sampletype, cyclasetype you can use this** [script] (https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/MetaBGC-Quantify)**.**
+	**If a user is interested in adding metadata to the headers of the multiFASTA file such as sampletype, cyclasetype you can use this** [script] (https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/MetaBGC-Quantify/add_metadata_to_FASTA.py)**.**
 
 2. To quantify these de-replicated reads, a users must use the multi-FASTA de-replicated file as query using BLASTn against all sample metagenomes using the following parameters: `-task blastn -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 window_size 11`
 **Please name BLAST tabular files with the following synthax 
