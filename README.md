@@ -21,7 +21,7 @@ To run MetaBGC, you will need the following dependencies and data preprocessing:
 * [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 * [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/)
 * [R Studio](https://www.rstudio.com/products/rstudio/download/)
-* Before using MetaBGC to either identify Type II Polyketides or other protein families of interest in metagenomic datasets, a user must prepare their datasets by translating the metagenomic reads from nucleic acid to amino acid using **EMBOSS:6.6.0.0 transeq** tool in all six open reading frames with the following parameters: `-frame=6 - table=0 -sformat pearson`. 
+* Before using MetaBGC to either identify Type II Polyketides or other protein families of interest in metagenomic dataset(s), a user must prepare their dataset(s) by translating the metagenomic reads from nucleic acid to amino acid using **EMBOSS:6.6.0.0 transeq** tool in all six open reading frames with the following parameters: `-frame=6 - table=0 -sformat pearson`. 
 
 
 
@@ -39,7 +39,7 @@ MetaBGC consists of three main modules:
 
 ### Running MetaBGC-Build to build spHMMs
 
-1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclases that were used for benchmarking. These can be run with the data files in the [benchmark data folder](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/benchmark_data). A sample template EmptyTemplate.yaml is provided in the MetaBGC-Build directory for adding new datasets. The config parameters are:
+1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclases that were used for benchmarking. These can be run with the data files in the [benchmark data folder](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/benchmark_data). A sample template EmptyTemplate.yaml is provided in the MetaBGC-Build directory for adding new dataset(s). The config parameters are:
 	1.  DataRoot - REQUIRED: Root data directory. All the input paths and output paths are relative to this directory.
 	2.  InputFiles.ProtAlnFasta - REQUIRED: Alignment of protein homologs.  
 	3.  InputFiles.HMMRun - REQUIRED: HMMER search of the synthetic reads against all the spHMM models. 
