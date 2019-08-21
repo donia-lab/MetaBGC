@@ -81,7 +81,7 @@ MetaBGC consists of three main modules:
 	G. --sampleType, required=True: The type of sample (ie,bodysite, isolation_source, cohort)
 	```
 	
-3. To filter the HMMER results from *step 2* you need to combine the parsed results and create a new combined HMMER result file and then use [MetaBGC-Identify] (https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Identify/MetaBGC-Identify.py). For Type II Polyketides you can use the pre-defined HMMER Score cutoffs [here](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/models/spHMM-cutoffs.txt).
+3. To filter the HMMER results from *step 2* you need to combine the parsed results and create a new combined HMMER result file and then use [MetaBGC-Identify](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Identify/MetaBGC-Identify.py). For Type II Polyketides you can use the pre-defined HMMER Score cutoffs [here](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/models/spHMM-cutoffs.txt).
 
 	```
 	A. --hmm_file, required=True: Combined spHMM results file  
@@ -96,12 +96,12 @@ MetaBGC consists of three main modules:
 
 1. A user must combine each sample FASTA file from the MetaBGC-Identify module into one multi-FASTA which then can be used to de-replicate at 95% identity and 95% alignment coverage using **CD-HIT-EST** with the following parameters: `-c .95 -n 10 -d 0 -aS .95`.
 
-	**If a user is interested in adding metadata to the headers of the multiFASTA file such as sampletype, cyclasetype you can use this** [script] (https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/MetaBGC-Quantify/add_metadata_to_FASTA.py)**.**
+	**If a user is interested in adding metadata to the headers of the multiFASTA file such as sampletype, cyclasetype you can use this[script](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/MetaBGC-Quantify/add_metadata_to_FASTA.py).**
 
 2. To quantify these de-replicated reads, a users must use the multi-FASTA de-replicated file as query using BLASTn against all sample metagenomes using the following parameters: `-task blastn -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 window_size 11`
 **Please name BLAST tabular files with the following synthax 
 {SAMPLE_\__ID}_\__{BLAST_\__extension}. For example: V1.UC48.0_\__reads_\__against_\__combined-reads**
-3. To produce an abundance profile using the results from *step 2* a user must then use [MetaBGC-Quantify.py] (https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Quantify/MetaBGC-Quantify.py) with the following parameters: 
+3. To produce an abundance profile using the results from *step 2* a user must then use [MetaBGC-Quantify.py](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Quantify/MetaBGC-Quantify.py) with the following parameters: 
 
 	```
 		A. --blast_extension, required=True: extension to combine BLAST results to search for all the BLAST tabular files in a directory  
