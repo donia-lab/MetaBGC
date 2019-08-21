@@ -128,7 +128,7 @@ MetaBGC consists of three main modules:
 This project is licensed under the GNU General Public License V3 - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Contact
-If there are any question please contact:
+If there are any questions please contact:
 
 **Mohamed Abou Donia, Ph.D.**
  <br /> Assistant Professor
