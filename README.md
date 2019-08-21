@@ -96,7 +96,7 @@ MetaBGC consists of three main modules:
 
 1. A user must combine each sample FASTA file from the MetaBGC-Identify module into one multi-FASTA which then can be used to de-replicate at 95% identity and 95% alignment coverage using **CD-HIT-EST** with the following parameters: `-c .95 -n 10 -d 0 -aS .95`.
 
-	**If a user is interested in adding metadata to the headers of the multiFASTA file such as sampletype, cyclasetype you can use this[script](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/MetaBGC-Quantify/add_metadata_to_FASTA.py).**
+	**If a user is interested in adding metadata to the headers of the multi-FASTA file such as sampletype, cyclasetype you can use this [script](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/MetaBGC-Quantify/add_metadata_to_FASTA.py).**
 
 2. To quantify these de-replicated reads, a users must use the multi-FASTA de-replicated file as query using BLASTn against all sample metagenomes using the following parameters: `-task blastn -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 window_size 11`
 **Please name BLAST tabular files with the following synthax 
@@ -114,8 +114,12 @@ MetaBGC consists of three main modules:
 	```
 
 ### Running MetaBGC-Cluster to generate BGCs bins 
-1. Abundance profiles from the MetaBGC-Quantify module are clustered using DBSCAN clustering method with Pearson correlation distance metric and the following parameters: `eps .2 min_samples 1`
-2. Each bin from DBSCAN must contain at least 50 reads or more to count as a cluster to examine.
+1. To generate BGC bins, users will use the abundance profile file **(abundance_table.txt)** produced from the MetaBGC-Quantify module as input for [MetaBGC-Cluster.py](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Cluster/MetaBGC-Cluster.py) with the following suggested parameters: `eps .2 min_samples 1`
+
+2. We suggest for synthetic dataset to examine bins that contain at least 50 reads or more and at least 10 reads for metagenomic data. 
+
+**Please be aware these are suggested parameters and may have to be tuned depending on the metagenomic dataset(s).**
+
 
 ## License
 
