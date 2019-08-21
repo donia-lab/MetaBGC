@@ -21,7 +21,7 @@ To run MetaBGC, you will need the following dependencies and data preprocessing:
 * [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 * [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/)
 * [R Studio](https://www.rstudio.com/products/rstudio/download/)
-* Before using MetaBGC to either identify Type II Polyketides or other protein families of interest in metagenomic dataset(s), a user must prepare their dataset(s) by translating the metagenomic reads from nucleic acid to amino acid using **EMBOSS:6.6.0.0 transeq** tool in all six open reading frames with the following parameters: `-frame=6 - table=0 -sformat pearson`. 
+* Before using MetaBGC to either identify Type II Polyketides (Type II PKS) or other protein families of interest in metagenomic dataset(s), a user must prepare their dataset(s) by translating the metagenomic reads from nucleic acid to amino acid using **EMBOSS:6.6.0.0 transeq** tool in all six open reading frames with the following parameters: `-frame=6 - table=0 -sformat pearson`. 
 
 
 
@@ -31,7 +31,7 @@ MetaBGC consists of three main modules:
 
 **MetaBGC-Build** - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. If the BGC of interest commonly contains proteins of one of the pre-built high-performance spHMMs, this step can be skipped.
 
-**MetaBGC-Identify** - This module reformats HMMER results, filters the data using spHMMs cutoffs and parses out the read IDs for each sample that passes during the filtering stage.
+**MetaBGC-Identify** - This module reformats HMMER results, filters the data using spHMMs HMMER Score cutoffs and parses out the read IDs for each sample that passes during the filtering stage.
 
 **MetaBGC-Quantify** - This module takes reads identified and that scored above a defined cutoff by the MetaBGC-Identify module as "biosynthetic." A user must then combine these biosynthetic reads into a multi-FASTA file to run de-replication and BLAST which quantifies these de-replicated reads in all samples of the entire metagenomic dataset(s). An abundance matrix is generated for all unique reads against all samples. 
 
@@ -67,11 +67,30 @@ MetaBGC consists of three main modules:
 
 ### Running MetaBGC-Identify to detect biosynthetic-like reads
 
-1. Translate metagenomic reads from nucleic acid to amino acid using EMBOSS:6.6.0.0 transeq tool in all six open reading frames: `-frame=6 - table=0 -sformat pearson` 
-2. Run `hmmsearch` command from HMMER on the translated metagenomic data from step 1 using the heuristic filters: `--F1 0.02 --F2 0.02 --F3 0.02` 
-3. Parse results from step 2 using the parser script. 
-4. Filter the results with the cutoffs for each spHMM. 
-5. Extract read ids per sample from filtered results and extract sequences for read ids to create a fasta file for each sample. 
+1. For identifying Type II PKS BGCs you can find the pre-built high-performing [spHMM models](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/models) and run HMMER on your translated metagenomic dataset(s) using the `hmmsearch` command with the heuristic filters: `--F1 0.02 --F2 0.02 --F3 0.02`. Please create an HMMER result parent directory with each spHMM results as a sub-directory for the next step.  
+
+2. To parse and reformat HMMER results use the [spHMM parser](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Identify/spHMM_parser.py) with the following inputs:
+
+	```
+	A. --hmmscan_file_dir, required=True: The HMMER results parent directory 
+	B. --outdir, required=True: The desired parsed output directory name
+	C. --cyclase_type,required=True: Protein family name (ie, TcmN or siderophore)
+	D. --window, required=False, default='30_10': Window used for segmentation
+	E. --interval, required=True: The name of the spHMM interval parsing (ie, 0_30)
+	F. --sampleID, required=True: The name of the Sample
+	G. --sampleType, required=True: The type of sample (ie,bodysite, isolation_source, cohort)
+	```
+	
+3. To filter the HMMER results from *step 2* you need to combine the parsed results and create a new combined HMMER result file and then use [MetaBGC-Identify] (https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Identify/MetaBGC-Identify.py). For Type II Polyketides you can use the pre-defined HMMER Score cutoffs [here](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/models/spHMM-cutoffs.txt).
+
+	```
+	A. --hmm_file, required=True: Combined spHMM results file  
+	B. --outdir, required=True: PATH to save filtered results
+	C. --cutoff_file, required=True: Text file with HMM Score cutoffs per interval
+	D. --fasta_dir, required=True: PATH to save fasta files for each sample and their reads that passed the defined HMMER score cutoffs.
+	```
+	
+ **If your protein of interest is not Type II PKS, then use the cutoffs defined from MetaBGC-build. Please be aware because these cutoffs were designated using synthetic genomes, you may need to manually re-tune the spHMM cutoffs after running MetaBGC on a metagenomic dataset(s).**
 
 ### Running MetaBGC-Quantify to profile biosynthetic-like reads
 
