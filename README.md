@@ -92,7 +92,7 @@ MetaBGC consists of three main modules:
 	
 	**If your protein of interest is not Type II PKS, then use the cutoffs defined from MetaBGC-build. Please be aware because these cutoffs were designated using synthetic genomes, you may need to manually re-tune the spHMM cutoffs after running MetaBGC on a metagenomic dataset(s).**
 
-4. MetaBGC-Identify will produce a text file of each sample and their read IDs that passed in *step 3*. Use the [extractFASTAfromLIST-2MultiFASTA.py](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Identify/extractFASTAfromLIST-2MultiFASTA.py) script to parse out the nucleotide sequences for those sample's reads that passed. 
+4. MetaBGC-Identify will produce a text file of each sample and their read IDs that passed in *step 3*. Use the [extractFASTAfromLIST-2MultiFASTA](https://github.com/donia-lab/MetaBGC-TIIPKS/blob/master/MetaBGC-Identify/extractFASTAfromLIST-2MultiFASTA.py) script to parse out the nucleotide sequences for those sample's reads that passed. 
 
 ### Running MetaBGC-Quantify to profile biosynthetic-like reads
 
