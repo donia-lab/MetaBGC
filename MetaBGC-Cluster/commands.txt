@@ -1,2 +1,0 @@
-
-python /tigress/DONIA/shuow/reads_clustering/reads_clustering_DBSCAN.py --table all_domains-eastern-dereplicated-reads_abundance_table.txt --max_dist .2 --min_samples 1 --threads 4
