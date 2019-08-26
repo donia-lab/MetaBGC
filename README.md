@@ -20,14 +20,13 @@ To run MetaBGC, you will need the following dependencies and data preprocessing:
 * [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.7
 * [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 * [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/)
-* [R Studio](https://www.rstudio.com/products/rstudio/download/)
 * Before using MetaBGC to either identify Type II Polyketides (Type II PKS) or other protein families of interest in metagenomic dataset(s), a user must prepare their dataset(s) by translating the metagenomic reads from nucleic acid to amino acid using **EMBOSS:6.6.0.0 transeq** tool in all six open reading frames with the following parameters: `-frame=6 - table=0 -sformat pearson`. 
 
 
 
 ### Program Structure
 
-MetaBGC consists of three main modules:
+MetaBGC consists of four main modules:
 
 **MetaBGC-Build** - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. If the BGC of interest commonly contains proteins of one of the pre-built high-performance spHMMs, this step can be skipped.
 
@@ -39,34 +38,24 @@ MetaBGC consists of three main modules:
 
 ### Running MetaBGC-Build to build spHMMs
 
-1. Construct a YAML file with required input files, output files, and input parameters. Some YAML files are included for Lantibiotics, Siderophore and 4 cyclases that were used for benchmarking. These can be run with the data files in the [benchmark data folder](https://github.com/donia-lab/MetaBGC-TIIPKS/tree/master/benchmark_data). A sample template EmptyTemplate.yaml is provided in the MetaBGC-Build directory for adding new dataset(s). The config parameters are:
+1. To build and evaluate spHMMs for the protein family of choice being used to target the BGC if interest, the MetaBGC-Build.py script in the MetaBGC-Build has to be executed with required input files. To select high performance spHMMs, a synthetic dataset of reads must be generated with reads from true positive genes spiked in to test the performance of each spHMM.
 
 	```
-	A.  DataRoot, required=True: Root data directory. All the input paths and output paths are relative to this directory.
-	B.  InputFiles.ProtAlnFasta, required=True: Alignment of protein homologs.  
-	C.  InputFiles.HMMRun, required=True: HMMER search of the synthetic reads against all the spHMM models. 
-	D.  InputFiles.BLAST_TP_NoCov, required=True: TP reads matched to the proteins with BLAST. 
-	E.  InputFiles.BLAST_IGNORE, required=False: Reads ignored in BLAST that was missed by antiSMASH.
-	F.  InputFiles.GeneIntervalPos, required=True: antiSMASH output with the interval positions of each gene. 
-	G.  InputFiles.GeneIntervalBlast, required=False: BLAST result of aligning the reads to the antiSMASH intervals in each protein. 
-	H.  InputFiles.HMMUniqueBlast, required=False: Filtered blast search output that uniquely matches the domain.
-	I.  InputFiles.HMM_Cutoff_Scores, required=True: File with HMM cutoffs to compare to BLAST interval reads.
-	J. InputFiles.ScaffoldCheck, required=False: List of scaffold ids for the median, +5, and -5 that are known to match the scaffolds that have the protein of interest. Reduces running time. 
-	K. InputParam.HMM_Model_Name, required=True: Name of the PFAM. 
-	L. InputParam.Seq_start, required=True: Start position in the PFAM alignment to start building spHMMs. 
-	M. InputParam.Seq_end, required=True: End position in the PFAM alignment to start building spHMMs. 
-	N. InputParam.F1_Threshold, required=True: F1 score threshold for eliminating low-performance models and tuning spHMMs. 
-	O. OutputFiles.HMMOutDir, required=True: Output directory where the spHMMs are saved. 
-	P. OutputFiles.HMMHighPerfOutDir, required=True: Output directory where the high performing spHMMs are saved. 
-	Q. OutputFiles.SampleReadIdDir, required=True: Output directory where read ids matched to spHMMs are saved. 
-	R. OutputFiles.F1_Cutoff, required=True: Output file with a list of spHMMs that pass the F1 threshold.  
-	S. OutputFiles.Plot, required=True: Output plot of the F1 scores for each spHMM with threshold boundary lines.
-	T. OutputFiles.ModelData, required=True: Output FP/TP for HMM reads detected in final models with final cutoffs that keep reads duplicated with the highest HMM Score. In case of a tie, then choose the first one. 
-	U. OutputFiles.RawModelData, required=True: Output FP/TP for HMM reads detected in final models with final cutoffs duplicate reads in intervals. 
+    A. --prot_alignment, required=True: Alignment of the protein homologs in FASTA format.
+	B. --prot_family_name, required=True: Name of the protein family. 
+         This is used as prefix for all output files.
+	C. --nucl_seq_directory, required=True: Directory of nuleotide synthetic read samples
+         in fasta format with ".fasta" extension. The filenames are used as sample names.  
+	D. --prot_seq_directory, required=True: Directory of EMBOSS translated synthetic protein 
+         read samples in fasta format with ".fasta" extension. If they are saved in the same 
+         directory they can be names as "-translated.fasta" for distinguish them from the 
+         nucleotide file.  
+	E. --cohort_name, required=True: Name of the sample/cohort of read samples used for evaluation.
+	F. --tp_genes', required=True: Multi-FASTA with true positive genes in the synthetic dataset 
+         used to generate the read.
+	G. --output_directory, required=True: Directory to save results.
 	```
- 
-2. Replace the config file in the R notebook MetaBGC-Build/SPHMM_Model.Rmd
-3. Run the R notebook. The output high-performance spHMMs will be in OutputFiles.HMMHighPerfOutDir  
+2. The high-performance spHMMs will be in the output directory specified.  
 
 ### Running MetaBGC-Identify to detect biosynthetic-like reads
 

@@ -3,7 +3,7 @@
 from __future__ import division
 from Bio import AlignIO
 import os 
-from CreateSpHMMs import 
+from CreateSpHMMs import GenerateSpHMM
 
 if __name__ == '__main__':
     import argparse

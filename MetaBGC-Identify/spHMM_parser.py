@@ -23,7 +23,6 @@ class readID():
 
 def parseHMM(hmmFile, hmmDir, sampleType, sampleID, cyclaseType, window, interval):
 	with open(os.path.join(hmmDir,hmmFile), 'rU') as handle:
-
 		results_dict = {}
 		try:
 			for record in SearchIO.parse(handle, 'hmmer3-text'):
@@ -36,14 +35,11 @@ def parseHMM(hmmFile, hmmDir, sampleType, sampleID, cyclaseType, window, interva
 						hmm_bitscore = hits[i].bitscore
 						if hmm_name not in results_dict: # add hits to results dictionary 
 							readID_Class = readID(hmm_name, sampleType, sampleID, cyclaseType, hmm_bitscore, window, interval)
-
 							results_dict[hmm_name] = readID_Class
 						# the bio module wont allow duplicated query IDs
 			handle.close()
-
 		except ValueError:
 			print ("ERROR: duplicated queryIDs in hmmer result file:", hmmFile)
-
 	return results_dict
 
 def createPandaDF(cyclase_dict, outdir, outfile):
@@ -65,9 +61,7 @@ def createPandaDF(cyclase_dict, outdir, outfile):
 		outputDF_empty.to_csv(outfile, index=False, sep='\t', header=False)
 
 def main(hmmscan_file_dir, outdir, cyclase_type, window, interval, sampleID, sampleType):
-
 	os.makedirs(outdir)
-	
 	for hmmscan_file in os.listdir(hmmscan_file_dir):
 		baseOutFile = hmmscan_file.split('.')[0]
 		outfile = baseOutFile + "-PARSED.txt"
