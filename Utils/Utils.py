@@ -7,9 +7,9 @@ import pandas as pd
 """
 Function searches FASTA file against HMM. 
 """
-def runHMMSearch(fastaFile, hmmFile, outputFile):
+def runHMMSearch(fastaFile, hmmFile, outputFile, ncpus=4):
     print('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
-    cmd = "hmmsearch --F1 0.02 --F2 0.02 --F3 0.02 --tblout " + outputFile + " " + hmmFile + " "+ fastaFile + " > /dev/null"
+    cmd = "hmmsearch --cpu " + str(ncpus) + " --F1 0.02 --F2 0.02 --F3 0.02 --tblout " + outputFile + " " + hmmFile + " "+ fastaFile + " > /dev/null"
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done Running HMM Build with:",fastaFile)
@@ -35,8 +35,8 @@ def runMakeBLASTDB(fastaFile, database, type):
 """
 Function BLAST search a FASTA. 
 """
-def runBLASTN(fastaFile, database, outFile):
-    cmd = "blastn -query " + fastaFile + " -db database -perc_identity 90.0 -max_target_seqs 10000 -outfmt \"6 sseqid qseqid slen qlen qcovs pident evalue qstart qend\" -out " + outFile
+def runBLASTN(fastaFile, database, outFile, ncpus=4):
+    cmd = "blastn -num_threads " + str(ncpus) +  " -query " + fastaFile + " -db database -perc_identity 90.0 -max_target_seqs 10000 -outfmt \"6 sseqid qseqid slen qlen qcovs pident evalue qstart qend\" -out " + outFile
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done running BLAST Build on:",fastaFile)
@@ -48,7 +48,7 @@ def parseHMM(hmmPathFile, sampleType, sampleID, cyclaseType, window, interval):
     with open(hmmPathFile, 'rU') as handle:
         results_dict = {}
         try:
-            for record in SearchIO.parse(handle, 'hmmer3-text'):
+            for record in SearchIO.parse(handle, 'hmmer3-tab'):
                 hits = record.hits
                 num_hits = len(hits)  #calculate how many hits per query
                 if num_hits > 0:  #extract hits data
@@ -56,9 +56,9 @@ def parseHMM(hmmPathFile, sampleType, sampleID, cyclaseType, window, interval):
                         hmm_name = hits[i].id
                         hmm_bitscore = hits[i].bitscore
                         if hmm_name not in results_dict: # add hits to results dictionary
-                            readID_Class = HMMRecord(hmm_name, sampleType, sampleID, cyclaseType, hmm_bitscore, window, interval)
-                            results_dict[hmm_name] = readID_Class
-                            # the bio module wont allow duplicated query IDs
+                            hmmRec = HMMRecord(hmm_name, sampleType, sampleID, cyclaseType, hmm_bitscore, window, interval)
+                            results_dict[hmm_name] = hmmRec
+                            print(hmmRec)
             handle.close()
         except ValueError:
             print ("ERROR: duplicated queryIDs in hmmer result file:", hmmPathFile)
