@@ -26,8 +26,8 @@ def runHMMBuild(alnFile, hmmFile, modelName):
 """
 Function build a BLAST DB with a FASTA. 
 """
-def runMakeBLASTDB(fastaFile, database, type):
-    cmd = "makeblastdb -in " + fastaFile + " -dbtype nucl -parse_seqids -out " + database
+def runMakeBLASTDB(fastaFile, type):
+    cmd = "makeblastdb -in " + fastaFile + " -dbtype nucl -parse_seqids -out " + fastaFile
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done building BLAST Build on:",fastaFile)
@@ -36,7 +36,7 @@ def runMakeBLASTDB(fastaFile, database, type):
 Function BLAST search a FASTA. 
 """
 def runBLASTN(fastaFile, database, outFile, ncpus=4):
-    cmd = "blastn -num_threads " + str(ncpus) +  " -query " + fastaFile + " -db database -perc_identity 90.0 -max_target_seqs 10000 -outfmt \"6 sseqid qseqid slen qlen qcovs pident evalue qstart qend\" -out " + outFile
+    cmd = "blastn -num_threads " + str(ncpus) +  " -query " + fastaFile + " -db " + database + " -perc_identity 90.0 -max_target_seqs 10000 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" -out " + outFile
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done running BLAST Build on:",fastaFile)
