@@ -3,6 +3,24 @@ import os
 import subprocess
 from Utils.HMMRecord import HMMRecord
 import pandas as pd
+import re
+
+"""
+Function searches all FASTA file in a directory against a HMM. 
+"""
+def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, ouputDir, ncpus=4):
+    for subdir, dirs, files in os.walk(inputDir):
+        for file in files:
+            filePath = os.path.join(subdir, file)
+            if re.match(r".*\.translated.fasta$", file) and os.path.getsize(filePath) > 0:
+                sampleStr = file.split(".")[0]
+                hmmTblFileName = sampleStr +"_"+interval+".tbl"
+                hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
+                runHMMSearch(filePath, hmmModel,hmmTblFilePath,ncpus)
+                result_dict = parseHMM(hmmTblFilePath, sampleType, sampleStr, protType, window, interval)
+                hmmSearchFileName = sampleStr +"_"+interval+".txt"
+                hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
+                createPandaDF(result_dict, hmmSearchFilePath)
 
 """
 Function searches FASTA file against HMM. 
@@ -26,8 +44,9 @@ def runHMMBuild(alnFile, hmmFile, modelName):
 """
 Function build a BLAST DB with a FASTA. 
 """
-def runMakeBLASTDB(fastaFile, type):
-    cmd = "makeblastdb -in " + fastaFile + " -dbtype nucl -parse_seqids -out " + fastaFile
+def runMakeBLASTDB(fastaFile, dbName, dbPath, type):
+    dbOut = dbPath + os.sep + dbName
+    cmd = "makeblastdb -in " + fastaFile + " -title " + dbName +" -dbtype nucl -parse_seqids -out " + dbOut
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done building BLAST Build on:",fastaFile)
@@ -77,3 +96,15 @@ def createPandaDF(cyclase_dict, outfile):
         outputDF_empty_columns = ["readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window", "interval"]  # rename column names
         outputDF_empty = pd.DataFrame(columns=outputDF_empty_columns)
         outputDF_empty.to_csv(outfile, index=False, sep='\t', header=False)
+
+
+"""
+Function runs MSA against FASTA file. 
+"""
+def runMUSCLE(fastaFile,outputFile):
+    print('Running MUSCLE with {0}.'.format(fastaFile))
+    cmd = "muscle -in " + fastaFile + " -out " + outputFile
+    print(cmd)
+    subprocess.call(cmd, shell=True)
+    print("Done Running MUSCLE with:",fastaFile)
+    return outputFile

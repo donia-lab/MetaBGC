@@ -73,7 +73,6 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	compare_reads <- function(hmm_df, blast_df){
 	  names(blast_df)[names(blast_df)=="sseqid"] <-"readID"
 	  names(blast_df)[names(blast_df)=="qseqid"] <-"bgcName"
-	  names(hmm_df)[names(hmm_df)=="cyclaseType"] <-"cyclase_type"
 	  
 	  # remove columns to compare the two dataframe 
 	  blastDF <- blast_df %>% select(-c(model_cov, interval))
@@ -86,8 +85,6 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	}
 
 	blast_bin <- compare_reads(hmm_df_recoded, blast_intervals)
-	names(blast_bin)[names(blast_bin)=="cyclase_type"] <-"cyclaseType"
-
 
 	df_hmm_cutoff_scores <- blast_bin %>% filter(readCheck == "common-read") %>% group_by(interval) %>% mutate(medianScore = round(median(HMMScore))) %>% distinct(interval, readCheck, medianScore) %>% ungroup()
 	names(df_hmm_cutoff_scores) <- c("interval", "read_check", "cutoff")
@@ -120,9 +117,7 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	#return the hmm-unique reads 
 
 	compare_hmm_unique <- function(hmm_df, blast_df, pos_df){
-
-	  #hmm_unique_df <- hmm_df  %>% inner_join(.,blast_df, by = c("readID"="sseqid", "Sample", "sampleType","cyclaseType"= "cyclase_type"))
-	   hmm_unique_df <- hmm_df  %>% inner_join(.,blast_df, by = c("readID"="sseqid", "Sample", "sampleType", "cyclase_type"))
+      hmm_unique_df <- hmm_df  %>% inner_join(.,blast_df, by = c("readID"="sseqid", "Sample", "sampleType", "cyclaseType"))
 	  intervals <- unique(hmm_unique_df$interval)
 	  results <- data.frame()
 	  #check that reads are in the same interval to throw out 
@@ -145,14 +140,13 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	return_hmm_unique <- function(hmm_df, blast_df){
 	  oxyn_hmm_df <- hmm_df  %>% select(-c(window))
 	  oxyn_hmm_df$interval <- as.character(oxyn_hmm_df$interval)
-	  names(oxyn_hmm_df)[names(oxyn_hmm_df)=="cyclaseType"] <-"cyclase_type"
 	  names(blast_df)[names(blast_df)=="sseqid"] <-"readID"
 	  OxyN_hmm_unique <- oxyn_hmm_df %>% anti_join(.,blast_df, by= c("readID", "Sample", "sampleType", "interval"))
 	  return(OxyN_hmm_unique)
 	}
 
-	gene_positions$cyclase_type <- InputParam.HMM_Model_Name
-	all_blast_df$cyclase_type <- InputParam.HMM_Model_Name
+	gene_positions$cyclaseType <- InputParam.HMM_Model_Name
+	all_blast_df$cyclaseType <- InputParam.HMM_Model_Name
 
 	median_hmmunique <- return_hmm_unique(filtered_median, blast_intervals)
 	median_hmmunique_less_model_cov <- compare_hmm_unique(median_hmmunique, all_blast_df, gene_positions) 
@@ -175,7 +169,6 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	  #added this because factor vector 
 	  hmm_df$interval <- as.character(hmm_df$interval)
 	  hmm_df <- hmm_df %>% select(-c(window))
-	  names(hmm_df)[names(hmm_df)=="cyclaseType"] <-"cyclase_type"
 	  names(blast_df)[names(blast_df)=="sseqid"] <-"readID"
 	  
 	  results<-data.frame(interval=character(), F1=numeric())

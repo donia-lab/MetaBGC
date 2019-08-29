@@ -7,6 +7,7 @@ from __future__ import division
 from Bio import AlignIO
 import os 
 import subprocess
+import ntpath
 
 """
 Script takes in an alignment file (fasta format), kmer len, and sliding window len. The script 
@@ -45,7 +46,6 @@ def getKmers(k, interval, outdir, msaFile, modelName, start, end):
         endPos = j+k 
         kmer = alignment[:,startPos:endPos] #[ rows (different domains),columns (Amino Acids)]
         outputFile = msaFile.split('.fas')[0] + "__" + str(k)+ "_"+ str(interval) + "__"+ str(startPos)+ "_"+ str(endPos) + ".fas"
-        os.chdir(outdir)
         AlignIO.write(kmer, outputFile, "fasta")
         hmmFile = runHMMBuild(outputFile, modelName)
         hmmSegment = str(startPos)+ "_"+ str(endPos)
