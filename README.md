@@ -23,7 +23,7 @@ To run MetaBGC, you will need the following dependencies and data preprocessing:
 * [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.7
 * [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 * [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/)
-* [EMBOSS-6.5.7](ftp://emboss.open-bio.org/pub/EMBOSS/EMBOSS-6.5.7.tar.gz)
+* [EMBOSS-6.5.7](http://emboss.sourceforge.net/)
 
 
 ### Program Structure
@@ -73,8 +73,8 @@ MetaBGC consists of four main modules:
 	B. --nucl_seq_directory, required=True: Directory of reads of metagenome samples. The filenames are used as sample names.  
     C. --seq_fmt, required=True: {fasta,fastq} Sequence file format and extension.
     D. --pair_fmt, required=True: {single, split, interleaved} Sequence pair format.
-    G. --R1_file_suffix, required=False: Suffix including extension of the file name specifying the forward reads. Not specified for single or interleaved reads. Example: .R1.fastq
-    H. --R2_file_suffix, required=False: Suffix including extension of the file name specifying the reverse reads. Not specified for single or interleaved reads. Example: .R2.fastq 
+    E. --R1_file_suffix, required=False: Suffix including extension of the file name specifying the forward reads. Not specified for single or interleaved reads. Example: .R1.fastq
+    F. --R2_file_suffix, required=False: Suffix including extension of the file name specifying the reverse reads. Not specified for single or interleaved reads. Example: .R2.fastq 
 	G. --prot_family_name, required=True: Name of the protein family.
 	H. --cohort_name, required=True: Name of the cohort of read samples used for model building.
 	I. --output_directory, required=True: Directory to save results.
@@ -92,8 +92,8 @@ MetaBGC consists of four main modules:
     B. --nucl_seq_directory, required=True: Directory of reads of metagenome samples. The filenames are used as sample names.  
     C. --seq_fmt, required=True: {fasta,fastq} Sequence file format and extension.
     D. --pair_fmt, required=True: {single, split, interleaved} Sequence pair format.
-    G. --R1_file_suffix, required=False: Suffix including extension of the file name specifying the forward reads. Not specified for single or interleaved reads. Example: .R1.fastq
-    H. --R2_file_suffix, required=False: Suffix including extension of the file name specifying the reverse reads. Not specified for single or interleaved reads. Example: .R2.fastq 
+    E. --R1_file_suffix, required=False: Suffix including extension of the file name specifying the forward reads. Not specified for single or interleaved reads. Example: .R1.fastq
+    F. --R2_file_suffix, required=False: Suffix including extension of the file name specifying the reverse reads. Not specified for single or interleaved reads. Example: .R2.fastq 
 	G. --cohort_name, required=True: Name of the cohort of read samples used for model building.
 	H. --output_directory, required=True: Directory to save results.
 	I. --cpu, required=False: Number of CPU threads to use (Def.=4). 
