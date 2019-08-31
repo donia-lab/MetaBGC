@@ -11,67 +11,79 @@ import pandas as pd
 import glob
 import rpy2.robjects.packages as rpackages
 import rpy2.robjects as robjects
+from Utils.Utils import PreProcessReads
+from Utils.Utils import RunBLASTNDirectory
+from Utils.Utils import runCDHit
 
+CPU_THREADS=4
 
-def combine_blast_results(blast_extension, sample_extension, blast_dirpath, tabular_colnames, outfile, outdir, cohort_name):
-	#os.chdir(blast_dirpath)
-	filenames = glob.glob(os.path.join(blast_dirpath, '*{}').format(blast_extension))
-	#filenames = glob.glob("*blast_extension")
-
-	list_of_dfs = [pd.read_csv(filename, names=tabular_colnames, header=None, delim_whitespace=True) for filename in filenames]
+def combine_blast_results(blast_dir_path, outdir, cohort_name):
+	filenames = [f for f in os.listdir(blast_dir_path) if os.isfile(os.join(blast_dir_path, f))]
+	tabular_colnames = "sseqid slen sstart send qseqid qlen qstart qend qcovs pident evalue"
+	df_colnames = tabular_colnames.split()
+	list_of_dfs = [pd.read_csv(filename, names=df_colnames, header=None, delim_whitespace=True) for filename in filenames]
 	for dataframe, filename in zip(list_of_dfs, filenames):
-		dataframe['Sample'] = os.path.basename(filename).split(sample_extension)[0]
+		dataframe['Sample'] = os.path.basename(filename).split(".txt")[0]
 		dataframe['cohort'] = cohort_name
-
 	combined_df = pd.concat(list_of_dfs, ignore_index=True)
-	os.chdir(outdir)
-	combined_df.to_csv(outfile, index=False, sep='\t', header=False)
+	combinedBLAST = os.path.join(outdir,"CobminedQuantifyBLAST.txt")
+	combined_df.to_csv(combinedBLAST, index=False, sep='\t', header=False)
+	return combinedBLAST
 
-def create_clustering_file(outdir, outfile ):
-	os.chdir(outdir)
+def create_clustering_file(outdir,outfile):
 	base = rpackages.importr('base')
 	packageNames = ('tidyverse')
 	utils = rpackages.importr('utils')
 	utils.chooseCRANmirror(ind=1)
- 
 	packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
- 
 	if len(packnames_to_install) > 0:
 		utils.install_packages(StrVector(packnames_to_install))
 	tidyverse = rpackages.importr('tidyverse')
 	robjects.r['options'](warn=-1)
 	create_file = robjects.r('''
-		function(results_file) {
+		function(results_file,outdir) {
 			all_domains_blast_df <- read_tsv(results_file, col_names = F)
 			names(all_domains_blast_df) <- c("sseqid", "slen","sstart", "send", "qseqid", "qlen", "qstart", "qend", "qcovs", "pident"," evalue", "Sample", "cohort")
 			all_domains_blast_df_count <- all_domains_blast_df %>% group_by(Sample, qseqid) %>% count() %>% ungroup()
 			all_domains_blast_df_count_table <- all_domains_blast_df_count %>% spread(., Sample, n, fill =0 )
-			write_tsv(all_domains_blast_df_count_table, "abundance_table.txt", col_names = T)
-			write_tsv(all_domains_blast_df_count, "abundance_table-wide.txt", col_names = T)
-
+			abundFile = file.path(outdir, "abundance_table.txt")
+			abundWideFile = file.path(outdir, "abundance_table-wide.txt")
+			write_tsv(all_domains_blast_df_count_table, abundFile, col_names = T)
+			write_tsv(all_domains_blast_df_count, abundWideFile, col_names = T)
 		}
 		''')
 
-	create_file(outfile)
-
-def main(blast_extension, sample_extension, blast_dirpath, tabular_colnames, outfile, outdir, cohort_name):
-	df_colnames = tabular_colnames.split()
-	combine_blast_results(blast_extension, sample_extension, blast_dirpath, df_colnames, outfile, outdir, cohort_name)
-	create_clustering_file(outdir, outfile)
-
+	create_file(outfile,outdir)
 
 if __name__ == '__main__':
 	import argparse
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--blast_extension', required=True, help= "extension to combine BLAST results")  
-	parser.add_argument('--sample_extension', required=True, help= "extension to parse sample name")
-	parser.add_argument('--blast_dirpath', required=True, help= "output directory name")
-	parser.add_argument('--tabular_colnames', nargs='+', required=False, default = "sseqid slen sstart send qseqid qlen qstart qend qcovs pident evalue") 
-	parser.add_argument('--outfile', required=False, default='combined-blast_quantifier-results.txt')
-	parser.add_argument('--outdir', required=True, help="directory to output results")
-	parser.add_argument('--cohort_name', required=True, help="dataset_name")
-
-
+	parser.add_argument('--identify_fasta', required=True, help= "Path to the file produced by MetaBGC-Identify.")
+	parser.add_argument('--nucl_seq_directory', required=True, help= "Directory with nuleotide fasta files.")
+	parser.add_argument('--seq_fmt', required=True, help="Sequence file format and extension.: {fasta,fastq}.")
+	parser.add_argument('--pair_fmt', required=True, help="Sequence pair format: {single, split, interleaved}.")
+	parser.add_argument('--R1_file_suffix', required=False,
+						help="Suffix including extension of the file name specifying R1 reads. Not specified for single or interleaved reads.")
+	parser.add_argument('--R2_file_suffix', required=False,
+						help="Suffix including extension of the file name specifying R2 reads. Not specified for single or interleaved reads.")
+	parser.add_argument('--cohort_name', required=True, help="Name of the sample/cohort.")
+	parser.add_argument('--output_directory', required=True, help="Directory to save results.")
+	parser.add_argument('--cpu', required=False, help="Number of threads. Def.: 4")
 	args = parser.parse_args()
 
-	main(args.blast_extension, args.sample_extension, args.blast_dirpath, args.tabular_colnames, args.outfile , args.outdir, args.cohort_name)
+	if args.cpu is not None:
+		CPU_THREADS = args.cpu
+
+	nucl_seq_directory = PreProcessReads(args.nucl_seq_directory, args.seq_fmt, args.pair_fmt,
+										 args.R1_file_suffix.strip(), args.R2_file_suffix.strip(),
+										 args.output_directory)
+
+	cdHitFile = os.path.join(args.output_directory,"CombinedIDFASTASeqs_Drep.fasta")
+	runCDHit(args.identify_fasta,cdHitFile,CPU_THREADS)
+
+
+	blastn_search_directory = os.path.join(args.output_directory, 'quantify_blastn_result')
+	os.makedirs(blastn_search_directory, 0o777, True)
+	RunBLASTNDirectory(nucl_seq_directory, cdHitFile, blastn_search_directory.CPU_THREADS)
+	combinedBLASTPath = combine_blast_results(blastn_search_directory, args.output_directory, args.cohort_name)
+	create_clustering_file(args.output_directory, combinedBLASTPath)

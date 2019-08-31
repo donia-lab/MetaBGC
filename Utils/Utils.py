@@ -1,9 +1,11 @@
 from Bio import SearchIO
+from Bio import SeqIO
 import os
 import subprocess
 from Utils.HMMRecord import HMMRecord
 import pandas as pd
 import re
+import itertools
 
 """
 Function searches all FASTA file in a directory against a HMM. 
@@ -12,7 +14,7 @@ def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, 
     for subdir, dirs, files in os.walk(inputDir):
         for file in files:
             filePath = os.path.join(subdir, file)
-            if re.match(r".*\.translated.fasta$", file) and os.path.getsize(filePath) > 0:
+            if re.match(r".*.fasta$", file) and os.path.getsize(filePath) > 0:
                 sampleStr = file.split(".")[0]
                 hmmTblFileName = sampleStr +"_"+interval+".tbl"
                 hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
@@ -61,6 +63,20 @@ def runBLASTN(fastaFile, database, outFile, ncpus=4):
     print("Done running BLAST Build on:",fastaFile)
 
 """
+Function to run BLAST against a directory. 
+"""
+def RunBLASTNDirectory(dbDir, queryFile, ouputDir,ncpus=4):
+    for subdir, dirs, files in os.walk(dbDir):
+        for file in files:
+            filePath = os.path.join(subdir, file)
+            if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
+                runMakeBLASTDB(filePath, "TMPDB", ouputDir, 'nucl')
+                sampleStr = file.split(".")[0]
+                outputFileName = sampleStr + ".txt"
+                outputFilePath = os.path.join(ouputDir, outputFileName)
+                runBLASTN(queryFile, ouputDir+os.sep+"TMPDB", outputFilePath, ncpus)
+
+"""
 Function to parse HMM file into HMMRecord dict. 
 """
 def parseHMM(hmmPathFile, sampleType, sampleID, cyclaseType, window, interval):
@@ -107,4 +123,94 @@ def runMUSCLE(fastaFile,outputFile):
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done Running MUSCLE with:",fastaFile)
-    return outputFile
+
+"""
+Function to generate a 6 frame translated amino acid sequence from the nucleotide sequence. 
+"""
+def runTranSeq(fastaFile,frameCode,outputFile):
+    print('Running transeq with {0}.'.format(fastaFile))
+    cmd = "transeq " + fastaFile + " " + outputFile + " -frame="+ frameCode +" -table=0 -sformat pearson"
+    print(cmd)
+    subprocess.call(cmd, shell=True)
+    print("Done Running transeq with:",fastaFile)
+
+
+"""
+Function runs cd-hit on a FASTA file. 
+"""
+def runCDHit(fastaFile,outputFile,ncpu):
+    print('Running CD-Hit with {0}.'.format(fastaFile))
+    opPrefix = outputFile.split(".fasta")[0]
+    cmd = "cd-hit-est -i " + fastaFile + " -o " + opPrefix + " -c .95 -n 10 -d 0 -aS .95 -T "+ str(ncpu)
+    print(cmd)
+    subprocess.call(cmd, shell=True)
+    print("Done Running Cd-Hit with:",fastaFile)
+
+
+"""
+Interleave FR reads. 
+"""
+def interleave(iter1, iter2) :
+    for (forward, reverse) in zip(iter1,iter2):
+        yield forward
+        yield reverse
+
+"""
+
+"""
+def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_suffix,ouputDir):
+    if seq_fmt.lower() == "fasta" and (pair_fmt.lower() == "interleaved" or pair_fmt.lower() == "single"):
+        return nucl_seq_directory
+    elif seq_fmt.lower() == "fasta" and pair_fmt.lower() == "split":
+        out_seq_directory = os.path.join(ouputDir, 'nucl_seq_dir')
+        os.makedirs(out_seq_directory, 0o777, True)
+        for subdir, dirs, files in os.walk(nucl_seq_directory):
+            for file in files:
+                filePath = os.path.join(subdir, file)
+                regF = r".*" + R1_file_suffix + "$"
+                regR = r".*" + R2_file_suffix + "$"
+                if re.match(regF, file) and not re.match(regR, file) and os.path.getsize(filePath) > 0:
+                    sampleName = file.split(R1_file_suffix)[0]
+                    r2FilePath = os.path.join(subdir, sampleName + R2_file_suffix)
+                    file_out = os.path.join(out_seq_directory, sampleName + ".fasta")
+                    records_f = SeqIO.parse(open(filePath, "rU"), seq_fmt.lower())
+                    records_r = SeqIO.parse(open(r2FilePath, "rU"), seq_fmt.lower())
+                    handle = open(file_out, "w")
+                    count = SeqIO.write(interleave(records_f, records_r), handle, "fasta")
+                    handle.close()
+        return out_seq_directory
+    elif seq_fmt.lower() == "fastq":
+        out_seq_directory = os.path.join(ouputDir, 'nucl_seq_dir')
+        os.makedirs(out_seq_directory, 0o777, True)
+        if pair_fmt.lower() == "interleaved" or pair_fmt.lower() == "single":
+            for subdir, dirs, files in os.walk(nucl_seq_directory):
+                for file in files:
+                    filePath = os.path.join(subdir, file)
+                    if re.match(r".*.fastq$", file) and os.path.getsize(filePath) > 0:
+                        print("Pre-processing:", file)
+                        out_seq_path = os.path.join(out_seq_directory, file)
+                        count = SeqIO.convert(filePath, "fastq", out_seq_path, "fasta")
+        elif pair_fmt.lower() == "split":
+            for subdir, dirs, files in os.walk(nucl_seq_directory):
+                for file in files:
+                    filePath = os.path.join(subdir, file)
+                    regF = r".*"+R1_file_suffix+"$"
+                    regR = r".*"+R2_file_suffix+"$"
+                    if re.match(regF, file) and not re.match(regR, file) and os.path.getsize(filePath) > 0:
+                        print("Pre-processing:", file)
+                        sampleName = file.split(R1_file_suffix)[0]
+                        r2FilePath = os.path.join(subdir,sampleName + R2_file_suffix)
+                        file_out = os.path.join(out_seq_directory,sampleName + ".fasta")
+                        records_f = SeqIO.parse(open(filePath, "rU"), seq_fmt.lower())
+                        records_r = SeqIO.parse(open(r2FilePath, "rU"), seq_fmt.lower())
+                        handle = open(file_out, "w")
+                        count = SeqIO.write(interleave(records_f, records_r), handle, "fasta")
+                        handle.close()
+        else:
+            print("Invalid sequence pair format inputs.\n")
+            exit(0)
+        return out_seq_directory
+    else:
+        print("Invalid file format inputs.\n")
+        exit(0)
+
