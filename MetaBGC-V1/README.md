@@ -1,5 +1,7 @@
 # MetaBGC: Metagenomic identifier of Biosynthetic Gene Clusters 
 
+[![DOI](https://zenodo.org/badge/187888803.svg)](https://zenodo.org/badge/latestdoi/187888803)
+
 MetaBGC is a read-based algorithm for the detection of biosynthetic gene clusters (BGCs) directly in metagenomic sequencing data.
 
 ## Getting Started
