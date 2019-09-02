@@ -67,14 +67,15 @@ MetaBGC consists of four main modules:
 	K. --output_directory, required=True: Directory to save results. 
 	L. --cpu, required=False: Number of CPU threads to use (Def.=4). 
 	```
-2. The high-performance spHMMs will be saved in the HiPer_spHMMs folder in the output directory specified. The HiPer_spHMMs folder should have the following files:
+2. The high-performance spHMMs will be saved in the HiPer\_spHMMs folder in the output directory specified. The HiPer\_spHMMs folder should have the following files:
+
 	```
     A. plot.eps : F1 score plot of all the spHMMs and the F1 cutoff threshold. 
     B. *.hmm : A set of spHMMs that perform above the F1 cutoff threshold.
     C. F1_Cutoff.txt: HMM search cutoff scores to be used for each high-performance spHMM interval. 
-    	**Because synthetic datasets do not fully represent real data, please be aware that some of the spHMM cutoffs may need to be further tuned after running MetaBGC on a real metagenomic dataset, as was done with the Type II polyketide cyclase cutoffs in the original MetaBGC publication.
-		**
     ```
+  	>**Because synthetic datasets do not fully represent real data, please be aware that some of the spHMM cutoffs may need to be further tuned after running MetaBGC on a real metagenomic dataset, as was done with the Type II polyketide cyclase cutoffs in the original MetaBGC publication.**
+    	
     
 ### Running MetaBGC-Identify to detect biosynthetic reads
 
