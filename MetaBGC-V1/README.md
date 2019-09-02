@@ -117,8 +117,8 @@ MetaBGC consists of four main modules:
 
 	```
 	A. --table, required=True: Path of tab-delimited abundance table,unique-biosynthetic-reads-abundance-table.txt, produced by MetaBGC-Quantify.
-	B. --max_dist, required=True: Maximum Pearson distance between two reads to be in the same cluster. (Def.=0.1)
-	C. --min_samples, required=True: Minimum number of samples required for a cluster. If min_samples > 1, noise are labelled as -1. (Def.=1).
+	B. --max_dist, required=False: Maximum Pearson distance between two reads to be in the same cluster. (Def.=0.1)
+	C. --min_samples, required=False: Minimum number of samples required for a cluster. If min_samples > 1, noise are labelled as -1. (Def.=1).
 	D. --threads, required=False: Number of CPU threads. (Def.=1)
 	```
 
