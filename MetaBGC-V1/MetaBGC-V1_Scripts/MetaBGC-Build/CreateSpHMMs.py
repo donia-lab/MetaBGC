@@ -1,14 +1,14 @@
-"""
-Created on Tues Oct 10 03:08:34 2017
-Updated on Mon Feb 5 18:40:09 2018
-@author: francinecamacho
-"""
 from __future__ import division
 from Bio import AlignIO
 import os 
 import subprocess
 import ntpath
-
+    
+#####################################################################################
+#@author: francinecamacho
+# This file is a component of MetaBGC (Metagenomic identifier of Biosynthetic Gene Clusters)
+# (contact Francine Camacho at camachofrancine@gmail.com).
+#####################################################################################
 """
 Script takes in an alignment file (fasta format), kmer len, and sliding window len. The script 
 parses the alignment file with kmer len and sliding winder to create a new alignment file.
