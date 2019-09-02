@@ -20,7 +20,7 @@ require(config)
 ### Load configuration. EDIT CONFIG FILE HERE. 
 ```{r setup, include=FALSE}
 exeDir <- getwd()
-config <- config::get(file = file.path(exeDir,"TcmIConfig.yaml"))
+config <- config::get(file = file.path(exeDir,"SiderophoresConfig.yaml"))
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = config$DataRoot)
 ```
@@ -452,6 +452,16 @@ lanc_f1_df <- rbind(lanc_f1_cutoff_median,lanc_f1_cutoff_plusfive,lanc_f1_cutoff
 ```{r}
 lanc_f1_cutoff_df <- lanc_f1_df %>% group_by(interval) %>% top_n(1, F1) %>% ungroup() %>%  filter(F1 >=as.numeric(config$InputParam.F1_Threshold)) %>% arrange(interval) %>% as.data.frame()
 
+colnames(lanc_f1_cutoff_df)[colnames(lanc_f1_cutoff_df)=="cutoff"] <- "cutoff_diff"
+colnames(lanc_f1_cutoff_df)[colnames(lanc_f1_cutoff_df)=="interval"] <- "Interval"
+
+var <- ("cutoff_diff")
+lanc_f1_cutoff_df[,var] <- sapply(lanc_f1_cutoff_df[,var],function(x) ifelse(x=='median',0,x))
+lanc_f1_cutoff_df <- base::merge(x=lanc_f1_cutoff_df,y=df_hmm_cutoff_scores,by="Interval")
+lanc_f1_cutoff_df$FinalCutoff <- as.numeric(lanc_f1_cutoff_df$cutoff_diff) + as.numeric(lanc_f1_cutoff_df$Cutoff)
+
+lanc_f1_cutoff_df <- subset(lanc_f1_cutoff_df, select = -c(cutoff_diff, Cutoff))
+
 write_tsv(lanc_f1_cutoff_df,config$OutputFiles.F1_Cutoff,col_names = T)
 
 CopyHPModel <- function(x) {
@@ -477,8 +487,8 @@ ggsave(supp_fig_lanc_f1, file=config$OutputFiles.Plot, device="eps", width = 20,
 lanc_filtered_final <- lantibiotics_recoded
 lanc_filtered_final <- lanc_filtered_final[0,]
 for (i in 1:nrow(lanc_f1_cutoff_df)) {
-  intervalStr <- toString(lanc_f1_cutoff_df[i, "interval"])
-  cutoffGroup <- toString(lanc_f1_cutoff_df[i, "cutoff"])
+  intervalStr <- toString(lanc_f1_cutoff_df[i, "Interval"])
+  cutoffGroup <- toString(lanc_f1_cutoff_df[i, "FinalCutoff"])
   intervalIndx <- which(df_hmm_cutoff_scores$Interval == intervalStr)
   cutoffScore <- as.numeric(df_hmm_cutoff_scores[intervalIndx,"Cutoff"])
   if(cutoffGroup=="-5"){

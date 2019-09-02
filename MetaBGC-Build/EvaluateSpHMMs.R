@@ -196,22 +196,31 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	f1_cutoff_subfive<- calculate_F1(filtered_subfive, subfive_remaining_hmm, blast_intervals, unique(hmm_df_recoded$interval))
 	f1_cutoff_subfive$cutoff<- "-5"
 
-	lanc_f1_df <- rbind(f1_cutoff_median, f1_cutoff_plusfive, f1_cutoff_subfive)
-	lanc_f1_cutoff_df <- lanc_f1_df %>% group_by(interval) %>% top_n(1, F1) %>% ungroup() %>%  filter(F1 >=as.numeric(InputParam.F1_Threshold)) %>% arrange(interval) %>% as.data.frame()
+	f1_df <- rbind(f1_cutoff_median, f1_cutoff_plusfive, f1_cutoff_subfive)
+	f1_cutoff_df <- f1_df %>% group_by(interval) %>% top_n(1, F1) %>% ungroup() %>%  filter(F1 >=as.numeric(InputParam.F1_Threshold)) %>% arrange(interval) %>% as.data.frame()
 
-	write_tsv(lanc_f1_cutoff_df,file.path(OutputFiles.HMMHighPerfOutDir,"F1_Cutoff.txt"),col_names = T)
+	colnames(f1_cutoff_df)[colnames(f1_cutoff_df)=="cutoff"] <- "cutoff_diff"
+	colnames(f1_cutoff_df)[colnames(f1_cutoff_df)=="interval"] <- "Interval"
+
+	var <- ("cutoff_diff")
+	f1_cutoff_df[,var] <- sapply(f1_cutoff_df[,var],function(x) ifelse(x=='median',0,x))
+	f1_cutoff_df <- base::merge(x=f1_cutoff_df,y=df_hmm_cutoff_scores,by="Interval")
+	f1_cutoff_df$FinalCutoff <- as.numeric(f1_cutoff_df$cutoff_diff) + as.numeric(f1_cutoff_df$Cutoff)
+	f1_cutoff_df <- subset(f1_cutoff_df, select = -c(cutoff_diff, Cutoff))
+	cutoffFileName = paste0(InputParam.HMM_Model_Name, "_F1_Cutoff.txt")
+	write_tsv(f1_cutoff_df,file.path(OutputFiles.HMMHighPerfOutDir,cutoffFileName),col_names = T)
 
 	CopyHPModel <- function(x) {
 	 spHMMInterval <- x[1]
 	 spHMMFileName = paste0(InputParam.HMM_Model_Name, "__30_10__", spHMMInterval, ".hmm")
 	 file.copy(file.path(OutputFiles.HMMOutDir,spHMMFileName), OutputFiles.HMMHighPerfOutDir)
 	}
-	apply(lanc_f1_cutoff_df, 1, CopyHPModel)
+	apply(f1_cutoff_df, 1, CopyHPModel)
 
-	supp_fig_lanc_f1 <-ggplot(data = lanc_f1_df, mapping = aes(x = interval, y = F1, group= cutoff, colour=cutoff )) + geom_point()+
+	supp_fig_lanc_f1 <-ggplot(data = f1_df, mapping = aes(x = interval, y = F1, group= cutoff, colour=cutoff )) + geom_point()+
 	geom_line() + 
 	ylim(0,1)+ 
-	geom_hline(yintercept=c(as.numeric(InputParam.F1_Threshold),0.1051712), linetype="dashed", color = c("red","green"), size=1) + 
+	geom_hline(yintercept=c(as.numeric(InputParam.F1_Threshold)), linetype="dashed", color = c("red","green"), size=1) +
 	theme_pubclean() +  
 	scale_color_npg(name="HMM Score Cutoff")
 

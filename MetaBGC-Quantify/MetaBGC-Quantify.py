@@ -46,8 +46,8 @@ def create_clustering_file(outdir,outfile):
 			names(all_domains_blast_df) <- c("sseqid", "slen","sstart", "send", "qseqid", "qlen", "qstart", "qend", "qcovs", "pident"," evalue", "Sample", "cohort")
 			all_domains_blast_df_count <- all_domains_blast_df %>% group_by(Sample, qseqid) %>% count() %>% ungroup()
 			all_domains_blast_df_count_table <- all_domains_blast_df_count %>% spread(., Sample, n, fill =0 )
-			abundFile = file.path(outdir, "abundance_table.txt")
-			abundWideFile = file.path(outdir, "abundance_table-wide.txt")
+			abundFile = file.path(outdir, "unique-biosynthetic-reads-abundance-table.txt")
+			abundWideFile = file.path(outdir, "unique-biosynthetic-reads-abundance-table-wide.txt")
 			write_tsv(all_domains_blast_df_count_table, abundFile, col_names = T)
 			write_tsv(all_domains_blast_df_count, abundWideFile, col_names = T)
 		}
@@ -80,7 +80,6 @@ if __name__ == '__main__':
 
 	cdHitFile = os.path.join(args.output_directory,"CombinedIDFASTASeqs_Drep.fasta")
 	runCDHit(args.identify_fasta,cdHitFile,CPU_THREADS)
-
 
 	blastn_search_directory = os.path.join(args.output_directory, 'quantify_blastn_result')
 	os.makedirs(blastn_search_directory, 0o777, True)

@@ -139,7 +139,7 @@ if __name__ == '__main__':
 	os.makedirs(identify_directory, 0o777, True)
 	fasta_dir = os.path.join(args.output_directory, 'fasta_result')
 	os.makedirs(fasta_dir, 0o777, True)
-	cutoff_file = os.path.join(args.hmm_directory, "F1_Cutoff.txt")
+	cutoff_file = os.path.join(args.hmm_directory, args.prot_family_name + "_F1_Cutoff.txt")
 	main(allHMMResult, identify_directory, cutoff_file, fasta_dir)
 
 	allHMMResult = fasta_dir + os.sep + "CombinedReadIds.txt"
@@ -150,6 +150,6 @@ if __name__ == '__main__':
 					for line in infile:
 						outfile.write(line)
 
-	multiFastaFile = args.output_directory + os.sep + "CombinedIDFASTASeqs.fasta"
-	ExtractFASTASeq(args.nucl_seq_directory,multiFastaFile,allHMMResult)
+	multiFastaFile = args.output_directory + os.sep + "identified-biosynthetic-reads.fasta"
+	ExtractFASTASeq(nucl_seq_directory,multiFastaFile,allHMMResult)
 

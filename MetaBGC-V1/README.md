@@ -4,7 +4,7 @@ MetaBGC is a read-based algorithm for the detection of biosynthetic gene cluster
 
 ## Getting Started
 
-These instructions will get you setup to MetaBGC on your local Linux or Apple environment. 
+These instructions will get you setup to run MetaBGC on your local Linux or Apple environment. 
 
 ### Prerequisites
 
@@ -33,7 +33,7 @@ Add the MetaBGC-V1_Scripts folder to PYTHONPATH.
 export PYTHONPATH="<PATH>/MetaBGC/MetaBGC-V1_Scripts"
 ```
 
-The python scripts for each module in available in the folder with the same name and can be run directly from commandline. 
+The python scripts for each module are available in the folder with the same name and can be run directly from the commandline. 
 
 
 ### Program Structure
@@ -44,7 +44,7 @@ MetaBGC consists of four main modules:
 
 **MetaBGC-Identify** - This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
 
-**MetaBGC-Quantify** - This module de-replicates all biosynthetic reads discovered by MetaBGC-Identify from all metagenomic samples in the cohort into a unified set of “unique biosynthetic reads”. An abundance profile martrix is then generated for all “unique biosynthetic reads” by quantifying them yingin all samples of the metagenomic cohort.
+**MetaBGC-Quantify** - This module de-replicates all biosynthetic reads discovered by MetaBGC-Identify from all metagenomic samples in the cohort into a unified set of “unique biosynthetic reads”. An abundance profile martrix is then generated for all “unique biosynthetic reads” by quantifying them in all samples of the metagenomic cohort.
 
 **MetaBGC-Cluster** - This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster “unique biosynthetic reads” with similar abundance profiles across different metagenomic samples into distinct bins, based on the abundance profile martrix obtained in MetaBGC-Quantify. 
 
@@ -78,7 +78,7 @@ MetaBGC consists of four main modules:
     
 ### Running MetaBGC-Identify to detect biosynthetic reads
 
-1. For identifying biosynthetic reads from the protein family of interest using the spHMMs constructed in MetaBGC-Build, the build step the MetaBGC-Identify.py script should be executed with the required input files. To use our pre-built high-performance spHMMs for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs). Please find the high performance input folders [here](https://github.com/donia-lab/MetaBGC-V1/tree/master/MetaBGC-Build_Outputs).
+1. For identifying biosynthetic reads from the protein family of interest using the spHMMs constructed in MetaBGC-Build, the MetaBGC-Identify.py script should be executed with the required input files. To use our pre-built high-performance spHMMs for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs), please find the high performance input folders [here](https://github.com/donia-lab/MetaBGC-V1/tree/master/MetaBGC-Build_Outputs).
 
 	```
 	A. --sphmm_directory, required=True: The high performance spHMM directory generated from MetaBGC-Build.
@@ -95,12 +95,12 @@ MetaBGC consists of four main modules:
 
 2. MetaBGC-Identify will produce a FASTA file, **identified-biosynthetic-reads.fasta**, comprised of all biosynthetic reads identified in the metagenomic samples of the analyzed cohort, based on the specified cutoffs.
 
-### Running MetaBGC-Quantify to profile biosynthetic-like reads
+### Running MetaBGC-Quantify to de-replicate and quantify biosynthetic reads
 
-1. To quantify the biosynthetic reads identified by MetaBGC-Identify, the MetaBGC-Quantify.py script should be executed with the following parameters: 
+1. To de-replicate and quantify the biosynthetic reads identified by MetaBGC-Identify, the MetaBGC-Quantify.py script should be executed with the following parameters: 
 
 	```
-    A. --identify_fasta, required=True: Path to the CombinedIDFASTASeqs.fasta file produced by MetaBGC-Identify.
+    A. --identify_fasta, required=True: Path to the identified-biosynthetic-reads.fasta file produced by MetaBGC-Identify.
     B. --nucl_seq_directory, required=True: Directory of reads for the metagenomic samples to be analyzed. The filenames are used as sample names.  
     C. --seq_fmt, required=True: {fasta,fastq} Sequence file format and extension.
     D. --pair_fmt, required=True: {single, split, interleaved} Paired-end information.
@@ -112,10 +112,19 @@ MetaBGC consists of four main modules:
 	```
 2. The output of the quantify script is an abundance profile file **unique-biosynthetic-reads-abundance-table.txt**. 
 
-### Running MetaBGC-Cluster to generate BGCs bins 
-1. To generate BGC bins of “unique biosynthetic reads”, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced from the MetaBGC-Quantify module as input for [MetaBGC-Cluster.py](https://github.com/donia-lab/MetaBGC-V1/tree/master/MetaBGC-V1_Scripts/MetaBGC-Cluster/MetaBGC-Cluster.py) with the following suggested parameters: `eps .2 min_samples 1` (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed)
+### Running MetaBGC-Cluster to generate biosynthetic read bins
+1. To generate BGC bins of “unique biosynthetic reads”, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by the MetaBGC-Quantify module as input for [MetaBGC-Cluster.py](https://github.com/donia-lab/MetaBGC-V1/tree/master/MetaBGC-V1_Scripts/MetaBGC-Cluster/MetaBGC-Cluster.py) with the following suggested parameters: `--max_disteps .2 --min_samples 1` (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The input parameters to the script are: 
 
-2. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
+	```
+	A. --table, required=True: Path of tab-delimited abundance table,unique-biosynthetic-reads-abundance-table.txt, produced by MetaBGC-Quantify.
+	B. --max_dist, required=True: Maximum Pearson distance between two reads to be in the same cluster. (Def.=0.1)
+	C. --min_samples, required=True: Minimum number of samples required for a cluster. If min_samples > 1, noise are labelled as -1. (Def.=1).
+	D. --threads, required=False: Number of CPU threads. (Def.=1)
+	```
+
+2. The cluster script produces a file, #ofThreads_DBSCAN.json, comprised of all the biosynthetic reads clustered in json format.   
+
+3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
 
 ## License

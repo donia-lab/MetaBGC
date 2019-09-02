@@ -207,7 +207,8 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	f1_cutoff_df <- base::merge(x=f1_cutoff_df,y=df_hmm_cutoff_scores,by="Interval")
 	f1_cutoff_df$FinalCutoff <- as.numeric(f1_cutoff_df$cutoff_diff) + as.numeric(f1_cutoff_df$Cutoff)
 	f1_cutoff_df <- subset(f1_cutoff_df, select = -c(cutoff_diff, Cutoff))
-	write_tsv(f1_cutoff_df,file.path(OutputFiles.HMMHighPerfOutDir,"F1_Cutoff.txt"),col_names = T)
+	cutoffFileName = paste0(InputParam.HMM_Model_Name, "_F1_Cutoff.txt")
+	write_tsv(f1_cutoff_df,file.path(OutputFiles.HMMHighPerfOutDir,cutoffFileName),col_names = T)
 
 	CopyHPModel <- function(x) {
 	 spHMMInterval <- x[1]
@@ -219,7 +220,7 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	supp_fig_lanc_f1 <-ggplot(data = f1_df, mapping = aes(x = interval, y = F1, group= cutoff, colour=cutoff )) + geom_point()+
 	geom_line() + 
 	ylim(0,1)+ 
-	geom_hline(yintercept=c(as.numeric(InputParam.F1_Threshold),0.1051712), linetype="dashed", color = c("red","green"), size=1) + 
+	geom_hline(yintercept=c(as.numeric(InputParam.F1_Threshold)), linetype="dashed", color = c("red","green"), size=1) +
 	theme_pubclean() +  
 	scale_color_npg(name="HMM Score Cutoff")
 

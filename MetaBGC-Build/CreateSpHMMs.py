@@ -45,7 +45,8 @@ def getKmers(k, interval, outdir, msaFile, modelName, start, end):
         startPos = j 
         endPos = j+k 
         kmer = alignment[:,startPos:endPos] #[ rows (different domains),columns (Amino Acids)]
-        outputFile = msaFile.split('.fas')[0] + "__" + str(k)+ "_"+ str(interval) + "__"+ str(startPos)+ "_"+ str(endPos) + ".fas"
+
+        outputFile = outdir + os.sep +modelName + "__" + str(k)+ "_"+ str(interval) + "__"+ str(startPos)+ "_"+ str(endPos) + ".fas"
         AlignIO.write(kmer, outputFile, "fasta")
         hmmFile = runHMMBuild(outputFile, modelName)
         hmmSegment = str(startPos)+ "_"+ str(endPos)

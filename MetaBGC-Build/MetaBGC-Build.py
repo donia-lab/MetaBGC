@@ -41,8 +41,59 @@ if __name__ == '__main__':
     if args.cpu is not None:
         CPU_THREADS = args.cpu
 
-    nucl_seq_directory = PreProcessReads(args.nucl_seq_directory,args.seq_fmt,args.pair_fmt,args.R1_file_suffix.strip(),args.R2_file_suffix.strip(),args.output_directory)
+    # Gen spHMMs and interval pos
+    hmm_directory = os.path.join(args.output_directory, 'spHMMs')
+    os.makedirs(hmm_directory,0o777,True)
+    copyfile(args.prot_alignment, hmm_directory+os.sep+ntpath.basename(args.prot_alignment))
+    prot_aln_file = os.path.join(hmm_directory,ntpath.basename(args.prot_alignment))
+    alignment = AlignIO.read(args.prot_alignment, "fasta")
+    hmmDict = GenerateSpHMM(prot_aln_file, 10, 30, hmm_directory, args.prot_family_name, 1, alignment.get_alignment_length()+1)
 
+    tp_genes_prot = args.output_directory+os.sep+"TPGenes.faa"
+    runTranSeq(args.tp_genes_nucl,"1",tp_genes_prot)
+    joinFilenames = [tp_genes_prot, prot_aln_file]
+    tmpFile = os.path.join(args.output_directory,"tmp.fa")
+    with open(tmpFile, 'w') as outfile:
+        for fname in joinFilenames:
+            with open(fname) as infile:
+                outfile.write(infile.read())
+    alnOutput = os.path.join(args.output_directory,"tmp.afa")
+    runMUSCLE(tmpFile, alnOutput)
+    #gene_pos_file = os.path.join(args.output_directory, 'Gene_Interval_Pos.txt')
+    # outfile = open(gene_pos_file, 'w')
+    # outfile.write("gene_name\tstart\tend\tinterval\tcyclase_type\n")
+    # for record in SeqIO.parse(tp_genes_prot, "fasta"):
+    #     for hmmInterval, hmmFile in hmmDict.items():
+    #         seqFile = hmmFile.split('.hmm')[0] +".fas"
+    #         hmmIntervalSeqs = list(SeqIO.parse(seqFile, "fasta"))
+    #         tmpFile = os.path.join(args.output_directory,"tmp.fa")
+    #         alnOutput = os.path.join(args.output_directory,"tmp.afa")
+    #         alnRecord = [record]
+    #         for hmmRec in hmmIntervalSeqs:
+    #             alnRecord.append(hmmRec)
+    #         SeqIO.write(alnRecord, tmpFile, "fasta")
+    #         runMUSCLE(tmpFile,alnOutput)
+    #         alnSeqs = list(SeqIO.parse(alnOutput, "fasta"))
+    #         foundCtr=0
+    #         startPos = alnLen = -1
+    #         for hmmRec in hmmIntervalSeqs:
+    #             for alnRec in alnSeqs:
+    #                 gapStripSeq = alnRec.seq.strip("-")
+    #                 fuzzyScore = fuzz.token_set_ratio(hmmRec.seq, gapStripSeq)
+    #                 if fuzzyScore > 70 :
+    #                     foundCtr += 1
+    #                     startPos = alnRec.seq.find(gapStripSeq)
+    #                     if alnLen < len(hmmRec):
+    #                         alnLen = len(hmmRec)
+    #                     break;
+    #         if foundCtr == len(hmmIntervalSeqs):
+    #             startPos = startPos*3
+    #             endPos = startPos + (alnLen * 3)
+    #             outfile.write(record.id+"\t"+str(startPos)+"\t"+str(endPos)+"\t"+hmmInterval+"\t"+args.prot_family_name+"\n")
+    # outfile.close()
+
+    #Preprocess synthetic reads
+    nucl_seq_directory = PreProcessReads(args.nucl_seq_directory,args.seq_fmt,args.pair_fmt,args.R1_file_suffix.strip(),args.R2_file_suffix.strip(),args.output_directory)
     # Translate nucleotide seq
     prot_seq_directory = os.path.join(args.output_directory, 'prot_seq_dir')
     os.makedirs(prot_seq_directory, 0o777, True)
@@ -52,50 +103,6 @@ if __name__ == '__main__':
             if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
                 prot_file = prot_seq_directory + os.sep + ntpath.basename(filePath)
                 runTranSeq(filePath, "6", prot_file)
-
-    hmm_directory = os.path.join(args.output_directory, 'spHMMs')
-    os.makedirs(hmm_directory,0o777,True)
-    copyfile(args.prot_alignment, hmm_directory+os.sep+ntpath.basename(args.prot_alignment))
-    prot_aln_file = os.path.join(hmm_directory,ntpath.basename(args.prot_alignment))
-    alignment = AlignIO.read(args.prot_alignment, "fasta")
-
-    # Gen spHMMs and interval pos
-    hmmDict = GenerateSpHMM(prot_aln_file, 10, 30, hmm_directory, args.prot_family_name, 1, alignment.get_alignment_length()+1)
-
-    tp_genes_prot = args.output_directory+os.sep+"TPGenes.faa"
-    runTranSeq(args.tp_genes_nucl,"1",tp_genes_prot)
-    gene_pos_file = os.path.join(args.output_directory, 'Gene_Interval_Pos.txt')
-    outfile = open(gene_pos_file, 'w')
-    outfile.write("gene_name\tstart\tend\tinterval\tcyclase_type\n")
-    for record in SeqIO.parse(tp_genes_prot, "fasta"):
-        for hmmInterval, hmmFile in hmmDict.items():
-            seqFile = hmmFile.split('.hmm')[0] +".fas"
-            hmmIntervalSeqs = list(SeqIO.parse(seqFile, "fasta"))
-            tmpFile = os.path.join(args.output_directory,"tmp.fa")
-            alnOutput = os.path.join(args.output_directory,"tmp.afa")
-            alnRecord = [record]
-            for hmmRec in hmmIntervalSeqs:
-                alnRecord.append(hmmRec)
-            SeqIO.write(alnRecord, tmpFile, "fasta")
-            runMUSCLE(tmpFile,alnOutput)
-            alnSeqs = list(SeqIO.parse(alnOutput, "fasta"))
-            foundCtr=0
-            startPos = alnLen = -1
-            for hmmRec in hmmIntervalSeqs:
-                for alnRec in alnSeqs:
-                    gapStripSeq = alnRec.seq.strip("-")
-                    fuzzyScore = fuzz.token_set_ratio(hmmRec.seq, gapStripSeq)
-                    if fuzzyScore > 70 :
-                        foundCtr += 1
-                        startPos = alnRec.seq.find(gapStripSeq)
-                        if alnLen < len(hmmRec):
-                            alnLen = len(hmmRec)
-                        break;
-            if foundCtr == len(hmmIntervalSeqs):
-                startPos = startPos*3
-                endPos = startPos + (alnLen * 3)
-                outfile.write(record.id+"\t"+str(startPos)+"\t"+str(endPos)+"\t"+hmmInterval+"\t"+args.prot_family_name+"\n")
-    outfile.close()
 
     # HMMER Search
     hmm_search_directory = os.path.join(args.output_directory, 'hmm_result')
