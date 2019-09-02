@@ -114,7 +114,7 @@ MetaBGC consists of four main modules:
 2. The output of the quantify script is an abundance profile file **unique-biosynthetic-reads-abundance-table.txt**. 
 
 ### Running MetaBGC-Cluster to generate biosynthetic read bins
-1. To generate BGC bins of “unique biosynthetic reads”, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by the MetaBGC-Quantify module as input for [MetaBGC-Cluster.py](https://github.com/donia-lab/MetaBGC/tree/master/MetaBGC-V1/MetaBGC-V1_Scripts/MetaBGC-Cluster/MetaBGC-Cluster.py) with the following suggested parameters: `--max_disteps .2 --min_samples 1` (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The input parameters to the script are: 
+1. To generate BGC bins of “unique biosynthetic reads”, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by the MetaBGC-Quantify module as input for [MetaBGC-Cluster.py](https://github.com/donia-lab/MetaBGC/tree/master/MetaBGC-V1/MetaBGC-V1_Scripts/MetaBGC-Cluster/MetaBGC-Cluster.py). The input parameters to the script are:
 
 	```
 	A. --table, required=True: Path of tab-delimited abundance table,unique-biosynthetic-reads-abundance-table.txt, produced by MetaBGC-Quantify.
