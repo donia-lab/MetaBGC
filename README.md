@@ -78,7 +78,7 @@ MetaBGC consists of four main modules:
     
 ### Running MetaBGC-Identify to detect biosynthetic reads
 
-1. For identifying biosynthetic reads from the protein family of interest using the spHMMs constructed in MetaBGC-Build, the build step the MetaBGC-Identify.py script should be executed with the required input files. To use our pre-built high-performance spHMMs for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs). Please find the high performance input folders [here](https://github.com/donia-lab/MetaBGC-V1/tree/master/MetaBGC-Build_Outputs).
+1. For identifying biosynthetic reads from the protein family of interest using the spHMMs constructed in MetaBGC-Build, the build step the MetaBGC-Identify.py script should be executed with the required input files. To use our pre-built high-performance spHMMs for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs). Please find the high performance input folders [here](https://github.com/donia-lab/MetaBGC/tree/master/MetaBGC-V1/MetaBGC-Build_Outputs).
 
 	```
 	A. --sphmm_directory, required=True: The high performance spHMM directory generated from MetaBGC-Build.
@@ -113,7 +113,7 @@ MetaBGC consists of four main modules:
 2. The output of the quantify script is an abundance profile file **unique-biosynthetic-reads-abundance-table.txt**. 
 
 ### Running MetaBGC-Cluster to generate BGCs bins 
-1. To generate BGC bins of “unique biosynthetic reads”, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced from the MetaBGC-Quantify module as input for [MetaBGC-Cluster.py](https://github.com/donia-lab/MetaBGC-V1/tree/master/MetaBGC-V1_Scripts/MetaBGC-Cluster/MetaBGC-Cluster.py) with the following suggested parameters: `eps .2 min_samples 1` (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed)
+1. To generate BGC bins of “unique biosynthetic reads”, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced from the MetaBGC-Quantify module as input for [MetaBGC-Cluster.py](https://github.com/donia-lab/MetaBGC/tree/master/MetaBGC-V1/MetaBGC-V1_Scripts/MetaBGC-Cluster/MetaBGC-Cluster.py) with the following suggested parameters: `eps .2 min_samples 1` (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed)
 
 2. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
