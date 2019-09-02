@@ -1,4 +1,8 @@
-
+#####################################################################################
+#@author: francinecamacho & abhishekbiswas
+# This file is a component of MetaBGC (Metagenomic identifier of Biosynthetic Gene Clusters)
+# (contact Francine Camacho at camachofrancine@gmail.com).
+#####################################################################################
 EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles.GeneIntervalPos,InputParam.HMM_Model_Name,InputParam.F1_Threshold,OutputFiles.HMMOutDir,OutputFiles.HMMHighPerfOutDir){
 
 	### Load segmented profiled HMMs for synthetic genomes
