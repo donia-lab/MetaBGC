@@ -161,8 +161,11 @@ def interleave(iter1, iter2) :
 def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_suffix,ouputDir):
     if seq_fmt.lower() == "fasta" and (pair_fmt.lower() == "interleaved" or pair_fmt.lower() == "single"):
         return nucl_seq_directory
+
+    out_seq_directory = os.path.join(ouputDir, 'nucl_seq_dir')
+    if os.path.isdir(out_seq_directory):
+        return out_seq_directory
     elif seq_fmt.lower() == "fasta" and pair_fmt.lower() == "split":
-        out_seq_directory = os.path.join(ouputDir, 'nucl_seq_dir')
         os.makedirs(out_seq_directory, 0o777, True)
         for subdir, dirs, files in os.walk(nucl_seq_directory):
             for file in files:
@@ -180,7 +183,6 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
                     handle.close()
         return out_seq_directory
     elif seq_fmt.lower() == "fastq":
-        out_seq_directory = os.path.join(ouputDir, 'nucl_seq_dir')
         os.makedirs(out_seq_directory, 0o777, True)
         if pair_fmt.lower() == "interleaved" or pair_fmt.lower() == "single":
             for subdir, dirs, files in os.walk(nucl_seq_directory):

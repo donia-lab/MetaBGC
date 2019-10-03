@@ -51,46 +51,80 @@ if __name__ == '__main__':
 
     tp_genes_prot = args.output_directory+os.sep+"TPGenes.faa"
     runTranSeq(args.tp_genes_nucl,"1",tp_genes_prot)
-    joinFilenames = [tp_genes_prot, prot_aln_file]
     tmpFile = os.path.join(args.output_directory,"tmp.fa")
-    with open(tmpFile, 'w') as outfile:
-        for fname in joinFilenames:
-            with open(fname) as infile:
-                outfile.write(infile.read())
+
+    # Join true positives in the sample with the BGC proteins
+    joinedSeqs = []
+    tpGeneSeqs = list(SeqIO.parse(tp_genes_prot, "fasta"))
+    for seq in tpGeneSeqs:
+        seq.id = seq.id[:-2]
+        seq.description = ""
+        joinedSeqs.append(seq)
+    protAlnSeqs = list(SeqIO.parse(prot_aln_file, "fasta"))
+    for seq in protAlnSeqs:
+        joinedSeqs.append(seq)
+    SeqIO.write(joinedSeqs, tmpFile, "fasta")
+
+    # MUSCLE align TP genes with markers
     alnOutput = os.path.join(args.output_directory,"tmp.afa")
     runMUSCLE(tmpFile, alnOutput)
-    #gene_pos_file = os.path.join(args.output_directory, 'Gene_Interval_Pos.txt')
-    # outfile = open(gene_pos_file, 'w')
-    # outfile.write("gene_name\tstart\tend\tinterval\tcyclase_type\n")
-    # for record in SeqIO.parse(tp_genes_prot, "fasta"):
-    #     for hmmInterval, hmmFile in hmmDict.items():
-    #         seqFile = hmmFile.split('.hmm')[0] +".fas"
-    #         hmmIntervalSeqs = list(SeqIO.parse(seqFile, "fasta"))
-    #         tmpFile = os.path.join(args.output_directory,"tmp.fa")
-    #         alnOutput = os.path.join(args.output_directory,"tmp.afa")
-    #         alnRecord = [record]
-    #         for hmmRec in hmmIntervalSeqs:
-    #             alnRecord.append(hmmRec)
-    #         SeqIO.write(alnRecord, tmpFile, "fasta")
-    #         runMUSCLE(tmpFile,alnOutput)
-    #         alnSeqs = list(SeqIO.parse(alnOutput, "fasta"))
-    #         foundCtr=0
-    #         startPos = alnLen = -1
-    #         for hmmRec in hmmIntervalSeqs:
-    #             for alnRec in alnSeqs:
-    #                 gapStripSeq = alnRec.seq.strip("-")
-    #                 fuzzyScore = fuzz.token_set_ratio(hmmRec.seq, gapStripSeq)
-    #                 if fuzzyScore > 70 :
-    #                     foundCtr += 1
-    #                     startPos = alnRec.seq.find(gapStripSeq)
-    #                     if alnLen < len(hmmRec):
-    #                         alnLen = len(hmmRec)
-    #                     break;
-    #         if foundCtr == len(hmmIntervalSeqs):
-    #             startPos = startPos*3
-    #             endPos = startPos + (alnLen * 3)
-    #             outfile.write(record.id+"\t"+str(startPos)+"\t"+str(endPos)+"\t"+hmmInterval+"\t"+args.prot_family_name+"\n")
-    # outfile.close()
+    muscleAlnSeqs = list(SeqIO.parse(alnOutput, "fasta"))
+    protPosList = []
+    for i,pseq in enumerate(protAlnSeqs):
+        for j,mseq in enumerate(muscleAlnSeqs):
+            if(pseq.id==mseq.id):
+                protPosList.append(j)
+
+    # Extract spHMM coordinates from MUSCLE alignment
+    gene_pos_file = os.path.join(args.output_directory, 'Gene_Interval_Pos.txt')
+    outfile = open(gene_pos_file, 'w')
+    outfile.write("gene_name\tstart\tend\tinterval\tcyclase_type\n")
+    for i, mseq in enumerate(muscleAlnSeqs):
+        if i not in protPosList:
+            protPos = min(protPosList, key=lambda x: abs(x - i))
+            protSeq = str(protAlnSeqs[protPosList.index(protPos)].seq)
+            protSeqNoGap = protSeq.replace('-', '')
+            protMuscleSeq = str(muscleAlnSeqs[protPos].seq)
+            ungappedCoords = [0] * len(protMuscleSeq)
+            aaIndex = 0
+            for i,aa in enumerate(protMuscleSeq):
+                if aa=='-':
+                    ungappedCoords[i]=-1
+                else:
+                    ungappedCoords[i] = aaIndex
+                    aaIndex=aaIndex+1
+            for key in hmmDict:
+                startPos = int(key.split('_')[0])
+                endPos = int(key.split('_')[1])
+                windowSeq = protSeq[startPos:endPos]
+                windowSeqNoGap = windowSeq.replace('-', '')
+                beginGaps = 0
+                endGaps = 0
+                isEndGap = 0
+                for aaVal in windowSeq:
+                    if isEndGap==1 and aaVal=='-':
+                        endGaps= endGaps +1
+                    elif isEndGap == 1 and aaVal != '-':
+                        endGaps = 0
+                    else:
+                        if aaVal!='-':
+                            isEndGap = 1
+                        else:
+                            beginGaps = beginGaps + 1
+                startPosNoGap = protSeqNoGap.find(windowSeqNoGap)
+                endPosNoGap = startPosNoGap + len(windowSeqNoGap)
+
+                startPosGapped = ungappedCoords.index(startPosNoGap)
+                endPosGapped = ungappedCoords.index(endPosNoGap)
+
+                #Add begin end gaps
+                startPosGapped = 0 if (startPosGapped-beginGaps)<0 else (startPosGapped-beginGaps)
+                endPosGapped = len(protMuscleSeq) if (endPosGapped + endGaps) >= len(protMuscleSeq) else (endPosGapped + endGaps)
+
+                startPosGapped = startPosGapped * 3
+                endPosGapped = endPosGapped * 3
+                outfile.write(mseq.id+"\t"+str(startPosGapped)+"\t"+str(endPosGapped)+"\t"+key+"\t"+args.prot_family_name+"\n")
+    outfile.close()
 
     #Preprocess synthetic reads
     nucl_seq_directory = PreProcessReads(args.nucl_seq_directory,args.seq_fmt,args.pair_fmt,args.R1_file_suffix.strip(),args.R2_file_suffix.strip(),args.output_directory)
@@ -136,13 +170,13 @@ if __name__ == '__main__':
                             outfile.write(line.strip() + "\t" + sampleName + "\t" + args.cohort_name + "\n")
 
     # Eval spHMMs
-    #rpackages.importr('base')
-    #packageNames = ('tidyverse','ggsci','ggpubr')
-    #utils = rpackages.importr('utils')
-    #utils.chooseCRANmirror(ind=1)
-    #packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
-    #if len(packnames_to_install) > 0:
-    #    utils.install_packages(StrVector(packnames_to_install))
+    rpackages.importr('base')
+    packageNames = ('tidyverse','ggsci','ggpubr')
+    utils = rpackages.importr('utils')
+    utils.chooseCRANmirror(ind=1)
+    packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
+    if len(packnames_to_install) > 0:
+        utils.install_packages(StrVector(packnames_to_install))
 
     rpackages.importr('tidyverse')
     rpackages.importr('ggsci')
