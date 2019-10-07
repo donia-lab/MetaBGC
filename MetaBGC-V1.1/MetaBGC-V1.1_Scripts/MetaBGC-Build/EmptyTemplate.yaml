@@ -1,0 +1,23 @@
+default:
+    DataRoot: "/home/metabgc/benchmark_data/PFAMX"
+    InputFiles.ProtAlnFasta: "PFAMX_alignment.fasta"
+    InputFiles.HMMRun: "Combined_spHMM_Search.txt"
+    InputFiles.BLAST_IGNORE: "blastx-fp-subfive.txt"
+    InputFiles.BLAST_TP_NoCov: "TP-reads/All_TP_Blast.txt"
+    InputFiles.GeneIntervalPos: "TP-reads/Gene_Interval_Pos.txt"
+    InputFiles.GeneIntervalBlast: "TP-reads/Gene_Interval_Blast.txt"
+    InputFiles.HMMUniqueBlast: "hmm-unique-analysis/HMM_Unique_Blast.txt"
+    InputFiles.HMM_Cutoff_Scores: "HMM_Score_Cutoff.txt" 
+    InputFiles.ScaffoldCheck: "ScaffoldChecks.txt"
+    InputParam.HMM_Model_Name: "PFAMX"
+    InputParam.Seq_start: 1
+    InputParam.Seq_end: 500
+    InputParam.F1_Threshold: 0.5
+    OutputFiles.HMMOutDir: "output/spHMM"
+    OutputFiles.HMMHighPerfOutDir: "output/spHMM/HighPerf"
+    OutputFiles.SampleReadIdDir: "output/Sample_ReadIds"
+    OutputFiles.F1_Cutoff: "output/PFAMX_F1_Cutoff.txt"
+    OutputFiles.Plot: "output/PFAMX_synthetic_F1-final.eps"
+    OutputFiles.ModelData: "output/PFAMX-final_models-data.txt"
+    OutputFiles.RawModelData: "output/PFAMX-final_data-raw.txt"
+
