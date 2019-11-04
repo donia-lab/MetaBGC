@@ -8,7 +8,7 @@
 from Utils.Utils import RunHMMDirectory
 import ntpath
 import re
-import ExtractFASTASeq from ExtractFASTASeq
+from ExtractFASTASeq import ExtractFASTASeq
 from Utils.Utils import PreProcessReadsPar
 from Utils.Utils import TranseqReadsDir
 from rpy2.robjects.vectors import StrVector
