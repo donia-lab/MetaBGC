@@ -1,3 +1,0 @@
-[console_scripts]
-metabgc = metabgc.__main__:entrypoint
-

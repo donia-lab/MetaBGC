@@ -1,8 +1,0 @@
-README.md
-setup.py
-metabgc.egg-info/PKG-INFO
-metabgc.egg-info/SOURCES.txt
-metabgc.egg-info/dependency_links.txt
-metabgc.egg-info/entry_points.txt
-metabgc.egg-info/requires.txt
-metabgc.egg-info/top_level.txt
