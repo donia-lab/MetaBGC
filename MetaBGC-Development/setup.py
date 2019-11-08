@@ -41,9 +41,7 @@ setup(
     long_description_content_type='text/markdown',
     install_requires=install_requires,
     entry_points={
-        'console_scripts': [
-            'metabgc=metabgc.__main__:entrypoint'
-        ],
+        'console_scripts': ['metabgc=metabgc.metabgc_cmds:main'],
     },
     url='https://github.com/donia-lab/MetaBGC',
     license='GNU General Public License v3',

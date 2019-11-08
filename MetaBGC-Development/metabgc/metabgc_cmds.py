@@ -182,5 +182,5 @@ def search(sphmm_directory,prot_family_name,cohort_name,
 
     print('Clustered file: ' + cluster_file)
 
-if __name__ == '__main__':
+def main():
     cli()
