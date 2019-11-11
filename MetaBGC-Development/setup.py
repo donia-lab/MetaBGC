@@ -26,7 +26,7 @@ install_requires = [
 
 def read_version():
     """Read the version from the appropriate place in the library."""
-    for line in open(os.path.join('metabgc.py'), 'r'):
+    for line in open(os.path.join("metabgc",'metabgc_cmds.py'), 'r'):
         if line.startswith('__version__'):
             return line.split('=')[-1].strip().strip('"')
 
@@ -34,6 +34,7 @@ setup(
     name="metabgc",
     python_requires='>=3.6',
     version=read_version(),
+    packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]),
     author='MetaBGC development team.',
     author_email='ab50@princeton.edu',
     description='Metagenomic identifier of Biosynthetic Gene Clusters.',
