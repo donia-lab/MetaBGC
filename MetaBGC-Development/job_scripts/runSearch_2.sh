@@ -18,13 +18,21 @@ conda activate /tigress/DONIA/data/donia/abiswas/tools/py37
 
 DATA_PATH=/tigress/DONIA/abiswas/git/MetaBGC-V1.2/data/OxyN
 NUCL_READ_PATH=${DATA_PATH}/reads
+INSTALL_PATH=/tigress/DONIA/abiswas/git/MetaBGC-V1.2
 
 echo Running on host `hostname`
 echo Starting Time is `date`
 echo Directory is `pwd`
 starttime=$(date +"%s")
 
-metabgc search --sphmm_directory ${DATA_PATH}/output/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${DATA_PATH}/output/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${DATA_PATH}/output --cpu 20
+export PYTHONPATH="${INSTALL_PATH}"
+
+python ${INSTALL_PATH}/metabgc.py identify --sphmm_directory ${DATA_PATH}/output/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${DATA_PATH}/output/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${DATA_PATH}/output --cpu 20
+
+python ${INSTALL_PATH}/metabgc.py quantify --identify_fasta ${DATA_PATH}/output/identified-biosynthetic-reads.fasta --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${DATA_PATH}/output/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${DATA_PATH}/output --cpu 1
+
+python ${INSTALL_PATH}/metabgc.py cluster --table ${DATA_PATH}/output/unique-biosynthetic-reads-abundance-table.txt
+
 
 endtime=$(date +"%s")
 diff=$(($endtime - $starttime))

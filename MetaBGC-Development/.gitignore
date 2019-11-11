@@ -1,0 +1,8 @@
+.pypirc
+build/*
+dist/*
+__pycache__
+.cache
+.pytest_cache
+pip-egg-info/*
+metabgc.egg-info/*

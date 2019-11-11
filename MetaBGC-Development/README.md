@@ -45,9 +45,11 @@ MetaBGC consists of four main modules:
 
 **Identify** - This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
 
-**Quantify** - This module de-replicates all biosynthetic reads discovered by MetaBGC-Identify from all metagenomic samples in the cohort into a unified set of â€œunique biosynthetic readsâ€. An abundance profile martrix is then generated for all â€œunique biosynthetic readsâ€ by quantifying them in all samples of the metagenomic cohort.
+**Quantify** - This module de-replicates all biosynthetic reads discovered by MetaBGC-Identify from all metagenomic samples in the cohort into a unified set of **unique biosynthetic reads**. An abundance profile martrix is then generated for all unique biosynthetic reads by quantifying them in all samples of the metagenomic cohort.
 
-**Cluster** - This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster â€œunique biosynthetic readsâ€ with similar abundance profiles across different metagenomic samples into distinct bins, based on the abundance profile martrix obtained in MetaBGC-Quantify. 
+**Cluster** - This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster unique biosynthetic reads with similar abundance profiles across different metagenomic samples into distinct bins, based on the abundance profile martrix obtained in MetaBGC-Quantify. 
+
+**Search** - **NEW** option to run Identify, Quantify and Cluster together as a single command.  
 
 ### Running Build to construct the spHMMs
 
@@ -114,7 +116,7 @@ MetaBGC consists of four main modules:
 	```
 2. The output of the quantify script is an abundance profile file **unique-biosynthetic-reads-abundance-table.txt**. 
 
-### Running MetaBGC-Cluster to generate biosynthetic read bins
+### Running Cluster to generate biosynthetic read bins
 1. To generate BGC bins of **unique biosynthetic reads**, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by Quantify as input for ```metabgc cluster```. The input parameters to the script are:
 
 	```
@@ -128,6 +130,24 @@ MetaBGC consists of four main modules:
 
 3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
+### Running Search to detect biosynthetic read bins
+
+1. For detecting biosynthetic reads from the protein family of interest using the spHMMs constructed in Build step, the ```metabgc search``` command should be executed with the required input files to run Identify, Quantify and Cluster in ine command. To use our pre-built high-performance spHMMs for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs), please find the high performance input folders [here](https://github.com/donia-lab/MetaBGC/tree/master/MetaBGC-V1/MetaBGC-Build_Outputs).
+
+	```
+	A. --sphmm_directory, required=True: The high performance spHMM directory generated from MetaBGC-Build.
+	B. --nucl_seq_directory, required=True: Directory of reads for the metagenomic samples to be analyzed. The filenames are used as sample names.  
+    C. --seq_fmt, required=True: {fasta,fastq} Sequence file format and extension.
+    D. --pair_fmt, required=True: {single, split, interleaved} Paired-end information.
+    E. --R1_file_suffix, required=False: Suffix including extension of the file name specifying the forward reads. Not specified for single or interleaved reads. Example: .R1.fastq
+    F. --R2_file_suffix, required=False: Suffix including extension of the file name specifying the reverse reads. Not specified for single or interleaved reads. Example: .R2.fastq 
+	G. --prot_family_name, required=True: Name of the protein family.
+	H. --cohort_name, required=True: Name of the cohort of metagenomic samples used for analysis.
+	I. --output_directory, required=True: Directory to save results in.
+	J. --cpu, required=False: Number of CPU threads to use (Def.=4). 
+	```
+
+2. Search will produce the same output as the Cluster command described above. 
 
 ## License
 
