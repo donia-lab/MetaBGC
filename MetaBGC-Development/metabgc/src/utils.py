@@ -182,7 +182,7 @@ Function to generate a 6 frame translated amino acid sequence from the nucleotid
 """
 def runTranSeq(fastaFile,frameCode,outputFile):
     print('Running transeq with {0}.'.format(fastaFile))
-    cmd = "transeq " + fastaFile + " " + outputFile + " -frame="+ frameCode +" -table=0 -sformat pearson"
+    cmd = "transeq " + fastaFile + " " + outputFile + " -frame="+ frameCode +" -table=11 -sformat pearson"
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done Running transeq with:",fastaFile)

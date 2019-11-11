@@ -27,9 +27,9 @@ starttime=$(date +"%s")
 
 export PYTHONPATH="${INSTALL_PATH}"
 
-#python ${INSTALL_PATH}/metabgc.py identify --sphmm_directory ${DATA_PATH}/output/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${DATA_PATH}/output/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${DATA_PATH}/output --cpu 20
+python ${INSTALL_PATH}/metabgc.py identify --sphmm_directory ${DATA_PATH}/output/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${DATA_PATH}/output/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${DATA_PATH}/output --cpu 20
 
-#python ${INSTALL_PATH}/metabgc.py quantify --identify_fasta ${DATA_PATH}/output/identified-biosynthetic-reads.fasta --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${DATA_PATH}/output/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${DATA_PATH}/output --cpu 1
+python ${INSTALL_PATH}/metabgc.py quantify --identify_fasta ${DATA_PATH}/output/identified-biosynthetic-reads.fasta --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${DATA_PATH}/output/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${DATA_PATH}/output --cpu 1
 
 python ${INSTALL_PATH}/metabgc.py cluster --table ${DATA_PATH}/output/unique-biosynthetic-reads-abundance-table.txt
 
