@@ -25,9 +25,13 @@ def combine_blast_results(blast_dir_path, outdir, cohort_name):
 	combined_df.to_csv(combinedBLAST, index=False, sep='\t', header=False)
 	return combinedBLAST
 
-def create_clustering_file(outdir,outfile):
+def create_clustering_file(outdir,blast_result):
 	rpackages.importr('base')
-	rpackages.importr('utils')
+	utils = rpackages.importr('utils')
+	packageNames = ('tidyverse')
+	packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
+	if len(packnames_to_install) > 0:
+		utils.install_packages(StrVector(packnames_to_install))
 	rpackages.importr('tidyverse')
 	robjects.r['options'](warn=-1)
 	create_file = robjects.r('''
@@ -43,7 +47,8 @@ def create_clustering_file(outdir,outfile):
 		}
 		''')
 
-	create_file(outfile,outdir)
+	create_file(blast_result,outdir)
+	return os.path.join(outdir,"unique-biosynthetic-reads-abundance-table.txt")
 
 
 def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directory,
@@ -67,5 +72,5 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 	os.makedirs(blastn_search_directory, 0o777, True)
 	RunBLASTNDirectoryPar(nucl_seq_directory, cdHitFile, blastn_search_directory,CPU_THREADS)
 	combinedBLASTPath = combine_blast_results(blastn_search_directory, quant_op_dir, cohort_name)
-	create_clustering_file(quant_op_dir, combinedBLASTPath)
-	return cdHitFile
+	abund_file = create_clustering_file(quant_op_dir, combinedBLASTPath)
+	return abund_file

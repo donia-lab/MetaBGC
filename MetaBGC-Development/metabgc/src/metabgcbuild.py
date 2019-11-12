@@ -150,12 +150,11 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     # Eval spHMMs
     rpackages.importr('base')
-    #packageNames = ('tidyverse','ggsci','ggpubr')
-    #utils = rpackages.importr('utils')
-    #utils.chooseCRANmirror(ind=1)
-    #packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
-    #if len(packnames_to_install) > 0:
-    #    utils.install_packages(StrVector(packnames_to_install))
+    utils = rpackages.importr('utils')
+    packageNames = ('tidyverse','ggsci','ggpubr','dplyr','ggplot2')
+    packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
+    if len(packnames_to_install) > 0:
+        utils.install_packages(StrVector(packnames_to_install))
     rpackages.importr('tidyverse')
     rpackages.importr('ggsci')
     rpackages.importr('ggpubr')

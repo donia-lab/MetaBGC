@@ -34,8 +34,13 @@ def filter_spHMM_data(spHMM_df, cutoff_df):
 #reformat IDs and filter duplicate readIDs and keep the highest HMM Score 
 def create_reformat_data(input_df, outdir):
 	rpackages.importr('base')
-	rpackages.importr('utils')
+	utils = rpackages.importr('utils')
+	packageNames = ('tidyverse')
+	packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
+	if len(packnames_to_install) > 0:
+		utils.install_packages(StrVector(packnames_to_install))
 	rpackages.importr('tidyverse')
+
 	robjects.r['options'](warn=-1)
 	reformat_df = robjects.r('''
 		function(hmmdf,outDir) {
