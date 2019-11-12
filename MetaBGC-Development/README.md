@@ -55,12 +55,11 @@ metabgc --help
 
 ### Quick Start
 
-To run a toy search example, please use the already constructed spHMMs [here](https://drive.google.com/file/d/1P2drvClotE8dJ9KMQuJxFVYpI_6RupsB/view?usp=sharing) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
+To run a toy search example, please download the already constructed spHMMs and some search samples from [here](https://drive.google.com/file/d/1P2drvClotE8dJ9KMQuJxFVYpI_6RupsB/view?usp=sharing) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
 
 ```
 OP_PATH=<set a path>
 cd ${OP_PATH}
-wget 
 tar -zxvf OxyN_Build.tar.gz
 metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${OP_PATH}/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${OP_PATH}/output --cpu 20
 ```
