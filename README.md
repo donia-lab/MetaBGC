@@ -4,54 +4,84 @@
 
 MetaBGC is a read-based algorithm for the detection of biosynthetic gene clusters (BGCs) directly in metagenomic sequencing data.
 
+## Publication 
+
+See [A metagenomic strategy for harnessing the chemical repertoire of the human microbiome](https://doi.org/10.1126/science.aax9176) for detailed description and for information on citing MetaBGC.
+
 ## Getting Started
 
 These instructions will get you setup to run MetaBGC on your local Linux or Apple environment. 
 
+## Bioconda Distribution 
+
+Coming soon...
+
+## Manual Installation
+
 ### Prerequisites
 
-To run MetaBGC, you will need the following dependencies and data preprocessing:
+To run MetaBGC, please make sure you the following dependencies installed and in PATH.
 
 * [Python](https://www.python.org/downloads/) (version >= 3.6)
 * [MUSCLE 3.8.31](https://www.drive5.com/muscle/downloads.htm)
-* [EMBOSS Transeq](http://emboss.sourceforge.net/download/) version 6.6.0.0
 * [HMMER](http://hmmer.org/download.html) version 3.1b2
 * [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.7
 * [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
-* [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/)
 * [EMBOSS-6.5.7](http://emboss.sourceforge.net/)
+* [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/): MetaBGC will try to install the following R packages at runtime. They can be installed manually if the user does not have access to the default R lib path.  
+  * tidyverse
+  * ggsci
+  * ggpubr
+  * dplyr
+  * ggplot2
 
-### Installation 
+### Installing the Package
 
 Obtain the package from PyPI:
 ```
 pip install metabgc
 ```
-
 All the internal python dependencies are specified in the setup will be installed. Help on the commandline parameters is provided. 
-
 ```
 metabgc --help
 ```
+To install the latest development build from GitHub:
+```
+git clone https://github.com/donia-lab/MetaBGC.git
+cd MetaBGC/MetaBGC-Development
+pip install .
+metabgc --help
+```
 
+### Quick Start
+
+To run a toy search example, please use the already constructed spHMMs [here](https://drive.google.com/file/d/1P2drvClotE8dJ9KMQuJxFVYpI_6RupsB/view?usp=sharing) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
+
+```
+OP_PATH=<set a path>
+cd ${OP_PATH}
+wget 
+tar -zxvf OxyN_Build.tar.gz
+metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${OP_PATH}/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${OP_PATH}/output --cpu 20
+```
 
 ### Program Structure
 
 MetaBGC consists of four main modules:
 
-**Build** - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs). If any of these protein families is to be used, this step can be skipped.
+**Build** - ```metabgc build --help``` - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs). If any of these protein families is to be used, this step can be skipped.
 
-**Identify** - This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
+**Identify** - ```metabgc identify --help``` -  This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
 
-**Quantify** - This module de-replicates all biosynthetic reads discovered by MetaBGC-Identify from all metagenomic samples in the cohort into a unified set of **unique biosynthetic reads**. An abundance profile martrix is then generated for all unique biosynthetic reads by quantifying them in all samples of the metagenomic cohort.
+**Quantify** - ```metabgc quantify --help``` - This module de-replicates all biosynthetic reads discovered by MetaBGC-Identify from all metagenomic samples in the cohort into a unified set of **unique biosynthetic reads**. An abundance profile martrix is then generated for all unique biosynthetic reads by quantifying them in all samples of the metagenomic cohort.
 
-**Cluster** - This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster unique biosynthetic reads with similar abundance profiles across different metagenomic samples into distinct bins, based on the abundance profile martrix obtained in MetaBGC-Quantify. 
+**Cluster** - ```metabgc cluster --help``` - This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster unique biosynthetic reads with similar abundance profiles across different metagenomic samples into distinct bins, based on the abundance profile martrix obtained in MetaBGC-Quantify. 
 
-**Search** - **NEW** option to run Identify, Quantify and Cluster together as a single command.  
+**Search** - ```metabgc search --help``` -**NEW** option to run Identify, Quantify, and Cluster together as a single command.  
 
 ### Running Build to construct the spHMMs
 
-1. To build and evaluate spHMMs for the protein family of interest, the ```metabgc build``` script has to be executed with required input files. To select high performance spHMMs, a synthetic metagenomic dataset must be generated with reads from true positive genes spiked in to test the performance of each spHMM.
+1. To build and evaluate spHMMs for the protein family of interest, the ```metabgc build``` command has to be executed with required input files. To select high performance spHMMs, a synthetic metagenomic dataset must be generated with reads from true positive genes spiked in to test the performance of each spHMM.
 
 	```
     A. --prot_alignment, required=True: Alignment of homologs from the protein family of interest in FASTA format.
@@ -99,7 +129,7 @@ MetaBGC consists of four main modules:
 
 ### Running Quantify to de-replicate and quantify biosynthetic reads
 
-1. To de-replicate and quantify the biosynthetic reads found by Identify, the ```metabgc quantify``` script should be executed with the following parameters: 
+1. To de-replicate and quantify the biosynthetic reads found by Identify, the ```metabgc quantify``` command should be executed with the following parameters: 
 
 	```
     A. --identify_fasta, required=True: Path to the identified-biosynthetic-reads.fasta file produced by MetaBGC-Identify.
@@ -112,7 +142,7 @@ MetaBGC consists of four main modules:
 	H. --output_directory, required=True: Directory to save results.
 	I. --cpu, required=False: Number of CPU threads to use (Def.=4). 
 	```
-2. The output of the quantify script is an abundance profile file **unique-biosynthetic-reads-abundance-table.txt**. 
+2. The output of the quantify command is an abundance profile file **unique-biosynthetic-reads-abundance-table.txt**. 
 
 ### Running Cluster to generate biosynthetic read bins
 1. To generate BGC bins of **unique biosynthetic reads**, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by Quantify as input for ```metabgc cluster```. The input parameters to the script are:
@@ -124,7 +154,7 @@ MetaBGC consists of four main modules:
 	D. --cpu, required=False: Number of CPU threads. (Def.=1)
 	```
 
-2. The cluster script produces a file, unique-biosynthetic-reads-abundance-table_DBSCAN.json, comprised of all the biosynthetic reads clustered in json format.   
+2. The cluster command produces a file, unique-biosynthetic-reads-abundance-table_DBSCAN.json, comprised of all the biosynthetic reads clustered in json format.   
 
 3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
@@ -145,7 +175,7 @@ MetaBGC consists of four main modules:
 	J. --cpu, required=False: Number of CPU threads to use (Def.=4). 
 	```
 
-2. Search will produce the same output as the Cluster command described above. 
+2. Search will produce the same output as the Cluster command described above and all the intermediate files from each step. 
 
 ## License
 
