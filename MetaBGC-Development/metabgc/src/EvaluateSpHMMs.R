@@ -26,9 +26,11 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	##### Load the BLAST data for genes against our synthetic dataset. 
 	# BLAST unfiltered reads at 95% pident no readCoverage filter
 	all_blast_df <- read_delim(InputFiles.BLAST_TP_NoCov, col_names = T, delim = "\t")
+	all_blast_df$sampleType[str_detect(all_blast_df$Sample, "high") ==TRUE] <-"high"
+	all_blast_df$sampleType[str_detect(all_blast_df$Sample, "low") ==TRUE] <-"low"
 
 	##### Positional information about domains and their locations in respect to the 30_10 spHMM models 
-	gene_positions <- read_tsv(InputFiles.GeneIntervalPos,col_names = T)  %>% filter(start != 0)
+	gene_positions <- read_tsv(InputFiles.GeneIntervalPos,col_names = T)
 
 
 	#### Positional read analysis in respect to location mapped to siderophore domain 
@@ -122,17 +124,18 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	  #check that reads are in the same interval to throw out 
 	  for (i in 1:length(intervals)){
 		gene_interval_data <- pos_df %>% filter(interval == intervals[i])
-		for (k in 1:nrow(gene_interval_data)){
-			gene_data <- gene_interval_data[k,]
-			#filters datatframe for edges and internal reads compared to model interval
-			interval_df  <- hmm_unique_df %>% filter(qseqid ==gene_data$gene_name) %>%
-			  filter(qstart %in% gene_data$start:gene_data$end | qend %in% gene_data$start:gene_data$end)
-			if (nrow(interval_df) > 0 ){
-			   results <- rbind(results,interval_df)
-			}
-		
+		if (dim(gene_interval_data)[1] > 0) {
+			for (k in 1:nrow(gene_interval_data)){
+				gene_data <- gene_interval_data[k,]
+				#filters datatframe for edges and internal reads compared to model interval
+				interval_df  <- hmm_unique_df %>% filter(qseqid ==gene_data$gene_name) %>%
+			  	filter(qstart %in% gene_data$start:gene_data$end | qend %in% gene_data$start:gene_data$end)
+				if (nrow(interval_df) > 0 ){
+			   		results <- rbind(results,interval_df)
+				}
+	  		}
+		}
 	  }
-	 }  
 	  return(results%>% distinct())
 	}
 
@@ -188,6 +191,7 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 
 	f1_cutoff_median<- calculate_F1(filtered_median, median_remaining_hmm, blast_intervals, unique(hmm_df_recoded$interval))
 	f1_cutoff_median$cutoff<- "median"
+	write.csv(median_remaining_hmm,file=file.path(OutputFiles.HMMHighPerfOutDir,"FP_Reads.csv"))
 
 	f1_cutoff_plusfive<- calculate_F1(filtered_plusfive, plusfive_remaining_hmm, blast_intervals, unique(hmm_df_recoded$interval))
 	f1_cutoff_plusfive$cutoff<- "+5"

@@ -26,6 +26,9 @@ def cli():
 @click.option('--nucl_seq_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,readable=True),
               help="Directory with synthetic read files of the cohort.")
+@click.option('--prot_seq_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with translated synthetic read files of the cohort. Computed if not provided.")
 @click.option('--seq_fmt', required=True,
               type=click.Choice(['fasta', 'fastq'],case_sensitive=False),
               help="Sequence file format and extension.")
@@ -36,6 +39,9 @@ def cli():
               help="Suffix including extension of the file name specifying R1 reads. Not specified for single or interleaved reads.")
 @click.option('--r2_file_suffix', required=False,
               help="Suffix including extension of the file name specifying R2 reads. Not specified for single or interleaved reads.")
+@click.option('--blastn_search_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
@@ -43,13 +49,13 @@ def cli():
               type=click.INT,default=4,
               help="Number of threads. Def.: 4")
 def build(prot_alignment,prot_family_name,cohort_name,
-          nucl_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
-          r2_file_suffix,tp_genes_nucl,f1_thresh,
+          nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
+          r2_file_suffix,tp_genes_nucl,blastn_search_directory,f1_thresh,
           output_directory,cpu):
     click.echo('Invoking MetaBGC Build...')
     hp_hmm_directory = mbgcbuild(prot_alignment,prot_family_name,cohort_name,
-          nucl_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
-          r2_file_suffix,tp_genes_nucl,f1_thresh,
+          nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
+          r2_file_suffix,tp_genes_nucl,blastn_search_directory,f1_thresh,
           output_directory,cpu)
     print('High performance SpHMMS saved here: '+hp_hmm_directory)
 

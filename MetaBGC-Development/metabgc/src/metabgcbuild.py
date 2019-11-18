@@ -10,8 +10,8 @@ from shutil import copyfile
 CPU_THREADS = 4
 
 def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
-          nucl_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
-          r2_file_suffix,tp_genes_nucl,f1_thresh,
+          nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
+          r2_file_suffix,tp_genes_nucl,blastn_search_directory,f1_thresh,
           output_directory,cpu):
     startTime = time.time()
     if cpu is not None:
@@ -26,7 +26,8 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
     gene_pos_file = os.path.join(build_op_dir, 'Gene_Interval_Pos.txt')
     hmm_search_directory = os.path.join(build_op_dir, 'hmm_result')
     allHMMResult = hmm_search_directory + os.sep + "CombinedHmmSearch.txt"
-    blastn_search_directory = os.path.join(build_op_dir, 'blastn_result')
+    if blastn_search_directory is None:
+        blastn_search_directory = os.path.join(build_op_dir, 'blastn_result')
     allBLASTResult = blastn_search_directory + os.sep + "CombinedBLASTSearch.txt"
 
     # Gen spHMMs and interval pos
@@ -98,7 +99,10 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
                 endPosNoGap = startPosNoGap + len(windowSeqNoGap)
 
                 startPosGapped = ungappedCoords.index(startPosNoGap)
-                endPosGapped = ungappedCoords.index(endPosNoGap)
+                if endPosNoGap in ungappedCoords:
+                    endPosGapped = ungappedCoords.index(endPosNoGap)
+                else:
+                    endPosGapped = len(ungappedCoords)
 
                 #Add begin end gaps
                 startPosGapped = 0 if (startPosGapped-beginGaps)<0 else (startPosGapped-beginGaps)
@@ -109,6 +113,11 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
                 outfile.write(mseq.id+"\t"+str(startPosGapped)+"\t"+str(endPosGapped)+"\t"+key+"\t"+prot_family_name+"\n")
     outfile.close()
 
+    if r1_file_suffix is None:
+        r1_file_suffix = ""
+    if r2_file_suffix is None:
+        r2_file_suffix = ""
+
     # #Preprocess synthetic reads
     nucl_seq_directory = PreProcessReadsPar(nucl_seq_directory,
                                             seq_fmt,pair_fmt,
@@ -117,7 +126,8 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
                                             build_op_dir,
                                             CPU_THREADS)
     # Translate nucleotide seq
-    prot_seq_directory = TranseqReadsDir(build_op_dir, nucl_seq_directory, CPU_THREADS)
+    if not os.path.isdir(prot_seq_directory):
+        prot_seq_directory = TranseqReadsDir(build_op_dir, nucl_seq_directory, CPU_THREADS)
 
     # HMMER Search
     os.makedirs(hmm_search_directory,0o777,True)
@@ -129,13 +139,14 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
             for file in files:
                 filePath = os.path.join(subdir, file)
                 if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
-                    with open(filePath) as infile:
+                   with open(filePath) as infile:
                         for line in infile:
                             outfile.write(line)
 
     # BLAST Alignment
-    os.makedirs(blastn_search_directory,0o777,True)
-    RunBLASTNDirectoryPar(nucl_seq_directory, tp_genes_nucl, blastn_search_directory,CPU_THREADS)
+    if not os.path.isdir(blastn_search_directory):
+        os.makedirs(blastn_search_directory,0o777,True)
+        RunBLASTNDirectoryPar(nucl_seq_directory, tp_genes_nucl, blastn_search_directory,CPU_THREADS)
 
     with open(allBLASTResult, 'w') as outfile:
         outfile.write("sseqid\tslen\tsstart\tsend\tqseqid\tqlen\tqstart\tqend\tpident\tevalue\tSample\tsampleType\n")
@@ -163,7 +174,7 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     hp_hmm_directory = os.path.join(build_op_dir, 'HiPer_spHMMs')
     os.makedirs(hp_hmm_directory,0o777,True)
-    r_script = os.path.join(sys.path[0],'src','EvaluateSpHMMs.R')
+    r_script = os.path.join(sys.path[0],'metabgc','src','EvaluateSpHMMs.R')
 
     with open(r_script, 'r') as f:
         rStr = f.read()

@@ -22,7 +22,8 @@ def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, 
                 sampleStr = file.split(".")[0]
                 hmmTblFileName = sampleStr +"_"+interval+".tbl"
                 hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
-                runHMMSearch(filePath, hmmModel,hmmTblFilePath,ncpus)
+                if not os.path.exists(hmmTblFilePath):
+                    runHMMSearch(filePath, hmmModel,hmmTblFilePath,ncpus)
                 result_dict = parseHMM(hmmTblFilePath, sampleType, sampleStr, protType, window, interval)
                 hmmSearchFileName = sampleStr +"_"+interval+".txt"
                 hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)

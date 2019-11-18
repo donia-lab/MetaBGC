@@ -20,7 +20,7 @@ Coming soon...
 
 ### Prerequisites
 
-To run MetaBGC, please make sure you the following dependencies installed and in PATH.
+To run MetaBGC, please make sure you have the following dependencies installed and in PATH.
 
 * [Python](https://www.python.org/downloads/) (version >= 3.6)
 * [MUSCLE 3.8.31](https://www.drive5.com/muscle/downloads.htm)
