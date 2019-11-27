@@ -12,16 +12,16 @@ import pandas as pd
 
 
 class readID():
-	def __init__(self, acc_numb, sampleType, sampleID, cyclaseType, bitscore, window, interval):
+	def __init__(self, acc_numb, sampleType, sampleID, protType, bitscore, window, interval):
 		self.acc_numb = acc_numb
 		self.sampleType = sampleType
 		self.sampleID = sampleID
-		self.cyclaseType = cyclaseType
+		self.protType = protType
 		self.bitscore = bitscore
 		self.window = window
 		self.interval = interval
 
-def parseHMM(hmmFile, hmmDir, sampleType, sampleID, cyclaseType, window, interval):
+def parseHMM(hmmFile, hmmDir, sampleType, sampleID, protType, window, interval):
 	with open(os.path.join(hmmDir,hmmFile), 'rU') as handle:
 		results_dict = {}
 		try:
@@ -34,7 +34,7 @@ def parseHMM(hmmFile, hmmDir, sampleType, sampleID, cyclaseType, window, interva
 						hmm_name = hits[i].id
 						hmm_bitscore = hits[i].bitscore
 						if hmm_name not in results_dict: # add hits to results dictionary 
-							readID_Class = readID(hmm_name, sampleType, sampleID, cyclaseType, hmm_bitscore, window, interval)
+							readID_Class = readID(hmm_name, sampleType, sampleID, protType, hmm_bitscore, window, interval)
 							results_dict[hmm_name] = readID_Class
 						# the bio module wont allow duplicated query IDs
 			handle.close()
@@ -47,16 +47,16 @@ def createPandaDF(cyclase_dict, outdir, outfile):
 	os.chdir(outdir)
 	outputDF = pd.DataFrame()
 	if len(cyclase_dict) != 0:  # check if counter dict is not empty to add to df
-		df = [(k, v.sampleType, v.sampleID, v.cyclaseType, v.bitscore, v.window, v.interval) for k, v in
+		df = [(k, v.sampleType, v.sampleID, v.protType, v.bitscore, v.window, v.interval) for k, v in
 			  list(cyclase_dict.items())]  # convert dictionary to list
 
 		outputDF = outputDF.append(df)  # append list to our initalized dataframe
-		outputDF.columns = ["readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window","interval"]  # rename column names
+		outputDF.columns = ["readID", "sampleType", "sampleID", "protType", "HMMScore", "window","interval"]  # rename column names
 		sorted_outputDF = outputDF.sort_values(by=['HMMScore'],
 											   ascending=[False])  # sort in decending order by Hit.counts column
 		sorted_outputDF.to_csv(outfile, index=False, sep='\t', header=False)
 	else:
-		outputDF_empty_columns = ["readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window", "interval"]  # rename column names
+		outputDF_empty_columns = ["readID", "sampleType", "sampleID", "protType", "HMMScore", "window", "interval"]  # rename column names
 		outputDF_empty = pd.DataFrame(columns=outputDF_empty_columns)
 		outputDF_empty.to_csv(outfile, index=False, sep='\t', header=False)
 
@@ -65,8 +65,8 @@ def main(hmmscan_file_dir, outdir, cyclase_type, window, interval, sampleID, sam
 	for hmmscan_file in os.listdir(hmmscan_file_dir):
 		baseOutFile = hmmscan_file.split('.')[0]
 		outfile = baseOutFile + "-PARSED.txt"
-		cyclaseType = cyclase_type
-		result_cyclase_Dict = parseHMM(hmmscan_file, hmmscan_file_dir, sampleType, sampleID, cyclaseType, window, interval)
+		protType = cyclase_type
+		result_cyclase_Dict = parseHMM(hmmscan_file, hmmscan_file_dir, sampleType, sampleID, protType, window, interval)
 
 		createPandaDF(result_cyclase_Dict, outdir, outfile)
 if __name__ == '__main__':

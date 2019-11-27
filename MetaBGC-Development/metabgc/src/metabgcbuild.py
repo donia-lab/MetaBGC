@@ -2,16 +2,16 @@ import time, sys
 from Bio import AlignIO
 from metabgc.src.utils import *
 from metabgc.src.createsphmms import GenerateSpHMM
-from rpy2.robjects.packages import STAP
-import rpy2.robjects.packages as rpackages
-from rpy2.robjects.vectors import StrVector
+#from rpy2.robjects.packages import STAP
+#import rpy2.robjects.packages as rpackages
+#from rpy2.robjects.vectors import StrVector
 from shutil import copyfile
 
 CPU_THREADS = 4
 
 def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
           nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
-          r2_file_suffix,tp_genes_nucl,blastn_search_directory,f1_thresh,
+          r2_file_suffix,tp_genes_nucl,blastn_search_directory,hmm_search_directory,f1_thresh,
           output_directory,cpu):
     startTime = time.time()
     if cpu is not None:
@@ -24,7 +24,8 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
     tp_genes_prot = build_op_dir + os.sep + "TPGenes.faa"
     alnOutput = os.path.join(build_op_dir,"tmp.afa")
     gene_pos_file = os.path.join(build_op_dir, 'Gene_Interval_Pos.txt')
-    hmm_search_directory = os.path.join(build_op_dir, 'hmm_result')
+    if hmm_search_directory is None:
+        hmm_search_directory = os.path.join(build_op_dir, 'hmm_result')
     allHMMResult = hmm_search_directory + os.sep + "CombinedHmmSearch.txt"
     if blastn_search_directory is None:
         blastn_search_directory = os.path.join(build_op_dir, 'blastn_result')
@@ -62,7 +63,7 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     # Extract spHMM coordinates from MUSCLE alignment
     outfile = open(gene_pos_file, 'w')
-    outfile.write("gene_name\tstart\tend\tinterval\tcyclase_type\n")
+    outfile.write("gene_name\tstart\tend\tinterval\tprot_type\n")
     for i, mseq in enumerate(muscleAlnSeqs):
         if i not in protPosList:
             protPos = min(protPosList, key=lambda x: abs(x - i))

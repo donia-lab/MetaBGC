@@ -53,7 +53,7 @@ Function build a BLAST DB with a FASTA.
 """
 def runMakeBLASTDB(fastaFile, dbName, dbOpPath, type):
     dbOut = dbOpPath + os.sep + dbName
-    cmd = "makeblastdb -in " + fastaFile + " -title " + dbName +" -dbtype nucl -parse_seqids -out " + dbOut
+    cmd = "makeblastdb -in " + fastaFile + " -title " + dbName +" -dbtype nucl -out " + dbOut
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done building BLAST Build on:",fastaFile)
@@ -133,7 +133,7 @@ def RunBLASTNDirectory(dbDir, queryFile, ouputDir,ncpus=4):
 """
 Function to parse HMM file into HMMRecord dict. 
 """
-def parseHMM(hmmPathFile, sampleType, sampleID, cyclaseType, window, interval):
+def parseHMM(hmmPathFile, sampleType, sampleID, protType, window, interval):
     with open(hmmPathFile, 'rU') as handle:
         results_dict = {}
         try:
@@ -145,25 +145,24 @@ def parseHMM(hmmPathFile, sampleType, sampleID, cyclaseType, window, interval):
                         hmm_name = hits[i].id
                         hmm_bitscore = hits[i].bitscore
                         if hmm_name not in results_dict: # add hits to results dictionary
-                            hmmRec = HMMRecord(hmm_name, sampleType, sampleID, cyclaseType, hmm_bitscore, window, interval)
+                            hmmRec = HMMRecord(hmm_name, sampleType, sampleID, protType, hmm_bitscore, window, interval)
                             results_dict[hmm_name] = hmmRec
-                            print(hmmRec)
             handle.close()
         except ValueError:
             print ("ERROR: duplicated queryIDs in hmmer result file:", hmmPathFile)
     return results_dict
 
 
-def createPandaDF(cyclase_dict, outfile):
+def createPandaDF(hmm_dict, outfile):
     outputDF = pd.DataFrame()
-    if len(cyclase_dict) != 0:  # check if counter dict is not empty to add to df
-        df = [(k, v.sampleType, v.sampleID, v.cyclaseType, v.bitscore, v.window, v.interval) for k, v in list(cyclase_dict.items())]  # convert dictionary to list
+    if len(hmm_dict) != 0:  # check if counter dict is not empty to add to df
+        df = [(k, v.sampleType, v.sampleID, v.protType, v.bitscore, v.window, v.interval) for k, v in list(hmm_dict.items())]  # convert dictionary to list
         outputDF = outputDF.append(df)  # append list to our initalized dataframe
-        outputDF.columns = ["readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window","interval"]  # rename column names
+        outputDF.columns = ["readID", "sampleType", "sampleID", "protType", "HMMScore", "window","interval"]  # rename column names
         sorted_outputDF = outputDF.sort_values(by=['HMMScore'],ascending=[False])  # sort in decending order by Hit.counts column
         sorted_outputDF.to_csv(outfile, index=False, sep='\t', header=False)
     else:
-        outputDF_empty_columns = ["readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window", "interval"]  # rename column names
+        outputDF_empty_columns = ["readID", "sampleType", "sampleID", "protType", "HMMScore", "window", "interval"]  # rename column names
         outputDF_empty = pd.DataFrame(columns=outputDF_empty_columns)
         outputDF_empty.to_csv(outfile, index=False, sep='\t', header=False)
 

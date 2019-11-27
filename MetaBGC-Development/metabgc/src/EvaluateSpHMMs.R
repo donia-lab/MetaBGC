@@ -4,9 +4,7 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	### Load segmented profiled HMMs for synthetic genomes
 	#load HMM data and recode sampleType for the complexity of the synthetic sample (#of genomes in samples)
 	hmm_df <- read_delim(InputFiles.HMMRun,col_names = F, delim = "\t") 
-	names(hmm_df) <- c("readID", "sampleType", "sampleID", "cyclaseType", "HMMScore", "window","interval")
-	hmm_df$sampleType[str_detect(hmm_df$sampleID, "high") ==TRUE] <-"high"
-	hmm_df$sampleType[str_detect(hmm_df$sampleID, "low") ==TRUE] <-"low"
+	names(hmm_df) <- c("readID", "sampleType", "sampleID", "protType", "HMMScore", "window","interval")
 
 	##### Remove the reading frame information from the readID. 
 	# Function to aggregate identitical sample reads located at different reading frames 
@@ -15,23 +13,18 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	  hmmdfRecoded <- separate(hmmdf, readID, into = c("readIDOnly","F_R_read_frame"), sep = "/", extra = "merge")
 	  hmmdfRecoded_FR <- separate(hmmdfRecoded, F_R_read_frame, into = c("F_R","frameNumb"), sep = "_", extra = "merge")
 	  hmmdfRecodedDF<- within(hmmdfRecoded_FR, readID <- paste(readIDOnly,F_R, sep='/'))
-	  hmmdfRecodedDFUnique<-aggregate(HMMScore ~ readID + sampleID + sampleType + cyclaseType + window + interval, hmmdfRecodedDF, max)
-	  colnames(hmmdfRecodedDFUnique)<-c("readID","Sample", "sampleType", "cyclaseType", "window", "interval","HMMScore")
+	  hmmdfRecodedDFUnique<-aggregate(HMMScore ~ readID + sampleID + sampleType + protType + window + interval, hmmdfRecodedDF, max)
+	  colnames(hmmdfRecodedDFUnique)<-c("readID","Sample", "sampleType", "protType", "window", "interval","HMMScore")
 	  return(hmmdfRecodedDFUnique)
 	}
 
 	#Keep duplicated reads if they are in different reads
 	hmm_df_recoded<-formatHMM(hmm_df)
-
-	##### Load the BLAST data for genes against our synthetic dataset. 
+	##### Load the BLAST data for genes against our synthetic dataset.
 	# BLAST unfiltered reads at 95% pident no readCoverage filter
 	all_blast_df <- read_delim(InputFiles.BLAST_TP_NoCov, col_names = T, delim = "\t")
-	all_blast_df$sampleType[str_detect(all_blast_df$Sample, "high") ==TRUE] <-"high"
-	all_blast_df$sampleType[str_detect(all_blast_df$Sample, "low") ==TRUE] <-"low"
-
-	##### Positional information about domains and their locations in respect to the 30_10 spHMM models 
+	##### Positional information about domains and their locations in respect to the 30_10 spHMM models
 	gene_positions <- read_tsv(InputFiles.GeneIntervalPos,col_names = T)
-
 
 	#### Positional read analysis in respect to location mapped to siderophore domain 
 	##### Keep reads that map to the interval of a given model and covers the model 90% 
@@ -48,21 +41,19 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 		interval_df_2 <- df %>% filter(qseqid ==gene_data$gene_name) %>% 
 		  filter(qstart < gene_data$start & qend > gene_data$end)
 		interval_df <- rbind(interval_df_1,interval_df_2)
-		if (nrow(interval_df) > 0){
-		  for (j in 1:nrow(interval_df)){
-			in_interval_count <- sum(interval_df[j,]$qstart:interval_df[j,]$qend %in% gene_data$start:gene_data$end)
-			interval_count <- length(gene_data$start:gene_data$end)
-			interval_cov <- (in_interval_count/interval_count) * 100
-			if (interval_cov >=90){
-			  res_df<-interval_df[j,]
-			  res_df$model_cov <- interval_cov
-			  res_df$interval <- gene_data$interval
-			  results <- rbind(results,res_df)
-			}
-		  }
-		  
-		}
-		
+  		if (nrow(interval_df) > 0){
+  		  for (j in 1:nrow(interval_df)){
+    			in_interval_count <- sum(interval_df[j,]$qstart:interval_df[j,]$qend %in% gene_data$start:gene_data$end)
+    			interval_count <- length(gene_data$start:gene_data$end)
+    			interval_cov <- (in_interval_count/interval_count) * 100
+    			if (interval_cov >=90){
+    			  res_df<-interval_df[j,]
+    			  res_df$model_cov <- interval_cov
+    			  res_df$interval <- gene_data$interval
+    			  results <- rbind(results,res_df)
+    			}
+  		  }
+  		}
 	  }
 	  return(results)
 	}
@@ -118,7 +109,7 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	#return the hmm-unique reads 
 
 	compare_hmm_unique <- function(hmm_df, blast_df, pos_df){
-      hmm_unique_df <- hmm_df  %>% inner_join(.,blast_df, by = c("readID"="sseqid", "Sample", "sampleType", "cyclaseType"))
+      hmm_unique_df <- hmm_df  %>% inner_join(.,blast_df, by = c("readID"="sseqid", "Sample", "sampleType", "protType"))
 	  intervals <- unique(hmm_unique_df$interval)
 	  results <- data.frame()
 	  #check that reads are in the same interval to throw out 
@@ -140,15 +131,15 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	}
 
 	return_hmm_unique <- function(hmm_df, blast_df){
-	  oxyn_hmm_df <- hmm_df  %>% select(-c(window))
-	  oxyn_hmm_df$interval <- as.character(oxyn_hmm_df$interval)
+	  temp_hmm_df <- hmm_df  %>% select(-c(window))
+	  temp_hmm_df$interval <- as.character(temp_hmm_df$interval)
 	  names(blast_df)[names(blast_df)=="sseqid"] <-"readID"
-	  OxyN_hmm_unique <- oxyn_hmm_df %>% anti_join(.,blast_df, by= c("readID", "Sample", "sampleType", "interval"))
-	  return(OxyN_hmm_unique)
+	  temp_hmm_unique <- temp_hmm_df %>% anti_join(.,blast_df, by= c("readID", "Sample", "sampleType", "interval"))
+	  return(temp_hmm_unique)
 	}
 
-	gene_positions$cyclaseType <- InputParam.HMM_Model_Name
-	all_blast_df$cyclaseType <- InputParam.HMM_Model_Name
+	gene_positions$protType <- InputParam.HMM_Model_Name
+	all_blast_df$protType <- InputParam.HMM_Model_Name
 
 	median_hmmunique <- return_hmm_unique(filtered_median, blast_intervals)
 	median_hmmunique_less_model_cov <- compare_hmm_unique(median_hmmunique, all_blast_df, gene_positions) 
@@ -173,7 +164,7 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	  hmm_df <- hmm_df %>% select(-c(window))
 	  names(blast_df)[names(blast_df)=="sseqid"] <-"readID"
 	  
-	  results<-data.frame(interval=character(), F1=numeric())
+	  results<-data.frame(interval=character(), F1=numeric(), TP=numeric(), FP=numeric(), FN=numeric())
 	  for (i in 1:length(intervals)){
 		model <- intervals[i]
 		model_hmm <- hmm_df %>% filter(interval== model) # filter out model HMM results 
@@ -184,7 +175,7 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 		FN <- model_blast %>% anti_join(.,model_hmm) %>% nrow()
 		F1_metric <- (2*TP)/((2*TP)+FP+FN)
 		row <- data.frame(cbind(model, F1_metric))
-		results<- results %>% add_row(interval = model, F1 = F1_metric)
+		results<- results %>% add_row(interval = model, F1 = F1_metric, TP = TP, FP = FP, FN = FN)
 	  }
 	  return(results)
 	}
@@ -210,8 +201,10 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	f1_cutoff_df <- base::merge(x=f1_cutoff_df,y=df_hmm_cutoff_scores,by="interval")
 	f1_cutoff_df$FinalCutoff <- as.numeric(f1_cutoff_df$cutoff_diff)
 	f1_cutoff_df <- subset(f1_cutoff_df, select = -c(cutoff_diff))
-	cutoffFileName = paste0(InputParam.HMM_Model_Name, "_F1_Cutoff.txt")
+	cutoffFileName = paste0(InputParam.HMM_Model_Name, "_F1_Cutoff.tsv")
+	scoringFileName = paste0(InputParam.HMM_Model_Name, "_Scores.tsv")
 	write_tsv(f1_cutoff_df,file.path(OutputFiles.HMMHighPerfOutDir,cutoffFileName),col_names = T)
+	write_tsv(f1_df,file.path(OutputFiles.HMMHighPerfOutDir,scoringFileName),col_names = T)
 
 	CopyHPModel <- function(x) {
 	 spHMMInterval <- x[1]
@@ -219,15 +212,64 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	 file.copy(file.path(OutputFiles.HMMOutDir,spHMMFileName), OutputFiles.HMMHighPerfOutDir)
 	}
 	apply(f1_cutoff_df, 1, CopyHPModel)
-
-	supp_fig_lanc_f1 <-ggplot(data = f1_df, mapping = aes(x = interval, y = F1, group=cutoff,  colour=cutoff )) + geom_point() +
-	geom_line() + 
-	ylim(0,1)+ 
-	geom_hline(yintercept=c(as.numeric(InputParam.F1_Threshold)), linetype="dashed", color = c("green"), size=1) +
-	theme_pubclean() +  
-	scale_color_npg(name="HMM Score Cutoff")
-
-	ggsave(supp_fig_lanc_f1, file=file.path(OutputFiles.HMMHighPerfOutDir,"plot.eps"), device="eps", width = 20, height = 7)
+	
+	f1_df$interval2 <- f1_df$interval
+	f1_df <- f1_df %>% separate(interval2, c("Start", "End"), "_")
+	f1_df$Start <- as.numeric(as.character(f1_df$Start))
+	f1_df <- f1_df[order(f1_df$Start),]
+	
+	f1_cutoff_median$interval2 <- f1_cutoff_median$interval
+	f1_cutoff_median <- f1_cutoff_median %>% separate(interval2, c("Start", "End"), "_")
+	f1_cutoff_median$Start <- as.numeric(as.character(f1_cutoff_median$Start))
+	f1_cutoff_median$interval <- factor(f1_cutoff_median$interval, levels = f1_cutoff_median$interval[order(f1_cutoff_median$Start)])
+	
+	f1_cutoff_subfive$interval2 <- f1_cutoff_subfive$interval
+	f1_cutoff_subfive <- f1_cutoff_subfive %>% separate(interval2, c("Start", "End"), "_")
+	f1_cutoff_subfive$Start <- as.numeric(as.character(f1_cutoff_subfive$Start))
+	f1_cutoff_subfive$interval <- factor(f1_cutoff_subfive$interval, levels = f1_cutoff_subfive$interval[order(f1_cutoff_subfive$Start)])
+	
+	f1_cutoff_plusfive$interval2 <- f1_cutoff_plusfive$interval
+	f1_cutoff_plusfive <- f1_cutoff_plusfive %>% separate(interval2, c("Start", "End"), "_")
+	f1_cutoff_plusfive$Start <- as.numeric(as.character(f1_cutoff_plusfive$Start))
+	f1_cutoff_plusfive$interval <- factor(f1_cutoff_plusfive$interval, levels = f1_cutoff_plusfive$interval[order(f1_cutoff_plusfive$Start)])
+	
+	supp_fig_f1 <-ggplot(f1_df,mapping = aes(x=interval,y=F1,group=cutoff,colour=cutoff)) +
+	  geom_line(data=f1_cutoff_median,aes(x = interval, y = F1,color='Median',group=1)) + 
+	  geom_point(data=f1_cutoff_median,aes(x = interval, y = F1,color='Median',group=1)) + 
+	  geom_line(data=f1_cutoff_plusfive,aes(x = interval, y = F1,color='+5',group=2)) + 
+	  geom_point(data=f1_cutoff_plusfive,aes(x = interval, y = F1,color='+5',group=2)) + 
+	  geom_line(data=f1_cutoff_subfive,aes(x = interval, y = F1,color='-5',group=3)) + 
+	  geom_point(data=f1_cutoff_subfive,aes(x = interval, y = F1,color='-5',group=3)) + 
+	  ylim(0,1)+ 
+	  geom_hline(yintercept=c(as.numeric(InputParam.F1_Threshold)), linetype="dashed", color = c("green"), size=1) +
+	  theme_pubclean() +  
+	  scale_color_npg(name="HMM Score Cutoff")
+	ggsave(supp_fig_f1, file=file.path(OutputFiles.HMMHighPerfOutDir,"F1_Plot.eps"), device="eps", width = 20, height = 7)
+	
+	supp_fig_tp <-ggplot(f1_df,mapping = aes(x=interval,y=TP,group=cutoff,colour=cutoff)) +
+	  geom_line(data=f1_cutoff_median,aes(x = interval, y = TP,color='Median',group=1)) + 
+	  geom_point(data=f1_cutoff_median,aes(x = interval, y = TP,color='Median',group=1)) + 
+	  geom_line(data=f1_cutoff_plusfive,aes(x = interval, y = TP,color='+5',group=2)) + 
+	  geom_point(data=f1_cutoff_plusfive,aes(x = interval, y = TP,color='+5',group=2)) + 
+	  geom_line(data=f1_cutoff_subfive,aes(x = interval, y = TP,color='-5',group=3)) + 
+	  geom_point(data=f1_cutoff_subfive,aes(x = interval, y = TP,color='-5',group=3)) + 
+	  theme_pubclean() +  
+	  scale_color_npg(name="HMM Score Cutoff")
+	ggsave(supp_fig_tp, file=file.path(OutputFiles.HMMHighPerfOutDir,"TP_Plot.eps"), device="eps", width = 20, height = 7)
+	
+	supp_fig_fp <-ggplot(f1_df,mapping = aes(x=interval,y=FP,group=cutoff,colour=cutoff)) +
+	  geom_line(data=f1_cutoff_median,aes(x = interval, y = FP,color='Median',group=1)) + 
+	  geom_point(data=f1_cutoff_median,aes(x = interval, y = FP,color='Median',group=1)) + 
+	  geom_line(data=f1_cutoff_plusfive,aes(x = interval, y = FP,color='+5',group=2)) + 
+	  geom_point(data=f1_cutoff_plusfive,aes(x = interval, y = FP,color='+5',group=2)) + 
+	  geom_line(data=f1_cutoff_subfive,aes(x = interval, y = FP,color='-5',group=3)) + 
+	  geom_point(data=f1_cutoff_subfive,aes(x = interval, y = FP,color='-5',group=3)) + 
+	  theme_pubclean() +  
+	  scale_y_continuous(breaks = round(seq(min(f1_df$FP), max(f1_df$FP), by = 1000),1)) +
+	  scale_color_npg(name="HMM Score Cutoff")
+	ggsave(supp_fig_fp, file=file.path(OutputFiles.HMMHighPerfOutDir,"FP_Plot.eps"), device="eps", width = 20, height = 7)
+	
+	
 
 }
 

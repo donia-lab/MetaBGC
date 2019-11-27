@@ -40,18 +40,27 @@ def getKmers(k, interval, outdir, msaFile, modelName, start, end):
     print ("Alignment length: %i" % alignment.get_alignment_length())
     hmmDict = {}
     counter = int(((alignment.get_alignment_length()- k) /interval)+1)
-    j = 0 
+    j = 0
+    seqCtr = len(alignment)
+    for i in range(alignment.get_alignment_length()):
+        alnCol = alignment[:,i]
+        if '-' in alnCol:
+            j=j+1
+        else:
+            break;
     for i in range(counter):
         startPos = j 
-        endPos = j+k 
-        kmer = alignment[:,startPos:endPos] #[ rows (different domains),columns (Amino Acids)]
-
-        outputFile = outdir + os.sep +modelName + "__" + str(k)+ "_"+ str(interval) + "__"+ str(startPos)+ "_"+ str(endPos) + ".fas"
-        AlignIO.write(kmer, outputFile, "fasta")
-        hmmFile = runHMMBuild(outputFile, modelName)
-        hmmSegment = str(startPos)+ "_"+ str(endPos)
-        hmmDict[hmmSegment] = hmmFile
-        j = j+interval
+        endPos = j+k
+        if endPos <= alignment.get_alignment_length():
+            kmer = alignment[:,startPos:endPos] #[ rows (different domains),columns (Amino Acids)]
+            outputFile = outdir + os.sep +modelName + "__" + str(k)+ "_"+ str(interval) + "__"+ str(i*interval)+ "_"+ str(i*interval+k) + ".fas"
+            AlignIO.write(kmer, outputFile, "fasta")
+            hmmFile = runHMMBuild(outputFile, modelName)
+            hmmSegment = str(startPos)+ "_"+ str(endPos)
+            hmmDict[hmmSegment] = hmmFile
+            j = j+interval
+        else:
+            break
     return hmmDict
 
 def GenerateSpHMM(aln_file, window_len, kmer_len, outdir, hmmName, start, end ):

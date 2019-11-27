@@ -9,15 +9,15 @@ import ntpath
 import re
 from metabgc.src.extractfastaseq import ExtractFASTASeq
 from metabgc.src.utils import *
-from rpy2.robjects.vectors import StrVector
+#from rpy2.robjects.vectors import StrVector
 import os
 import pandas as pd
-import rpy2.robjects.packages as rpackages
-import rpy2.robjects as robjects
-import rpy2.robjects as ro
-from rpy2.robjects.packages import importr
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
+#import rpy2.robjects.packages as rpackages
+#import rpy2.robjects as robjects
+#import rpy2.robjects as ro
+#from rpy2.robjects.packages import importr
+#from rpy2.robjects import pandas2ri
+#from rpy2.robjects.conversion import localconverter
 from pathlib import Path
 
 #Filter HMM results using predetermined spHMM models score cutoffs 
@@ -46,8 +46,8 @@ def create_reformat_data(input_df, outdir):
 		function(hmmdf,outDir) {
 			hmmdfRecoded <- separate(hmmdf, readID, into = c("read","F_R_read_frame"), sep = "_", extra = "merge") %>%
 			select(-c(F_R_read_frame))
-			hmmdfRecodedDFUnique<-aggregate(HMMScore ~ read + Sample + sampleType + cyclaseType , hmmdfRecoded, max)
-			colnames(hmmdfRecodedDFUnique)<-c("readID","Sample", "sampleType", "cyclaseType","HMMScore")
+			hmmdfRecodedDFUnique<-aggregate(HMMScore ~ read + Sample + sampleType + protType , hmmdfRecoded, max)
+			colnames(hmmdfRecodedDFUnique)<-c("readID","Sample", "sampleType", "protType","HMMScore")
 			write_tsv(hmmdfRecodedDFUnique, file.path(outDir, "spHMM-filtered-results.txt"), col_names = T)
 			return(hmmdfRecodedDFUnique)
 		}
@@ -75,7 +75,7 @@ def parse_sample_reads(reformat_df, reads_outdir):
 	parseReads(reformat_df,reads_outdir)
 
 def runidentify(hmm_file, outdir, cutoff_file, fasta_dir):
-	spHMM_df = pd.read_csv(hmm_file, sep ="\t", names = ["readID", "sampleType", "Sample", "cyclaseType", "HMMScore", "window","interval"])
+	spHMM_df = pd.read_csv(hmm_file, sep ="\t", names = ["readID", "sampleType", "Sample", "protType", "HMMScore", "window","interval"])
 	cutoff_df = pd.read_csv(cutoff_file, sep ="\t", header=0)
 	spHMM_df_filtered = filter_spHMM_data(spHMM_df, cutoff_df)
 	spHMM_df_filtered_reformat = create_reformat_data(spHMM_df_filtered, outdir)

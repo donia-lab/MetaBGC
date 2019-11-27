@@ -19,7 +19,7 @@ def updateFastaHeader(fasta_file, metadata_df, out_file ):
 			record_id_metadata = metadata_df[metadata_df.readID == record_id] 
 			record_sample = record_id_metadata.Sample.to_string(index = False)
 			record_sampleType = record_id_metadata.sampleType.to_string(index = False)  
-			record_cyclase = record_id_metadata.cyclaseType.to_string(index = False)
+			record_cyclase = record_id_metadata.protType.to_string(index = False)
 			record_cohort = record_id_metadata.cohort.to_string(index = False)
 			updated_record_id = record_id + "__"+ record_sample +"__"+ record_sampleType +"__"+ record_cyclase + "__"+record_cohort
 			record.id = updated_record_id

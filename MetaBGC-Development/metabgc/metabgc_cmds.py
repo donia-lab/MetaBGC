@@ -41,7 +41,10 @@ def cli():
               help="Suffix including extension of the file name specifying R2 reads. Not specified for single or interleaved reads.")
 @click.option('--blastn_search_directory', required=False,
               type=click.Path(exists=True,dir_okay=True,readable=True),
-              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided.")
+              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see job_scripts in development.")
+@click.option('--hmm_search_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
@@ -50,12 +53,12 @@ def cli():
               help="Number of threads. Def.: 4")
 def build(prot_alignment,prot_family_name,cohort_name,
           nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
-          r2_file_suffix,tp_genes_nucl,blastn_search_directory,f1_thresh,
+          r2_file_suffix,tp_genes_nucl,blastn_search_directory,hmm_search_directory,f1_thresh,
           output_directory,cpu):
     click.echo('Invoking MetaBGC Build...')
     hp_hmm_directory = mbgcbuild(prot_alignment,prot_family_name,cohort_name,
           nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
-          r2_file_suffix,tp_genes_nucl,blastn_search_directory,f1_thresh,
+          r2_file_suffix,tp_genes_nucl,blastn_search_directory,hmm_search_directory,f1_thresh,
           output_directory,cpu)
     print('High performance SpHMMS saved here: '+hp_hmm_directory)
 
