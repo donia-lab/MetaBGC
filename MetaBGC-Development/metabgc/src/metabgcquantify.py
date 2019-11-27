@@ -5,9 +5,9 @@
 # This file is a component of MetaBGC (Metagenomic identifier of Biosynthetic Gene Clusters)
 # (contact Francine Camacho at camachofrancine@gmail.com).
 #####################################################################################
-#from rpy2.robjects.vectors import StrVector
-#import rpy2.robjects.packages as rpackages
-#import rpy2.robjects as robjects
+from rpy2.robjects.vectors import StrVector
+import rpy2.robjects.packages as rpackages
+import rpy2.robjects as robjects
 from metabgc.src.utils import *
 
 CPU_THREADS=4

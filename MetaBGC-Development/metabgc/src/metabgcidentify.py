@@ -5,19 +5,17 @@
 # This file is a component of MetaBGC (Metagenomic identifier of Biosynthetic Gene Clusters)
 # (contact Francine Camacho at camachofrancine@gmail.com).
 #####################################################################################
-import ntpath
-import re
 from metabgc.src.extractfastaseq import ExtractFASTASeq
 from metabgc.src.utils import *
-#from rpy2.robjects.vectors import StrVector
+from rpy2.robjects.vectors import StrVector
 import os
 import pandas as pd
-#import rpy2.robjects.packages as rpackages
-#import rpy2.robjects as robjects
-#import rpy2.robjects as ro
-#from rpy2.robjects.packages import importr
-#from rpy2.robjects import pandas2ri
-#from rpy2.robjects.conversion import localconverter
+import rpy2.robjects.packages as rpackages
+import rpy2.robjects as robjects
+import rpy2.robjects as ro
+from rpy2.robjects.packages import importr
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
 from pathlib import Path
 
 #Filter HMM results using predetermined spHMM models score cutoffs 

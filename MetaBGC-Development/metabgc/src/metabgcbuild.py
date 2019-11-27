@@ -2,9 +2,9 @@ import time, sys
 from Bio import AlignIO
 from metabgc.src.utils import *
 from metabgc.src.createsphmms import GenerateSpHMM
-#from rpy2.robjects.packages import STAP
-#import rpy2.robjects.packages as rpackages
-#from rpy2.robjects.vectors import StrVector
+from rpy2.robjects.packages import STAP
+import rpy2.robjects.packages as rpackages
+from rpy2.robjects.vectors import StrVector
 from shutil import copyfile
 
 CPU_THREADS = 4
