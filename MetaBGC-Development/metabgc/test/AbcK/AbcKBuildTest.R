@@ -1,7 +1,7 @@
 InputFiles.HMMRun <- "data/CombinedHmmSearch.txt"
 InputFiles.BLAST_TP_NoCov <- "data/CombinedBLASTSearch.txt"
 InputFiles.GeneIntervalPos <- "output/build/Gene_Interval_Pos.txt"
-InputParam.HMM_Model_Name = 'Transport'
+InputParam.HMM_Model_Name = 'AbcK'
 InputParam.F1_Threshold = 0.50
 OutputFiles.HMMOutDir <- "output/build/spHMMs"
 OutputFiles.HMMHighPerfOutDir <- "output/build/HiPerf"

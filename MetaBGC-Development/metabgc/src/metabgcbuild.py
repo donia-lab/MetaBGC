@@ -1,5 +1,6 @@
 import time, sys
 from Bio import AlignIO
+from Bio import SeqIO
 from metabgc.src.utils import *
 from metabgc.src.createsphmms import GenerateSpHMM
 from rpy2.robjects.packages import STAP
@@ -8,6 +9,69 @@ from rpy2.robjects.vectors import StrVector
 from shutil import copyfile
 
 CPU_THREADS = 4
+
+
+def ungappedseqsearch(reference_str, query_str):
+    for i in range(0, len(reference_str)):
+        if reference_str[i]=='-':
+            continue
+        k = i
+        j = 0
+        while j < len(query_str) and k < len(reference_str):
+            if query_str[j] == '-':
+                j = j + 1
+            elif reference_str[k] == '-':
+                k = k + 1
+            elif reference_str[k] != query_str[j]:
+                break
+            else:
+                k = k + 1
+                j = j + 1
+        if j == len(query_str):
+            return [i, k]
+    return [-1, -1]
+
+def gensphmmfiles(prot_family_name,prot_aln_file,hmm_directory):
+    alignment = AlignIO.read(prot_aln_file, "fasta")
+    hmmDict = GenerateSpHMM(prot_aln_file, 10, 30, hmm_directory, prot_family_name, 1, alignment.get_alignment_length()+1)
+    return hmmDict
+
+def gengeneposlist(prot_family_name,protAlnSeqs,hmmDict,alnOutput,gene_pos_file):
+    muscleAlnSeqs = list(SeqIO.parse(alnOutput, "fasta"))
+    protPosList = []
+    for i,pseq in enumerate(protAlnSeqs):
+        for j,mseq in enumerate(muscleAlnSeqs):
+            if(pseq.id==mseq.id):
+                protPosList.append(j)
+    outfile = open(gene_pos_file, 'w')
+    outfile.write("gene_name\tstart\tend\tinterval\tprot_type\n")
+    for i, mseq in enumerate(muscleAlnSeqs):
+        if i not in protPosList:
+            protPos = min(protPosList, key=lambda x: abs(x - i))
+            protSeq = str(protAlnSeqs[protPosList.index(protPos)].seq)
+            protMuscleSeq = str(muscleAlnSeqs[protPos].seq)
+            protTPSeq = str(mseq.seq).replace('-', '')
+            for key in hmmDict:
+                startPos = int(key.split('_')[0])
+                endPos = int(key.split('_')[1])
+                windowSeq = protSeq[startPos:endPos]
+                coordMUSCLEList = ungappedseqsearch(protMuscleSeq,windowSeq)
+
+                startTPPosGapped = coordMUSCLEList[0]
+                endTPPosGapped = coordMUSCLEList[1]
+                windowTPSeqGapped = mseq.seq[startTPPosGapped:endTPPosGapped]
+
+                coordTPList = ungappedseqsearch(protTPSeq, windowTPSeqGapped)
+                startPosGapped = coordTPList[0]
+                endPosGapped = coordTPList[1]
+
+                startPosGapped = startPosGapped * 3
+                endPosGapped = endPosGapped * 3
+                outfile.write(mseq.id+"\t"+str(startPosGapped)+"\t"+str(endPosGapped)+"\t"+
+                              str(hmmDict[key].intervalStart)+"_"+str(hmmDict[key].intervalEnd)+
+                              "\t"+prot_family_name+"\n")
+    outfile.close()
+
 
 def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
           nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
@@ -33,9 +97,8 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     # Gen spHMMs and interval pos
     os.makedirs(hmm_directory,0o777,True)
-    copyfile(prot_alignment, hmm_directory+os.sep+ntpath.basename(prot_alignment))
-    alignment = AlignIO.read(prot_alignment, "fasta")
-    hmmDict = GenerateSpHMM(prot_aln_file, 10, 30, hmm_directory, prot_family_name, 1, alignment.get_alignment_length()+1)
+    copyfile(prot_alignment, prot_aln_file)
+    hmmDict = gensphmmfiles(prot_family_name, prot_aln_file, hmm_directory)
 
     runTranSeq(tp_genes_nucl,"1",tp_genes_prot)
     tmpFile = os.path.join(build_op_dir,"tmp.fa")
@@ -43,6 +106,7 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
     # Join true positives in the sample with the BGC proteins
     joinedSeqs = []
     tpGeneSeqs = list(SeqIO.parse(tp_genes_prot, "fasta"))
+    # Removing _1 added by TranSeq
     for seq in tpGeneSeqs:
         seq.id = seq.id[:-2]
         seq.description = ""
@@ -54,65 +118,8 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     # MUSCLE align TP genes with markers
     runMUSCLE(tmpFile, alnOutput)
-    muscleAlnSeqs = list(SeqIO.parse(alnOutput, "fasta"))
-    protPosList = []
-    for i,pseq in enumerate(protAlnSeqs):
-        for j,mseq in enumerate(muscleAlnSeqs):
-            if(pseq.id==mseq.id):
-                protPosList.append(j)
-
     # Extract spHMM coordinates from MUSCLE alignment
-    outfile = open(gene_pos_file, 'w')
-    outfile.write("gene_name\tstart\tend\tinterval\tprot_type\n")
-    for i, mseq in enumerate(muscleAlnSeqs):
-        if i not in protPosList:
-            protPos = min(protPosList, key=lambda x: abs(x - i))
-            protSeq = str(protAlnSeqs[protPosList.index(protPos)].seq)
-            protSeqNoGap = protSeq.replace('-', '')
-            protMuscleSeq = str(muscleAlnSeqs[protPos].seq)
-            ungappedCoords = [0] * len(protMuscleSeq)
-            aaIndex = 0
-            for i,aa in enumerate(protMuscleSeq):
-                if aa=='-':
-                    ungappedCoords[i]=-1
-                else:
-                    ungappedCoords[i] = aaIndex
-                    aaIndex=aaIndex+1
-            for key in hmmDict:
-                startPos = int(key.split('_')[0])
-                endPos = int(key.split('_')[1])
-                windowSeq = protSeq[startPos:endPos]
-                windowSeqNoGap = windowSeq.replace('-', '')
-                beginGaps = 0
-                endGaps = 0
-                isEndGap = 0
-                for aaVal in windowSeq:
-                    if isEndGap==1 and aaVal=='-':
-                        endGaps= endGaps +1
-                    elif isEndGap == 1 and aaVal != '-':
-                        endGaps = 0
-                    else:
-                        if aaVal!='-':
-                            isEndGap = 1
-                        else:
-                            beginGaps = beginGaps + 1
-                startPosNoGap = protSeqNoGap.find(windowSeqNoGap)
-                endPosNoGap = startPosNoGap + len(windowSeqNoGap)
-
-                startPosGapped = ungappedCoords.index(startPosNoGap)
-                if endPosNoGap in ungappedCoords:
-                    endPosGapped = ungappedCoords.index(endPosNoGap)
-                else:
-                    endPosGapped = len(ungappedCoords)
-
-                #Add begin end gaps
-                startPosGapped = 0 if (startPosGapped-beginGaps)<0 else (startPosGapped-beginGaps)
-                endPosGapped = len(protMuscleSeq) if (endPosGapped + endGaps) >= len(protMuscleSeq) else (endPosGapped + endGaps)
-
-                startPosGapped = startPosGapped * 3
-                endPosGapped = endPosGapped * 3
-                outfile.write(mseq.id+"\t"+str(startPosGapped)+"\t"+str(endPosGapped)+"\t"+key+"\t"+prot_family_name+"\n")
-    outfile.close()
+    gengeneposlist(prot_family_name,protAlnSeqs,hmmDict,alnOutput,gene_pos_file)
 
     if r1_file_suffix is None:
         r1_file_suffix = ""
@@ -132,8 +139,9 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     # HMMER Search
     os.makedirs(hmm_search_directory,0o777,True)
-    for hmmInterval, hmmFile in hmmDict.items():
-        RunHMMDirectory(prot_seq_directory,hmmFile, cohort_name, prot_family_name, "30_10", hmmInterval, hmm_search_directory, CPU_THREADS)
+    for hmmSeqPosKey, hmmFileObj in hmmDict.items():
+        hmmInterval = str(hmmDict[hmmSeqPosKey].intervalStart)+"_"+str(hmmDict[hmmSeqPosKey].intervalEnd)
+        RunHMMDirectory(prot_seq_directory,hmmFileObj.hmmFile, cohort_name, prot_family_name, "30_10", hmmInterval, hmm_search_directory, CPU_THREADS)
 
     with open(allHMMResult, 'w') as outfile:
         for subdir, dirs, files in os.walk(hmm_search_directory):
