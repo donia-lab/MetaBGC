@@ -90,7 +90,7 @@ MetaBGC consists of four main modules:
 	4. --nucl_seq_directory, required=True: Directory of reads for the synthetic metagenomic samples. The filenames are used as sample names.
 	5. --prot_seq_directory, required=False: Directory with translated synthetic read files of the cohort. Computed if not provided.
     6. --seq_fmt, required=True: {fasta, fastq} Sequence file format and extension.
-    7 --pair_fmt, required=True: {single, split, interleaved} Paired-end information.
+    7. --pair_fmt, required=True: {single, split, interleaved} Paired-end information.
     8. --R1_file_suffix, required=False: Suffix including extension of the file name specifying the forward reads. Not specified for single or interleaved reads. Example: .R1.fastq
     9. --R2_file_suffix, required=False: Suffix including extension of the file name specifying the reverse reads. Not specified for single or interleaved reads. Example: .R2.fastq 
 	10. --tp_genes_nucl, required=True: Nucleotide sequence of the full-length true-positive genes in the synthetic dataset in multi-FASTA format.
