@@ -71,6 +71,9 @@ def build(prot_alignment,prot_family_name,cohort_name,
 @click.option('--nucl_seq_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,readable=True),
               help="Directory with synthetic read files of the cohort.")
+@click.option('--prot_seq_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with translated synthetic read files of the cohort. Computed if not provided.")
 @click.option('--seq_fmt', required=True,
               type=click.Choice(['fasta', 'fastq'],case_sensitive=False),
               help="Sequence file format and extension.")
@@ -81,19 +84,22 @@ def build(prot_alignment,prot_family_name,cohort_name,
               help="Suffix including extension of the file name specifying R1 reads. Not specified for single or interleaved reads.")
 @click.option('--r2_file_suffix', required=False,
               help="Suffix including extension of the file name specifying R2 reads. Not specified for single or interleaved reads.")
+@click.option('--hmm_search_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
 @click.option('--cpu', required=False,
               type=click.INT,default=4,
               help="Number of threads. Def.: 4")
-def identify(sphmm_directory,cohort_name,nucl_seq_directory,
+def identify(sphmm_directory,cohort_name,nucl_seq_directory,prot_seq_directory,
              seq_fmt,pair_fmt,r1_file_suffix,r2_file_suffix,
-             prot_family_name,output_directory,cpu):
+             prot_family_name, hmm_search_directory, output_directory,cpu):
     click.echo('Invoking MetaBGC Identify...')
-    ident_reads_file = mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,
+    ident_reads_file = mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,prot_seq_directory,
                  seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,
-                 prot_family_name, output_directory, cpu)
+                 prot_family_name, hmm_search_directory, output_directory, cpu)
     print('Identified reads: ' + ident_reads_file)
 
 @cli.command()
@@ -117,6 +123,9 @@ def identify(sphmm_directory,cohort_name,nucl_seq_directory,
               help="Suffix including extension of the file name specifying R1 reads. Not specified for single or interleaved reads.")
 @click.option('--r2_file_suffix', required=False,
               help="Suffix including extension of the file name specifying R2 reads. Not specified for single or interleaved reads.")
+@click.option('--blastn_search_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see job_scripts in development.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
@@ -124,11 +133,11 @@ def identify(sphmm_directory,cohort_name,nucl_seq_directory,
               type=click.INT,default=4,
               help="Number of threads. Def.: 4")
 def quantify(identify_fasta,prot_family_name,cohort_name,nucl_seq_directory,
-             seq_fmt,pair_fmt,r1_file_suffix,r2_file_suffix,
+             seq_fmt,pair_fmt,r1_file_suffix,r2_file_suffix,blastn_search_directory,
              output_directory,cpu):
     click.echo('Invoking MetaBGC Quantify...')
     abund_file = mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directory,
-             seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,
+             seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,blastn_search_directory,
              output_directory, cpu)
     print('Reads abundance file: ' + abund_file)
 
@@ -155,6 +164,9 @@ def cluster(table,max_dist,min_samples,cpu):
 @click.option('--nucl_seq_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,readable=True),
               help="Directory with synthetic read files of the cohort.")
+@click.option('--prot_seq_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with translated synthetic read files of the cohort. Computed if not provided.")
 @click.option('--seq_fmt', required=True,
               type=click.Choice(['fasta', 'fastq'],case_sensitive=False),
               help="Sequence file format and extension.")
@@ -168,6 +180,12 @@ def cluster(table,max_dist,min_samples,cpu):
 @click.option("--max_dist", type=float, default=0.1,help="Maximum Pearson distance between two reads to be in the same cluster. Default is 0.1")
 @click.option("--min_samples", type=float, default=1,help="Minimum number of samples required for a cluster. " \
                                                           "If min_samples > 1, noise are labelled as -1")
+@click.option('--hmm_search_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.")
+@click.option('--blastn_search_directory', required=False,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see job_scripts in development.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
@@ -175,16 +193,16 @@ def cluster(table,max_dist,min_samples,cpu):
               type=click.INT,default=4,
               help="Number of threads. Def.: 4")
 def search(sphmm_directory,prot_family_name,cohort_name,
-            nucl_seq_directory,seq_fmt,pair_fmt,
+            nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,
             r1_file_suffix,r2_file_suffix,max_dist,
-            min_samples,output_directory,cpu):
+            min_samples, hmm_search_directory, blastn_search_directory, output_directory,cpu):
     click.echo('Invoking MetaBGC search...')
-    ident_reads_file = mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,
+    ident_reads_file = mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,prot_seq_directory,
                                     seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,
-                                    prot_family_name, output_directory, cpu)
+                                    prot_family_name, hmm_search_directory, output_directory, cpu)
 
     abund_file = mbgcquantify(ident_reads_file, prot_family_name, cohort_name, nucl_seq_directory,
-             seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,
+             seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,blastn_search_directory,
              output_directory, cpu)
 
     cluster_file = mbgccluster(abund_file, max_dist, min_samples, cpu)

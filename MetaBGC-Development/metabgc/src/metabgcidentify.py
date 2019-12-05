@@ -80,9 +80,9 @@ def runidentify(hmm_file, outdir, cutoff_file, fasta_dir):
 	parse_sample_reads(spHMM_df_filtered_reformat, fasta_dir)
 
 
-def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,
+def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,prot_seq_directory,
 					seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,
-					prot_family_name, output_directory, cpu):
+					prot_family_name, hmm_search_directory, output_directory, cpu):
 
 	if cpu is not None:
 		CPU_THREADS = int(cpu)
@@ -93,6 +93,15 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,
 		r1_file_suffix = ""
 	if r2_file_suffix is None:
 		r2_file_suffix = ""
+
+	if hmm_search_directory is None:
+		hmm_search_directory = os.path.join(identify_op_dir, 'hmm_identify_search')
+	allHMMResult = hmm_search_directory + os.sep + "CombinedHmmSearch.txt"
+	identify_directory = os.path.join(identify_op_dir, 'identify_result')
+	fasta_dir = os.path.join(identify_op_dir, 'fasta_result')
+	identifyReadIds = fasta_dir + os.sep + "CombinedReadIds.txt"
+	multiFastaFile = identify_op_dir + os.sep + "identified-biosynthetic-reads.fasta"
+
 	nucl_seq_directory = PreProcessReadsPar(nucl_seq_directory,
 											seq_fmt, pair_fmt,
 											r1_file_suffix.strip(),
@@ -101,10 +110,10 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,
 											CPU_THREADS)
 
 	# Translate nucleotide seq
-	prot_seq_directory = TranseqReadsDir(identify_op_dir, nucl_seq_directory, CPU_THREADS)
+	if not os.path.isdir(prot_seq_directory):
+		prot_seq_directory = TranseqReadsDir(identify_op_dir, nucl_seq_directory, CPU_THREADS)
 
 	# HMMER search
-	hmm_search_directory = os.path.join(identify_op_dir, 'hmm_identify_search')
 	os.makedirs(hmm_search_directory, 0o777, True)
 	for filename in os.listdir(sphmm_directory):
 		fileBase = Path(filename).resolve().stem
@@ -114,7 +123,7 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,
 			RunHMMDirectory(prot_seq_directory, hmmfilename, cohort_name, prot_family_name, "30_10", hmmInterval,
 						hmm_search_directory, CPU_THREADS)
 
-	allHMMResult = hmm_search_directory + os.sep + "CombinedHmmSearch.txt"
+
 	with open(allHMMResult, 'w') as outfile:
 		for subdir, dirs, files in os.walk(hmm_search_directory):
 			for file in files:
@@ -124,15 +133,14 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,
 						for line in infile:
 							outfile.write(line)
 
-	identify_directory = os.path.join(identify_op_dir, 'identify_result')
+
 	os.makedirs(identify_directory, 0o777, True)
-	fasta_dir = os.path.join(identify_op_dir, 'fasta_result')
 	os.makedirs(fasta_dir, 0o777, True)
 	cutoff_file = os.path.join(sphmm_directory, prot_family_name + "_F1_Cutoff.txt")
 	runidentify(allHMMResult, identify_directory, cutoff_file, fasta_dir)
 
-	allHMMResult = fasta_dir + os.sep + "CombinedReadIds.txt"
-	with open(allHMMResult, 'w') as outfile:
+
+	with open(identifyReadIds, 'w') as outfile:
 		for filename in os.listdir(fasta_dir):
 			if filename.endswith(".txt"):
 				filePath = os.path.join(fasta_dir, filename)
@@ -140,7 +148,6 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,
 					for line in infile:
 						outfile.write(line)
 
-	multiFastaFile = identify_op_dir + os.sep + "identified-biosynthetic-reads.fasta"
-	ExtractFASTASeq(nucl_seq_directory,multiFastaFile,allHMMResult)
+	ExtractFASTASeq(nucl_seq_directory,multiFastaFile,identifyReadIds)
 	return multiFastaFile
 

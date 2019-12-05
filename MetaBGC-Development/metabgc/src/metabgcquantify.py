@@ -52,7 +52,7 @@ def create_clustering_file(outdir,blast_result):
 
 
 def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directory,
-             seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,
+             seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix, blastn_search_directory,
              output_directory, cpu):
 
 	if cpu is not None:
@@ -63,14 +63,20 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 		r2_file_suffix = ""
 
 	quant_op_dir = output_directory
+	if blastn_search_directory is None:
+		blastn_search_directory = os.path.join(quant_op_dir, 'quantify_blastn_result')
+
 	nucl_seq_directory = PreProcessReadsPar(nucl_seq_directory, seq_fmt, pair_fmt,
 										 r1_file_suffix.strip(), r2_file_suffix.strip(),
 										 quant_op_dir, CPU_THREADS)
+
 	cdHitFile = os.path.join(quant_op_dir,"CombinedIDFASTASeqs_Drep.fasta")
 	runCDHit(identify_fasta,cdHitFile,CPU_THREADS)
-	blastn_search_directory = os.path.join(quant_op_dir, 'quantify_blastn_result')
-	os.makedirs(blastn_search_directory, 0o777, True)
-	RunBLASTNDirectoryPar(nucl_seq_directory, cdHitFile, blastn_search_directory,CPU_THREADS)
+
+	if not os.path.isdir(blastn_search_directory):
+		os.makedirs(blastn_search_directory, 0o777, True)
+		RunBLASTNDirectoryPar(nucl_seq_directory, cdHitFile, blastn_search_directory,CPU_THREADS)
+
 	combinedBLASTPath = combine_blast_results(blastn_search_directory, quant_op_dir, cohort_name)
 	abund_file = create_clustering_file(quant_op_dir, combinedBLASTPath)
 	return abund_file
