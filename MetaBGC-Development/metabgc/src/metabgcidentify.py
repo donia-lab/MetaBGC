@@ -136,7 +136,7 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,prot_seq_direc
 
 	os.makedirs(identify_directory, 0o777, True)
 	os.makedirs(fasta_dir, 0o777, True)
-	cutoff_file = os.path.join(sphmm_directory, prot_family_name + "_F1_Cutoff.txt")
+	cutoff_file = os.path.join(sphmm_directory, prot_family_name + "_F1_Cutoff.tsv")
 	runidentify(allHMMResult, identify_directory, cutoff_file, fasta_dir)
 
 

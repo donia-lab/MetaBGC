@@ -24,7 +24,7 @@ def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, 
                 hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
                 if not os.path.exists(hmmTblFilePath):
                     runHMMSearch(filePath, hmmModel,hmmTblFilePath,ncpus)
-                result_dict = parseHMM(hmmTblFilePath, sampleType, sampleStr, protType, window, interval)
+                result_dict = parseHMM(hmmTblFilePath, "hmmer3-tab", sampleType, sampleStr, protType, window, interval)
                 hmmSearchFileName = sampleStr +"_"+interval+".txt"
                 hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
                 createPandaDF(result_dict, hmmSearchFilePath)
@@ -133,11 +133,11 @@ def RunBLASTNDirectory(dbDir, queryFile, ouputDir,ncpus=4):
 """
 Function to parse HMM file into HMMRecord dict. 
 """
-def parseHMM(hmmPathFile, sampleType, sampleID, protType, window, interval):
+def parseHMM(hmmPathFile, hmm_string_fmt,sampleType, sampleID, protType, window, interval):
     with open(hmmPathFile, 'rU') as handle:
         results_dict = {}
         try:
-            for record in SearchIO.parse(handle, 'hmmer3-tab'):
+            for record in SearchIO.parse(handle, hmm_string_fmt):
                 hits = record.hits
                 num_hits = len(hits)  #calculate how many hits per query
                 if num_hits > 0:  #extract hits data
