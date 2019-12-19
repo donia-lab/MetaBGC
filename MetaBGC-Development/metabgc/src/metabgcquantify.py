@@ -28,7 +28,7 @@ def combine_blast_results(blast_dir_path, outdir, cohort_name):
 def create_clustering_file(outdir,blast_result):
 	rpackages.importr('base')
 	utils = rpackages.importr('utils')
-	packageNames = ('tidyverse')
+	packageNames = ('tidyverse', )
 	packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
 	if len(packnames_to_install) > 0:
 		utils.install_packages(StrVector(packnames_to_install))
