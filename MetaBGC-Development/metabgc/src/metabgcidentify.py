@@ -33,7 +33,7 @@ def filter_spHMM_data(spHMM_df, cutoff_df):
 def create_reformat_data(input_df, outdir):
 	rpackages.importr('base')
 	utils = rpackages.importr('utils')
-	packageNames = ('tidyverse')
+	packageNames = ('tidyverse', )
 	packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
 	if len(packnames_to_install) > 0:
 		utils.install_packages(StrVector(packnames_to_install))
