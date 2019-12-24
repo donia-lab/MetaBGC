@@ -19,7 +19,12 @@ Function to parse fasta file based on text file with fasta header ids
 """
 def ExtractFASTASeq(fasta_file,id_list,output_file):
     print("Searching " + fasta_file + "...")
-    records = (r for r in SeqIO.parse(fasta_file, "fasta") if r.id in id_list)
+    record_dict = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
+    records = []
+    for readid in id_list:
+        if readid in record_dict:
+            records.append(record_dict[readid])
+    #records = (r for r in SeqIO.parse(fasta_file, "fasta") if r.id in id_list)
     count = SeqIO.write(records, output_file, "fasta")
     print("Saved %i records from %s to %s" % (count, fasta_file, output_file))
 
