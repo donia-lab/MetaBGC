@@ -19,7 +19,7 @@ def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, 
         for file in files:
             filePath = os.path.join(subdir, file)
             if re.match(r".*.fasta$", file) and os.path.getsize(filePath) > 0:
-                sampleStr = file.split(".")[0]
+                sampleStr = os.path.splitext(file)[0]
                 hmmTblFileName = sampleStr +"_"+interval+".tbl"
                 hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
                 if not os.path.exists(hmmTblFilePath):
@@ -102,7 +102,7 @@ def RunBLASTNDirectoryPar(dbDir, queryFile, ouputDir,ncpus=4):
         for file in files:
             filePath = os.path.join(subdir, file)
             if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
-                sampleStr = file.split(".")[0]
+                sampleStr = os.path.splitext(file)[0]
                 outputFileName = sampleStr + ".txt"
                 outputFilePath = os.path.join(ouputDir, outputFileName)
                 dbFileList.append(filePath)
@@ -125,7 +125,7 @@ def RunBLASTNDirectory(dbDir, queryFile, ouputDir,ncpus=4):
             filePath = os.path.join(subdir, file)
             if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
                 runMakeBLASTDB(filePath, "TMPDB", ouputDir, 'nucl')
-                sampleStr = file.split(".")[0]
+                sampleStr = os.path.splitext(file)[0]
                 outputFileName = sampleStr + ".txt"
                 outputFilePath = os.path.join(ouputDir, outputFileName)
                 runBLASTN(queryFile, ouputDir+os.sep+"TMPDB", outputFilePath, ncpus)
@@ -134,7 +134,7 @@ def RunBLASTNDirectory(dbDir, queryFile, ouputDir,ncpus=4):
 Function to parse HMM file into HMMRecord dict. 
 """
 def parseHMM(hmmPathFile, hmm_string_fmt,sampleType, sampleID, protType, window, interval):
-    with open(hmmPathFile, 'rU') as handle:
+    with open(hmmPathFile, 'r') as handle:
         results_dict = {}
         try:
             for record in SearchIO.parse(handle, hmm_string_fmt):

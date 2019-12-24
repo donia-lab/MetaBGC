@@ -9,24 +9,75 @@
 from Bio import SeqIO
 import os
 import re
+from multiprocessing import Pool, freeze_support
+from itertools import repeat
+import pandas as pd
 
-"Function to parse fasta file based on text file with fasta header ids"
-def parseFastaFile(fasta_file, output_file, id_list):
-	fasta_sequences = SeqIO.parse(open(fasta_file),'fasta')
-	with open(output_file, "a+") as f:
-		for seq in fasta_sequences:
-			if seq.id in id_list:
-			   SeqIO.write(seq, f, "fasta")
-	f.close()
 
-def ExtractFASTASeq(fasta_dir,output_file,text_file):
-	with open(text_file, "r") as ids: 
-		id_list = ids.read() 
-	ids.close()
+"""
+Function to parse fasta file based on text file with fasta header ids
+"""
+def ExtractFASTASeq(fasta_file,id_list,output_file):
+    print("Searching " + fasta_file + "...")
+    records = (r for r in SeqIO.parse(fasta_file, "fasta") if r.id in id_list)
+    count = SeqIO.write(records, output_file, "fasta")
+    print("Saved %i records from %s to %s" % (count, fasta_file, output_file))
 
-	for subdir, dirs, files in os.walk(fasta_dir):
-		for file in files:
-			filePath = os.path.join(subdir, file)
-			if re.match(r".*\.fasta$", file) and not re.match(r".*\.translated.fasta$", file) and os.path.getsize(
-				filePath) > 0:
-				parseFastaFile(filePath, output_file, id_list)
+"""
+Function to run make search and extract FASTA file in parallel. 
+"""
+def RunExtractParallel(dbFileList,id_list,outFileList):
+    numOfprocess = len(dbFileList)
+    pool = Pool(processes=numOfprocess)
+    pool.starmap(ExtractFASTASeq, zip(dbFileList, repeat(id_list), outFileList))
+    pool.close()
+    pool.join()
+    pool.terminate()  # garbage collector
+
+"""
+Check if a given sample has any matched read at all.
+"""
+def sampleHasMatch(sample_list, sampleStr):
+    for sample in sample_list:
+        if sample in sampleStr:
+            return True
+    return False
+
+"""
+Function to run BLAST against a directory. 
+"""
+def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, ncpus=4):
+    df_reads = pd.read_csv(readIDFile, sep='\t')
+    id_list = list(set(df_reads.readID.values.tolist()))
+    sample_list = []
+    for sample in list(set(df_reads.Sample.values.tolist())):
+        sample_list.append(sample.split('-')[0])
+
+    for subdir, dirs, files in os.walk(readsDir):
+        dbFileList=[]
+        outFileList = []
+        for file in files:
+            filePath = os.path.join(subdir, file)
+            if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
+                sampleStr = os.path.splitext(file)[0]
+                if sampleHasMatch(sample_list, sampleStr):
+                    outputFileName = sampleStr + ".fasta"
+                    outputFilePath = os.path.join(ouputDir, outputFileName)
+                    dbFileList.append(filePath)
+                    outFileList.append(outputFilePath)
+                if len(dbFileList)>=ncpus:
+                    RunExtractParallel(dbFileList,id_list,outFileList)
+                    dbFileList = []
+                    outFileList = []
+        if len(dbFileList) > 0:
+            RunExtractParallel(dbFileList,id_list,outFileList)
+
+    with open(outputFasta, 'w') as outfile:
+        for filename in os.listdir(ouputDir):
+            if filename.endswith(".fasta"):
+                filePath = os.path.join(ouputDir, filename)
+                with open(filePath) as infile:
+                    for line in infile:
+                        outfile.write(line)
+            else:
+                continue
