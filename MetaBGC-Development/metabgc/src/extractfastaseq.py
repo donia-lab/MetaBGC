@@ -13,17 +13,18 @@ from multiprocessing import Pool, freeze_support
 from itertools import repeat
 import pandas as pd
 
-
 """
 Function to parse fasta file based on text file with fasta header ids
 """
 def ExtractFASTASeq(fasta_file,id_list,output_file):
     print("Searching " + fasta_file + "...")
-    record_dict = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
+    #record_dict = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta"))
+    record_dict = SeqIO.index(fasta_file, "fasta")
     records = []
     for readid in id_list:
         if readid in record_dict:
-            records.append(record_dict[readid])
+            seq_record = record_dict[readid]
+            records.append(seq_record)
     #records = (r for r in SeqIO.parse(fasta_file, "fasta") if r.id in id_list)
     count = SeqIO.write(records, output_file, "fasta")
     print("Saved %i records from %s to %s" % (count, fasta_file, output_file))
@@ -58,24 +59,31 @@ def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, ncpus=4)
     for sample in list(set(df_reads.Sample.values.tolist())):
         sample_list.append(sample.split('-')[0])
 
+    filePathDict={}
     for subdir, dirs, files in os.walk(readsDir):
         dbFileList=[]
         outFileList = []
         for file in files:
             filePath = os.path.join(subdir, file)
             if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
-                sampleStr = os.path.splitext(file)[0]
-                if sampleHasMatch(sample_list, sampleStr):
-                    outputFileName = sampleStr + ".fasta"
-                    outputFilePath = os.path.join(ouputDir, outputFileName)
-                    dbFileList.append(filePath)
-                    outFileList.append(outputFilePath)
-                if len(dbFileList)>=ncpus:
-                    RunExtractParallel(dbFileList,id_list,outFileList)
-                    dbFileList = []
-                    outFileList = []
-        if len(dbFileList) > 0:
-            RunExtractParallel(dbFileList,id_list,outFileList)
+                filePathDict[filePath] = os.path.getsize(filePath)
+
+    dbFileList = []
+    outFileList = []
+    for filePath in sorted(filePathDict, key=filePathDict.get):
+        file = os.path.basename(filePath)
+        sampleStr = os.path.splitext(file)[0]
+        if sampleHasMatch(sample_list, sampleStr):
+            outputFileName = sampleStr + ".fasta"
+            outputFilePath = os.path.join(ouputDir, outputFileName)
+            dbFileList.append(filePath)
+            outFileList.append(outputFilePath)
+        if len(dbFileList) >= ncpus:
+            RunExtractParallel(dbFileList, id_list, outFileList)
+            dbFileList = []
+            outFileList = []
+    if len(dbFileList) > 0:
+        RunExtractParallel(dbFileList, id_list, outFileList)
 
     with open(outputFasta, 'w') as outfile:
         for filename in os.listdir(ouputDir):

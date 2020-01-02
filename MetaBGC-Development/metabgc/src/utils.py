@@ -20,23 +20,58 @@ def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, 
             filePath = os.path.join(subdir, file)
             if re.match(r".*.fasta$", file) and os.path.getsize(filePath) > 0:
                 sampleStr = os.path.splitext(file)[0]
-                hmmTblFileName = sampleStr +"_"+interval+".tbl"
-                hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
-                if not os.path.exists(hmmTblFilePath):
-                    runHMMSearch(filePath, hmmModel,hmmTblFilePath,ncpus)
-                result_dict = parseHMM(hmmTblFilePath, "hmmer3-tab", sampleType, sampleStr, protType, window, interval)
-                hmmSearchFileName = sampleStr +"_"+interval+".txt"
-                hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
-                createPandaDF(result_dict, hmmSearchFilePath)
+                runHMMSearch(filePath, hmmModel, ouputDir, sampleType, sampleStr, protType, window, interval,ncpus)
+
+"""
+Function searches all FASTA file in a directory against a HMM in parallel. 
+"""
+def RunHMMDirectoryParallel(inputDir, hmmModel, sampleType, protType, window, interval, ouputDir, ncpus=4):
+    print('Number of pool processes:{0}.'.format(ncpus))
+    for subdir, dirs, files in os.walk(inputDir):
+        fastaFileList=[]
+        sampleStrList = []
+        for file in files:
+            filePath = os.path.join(subdir, file)
+            if re.match(r".*.fasta$", file) and os.path.getsize(filePath) > 0:
+                sampleStr = os.path.splitext(file)[0]
+                fastaFileList.append(filePath)
+                sampleStrList.append(sampleStr)
+                if len(fastaFileList) >= ncpus:
+                    HMMSearchParallel(fastaFileList, hmmModel, ouputDir, sampleType, sampleStrList, protType, window, interval)
+                    fastaFileList = []
+                    sampleStrList = []
+        if len(fastaFileList) > 0:
+            HMMSearchParallel(fastaFileList, hmmModel, ouputDir, sampleType, sampleStrList, protType, window, interval)
+
+"""
+Function to run make HMM search against FASTA files in parallel. 
+"""
+def HMMSearchParallel(fastaFileList, hmmFile, ouputDir, sampleType,sampleStrList,protType,window,interval):
+    numOfprocess = len(fastaFileList)
+    pool = Pool(processes=numOfprocess)
+    pool.starmap(runHMMSearch, zip(fastaFileList, repeat(hmmFile), repeat(ouputDir), repeat(sampleType),
+                                   sampleStrList, repeat(protType),repeat(window),repeat(interval),repeat(1)))
+    pool.close()
+    pool.join()
+    pool.terminate()  # garbage collector
 
 """
 Function searches FASTA file against HMM. 
 """
-def runHMMSearch(fastaFile, hmmFile, outputFile, ncpus=4):
-    print('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
-    cmd = "hmmsearch --cpu " + str(ncpus) + " --F1 0.02 --F2 0.02 --F3 0.02 --tblout " + outputFile + " " + hmmFile + " "+ fastaFile + " > /dev/null"
-    print(cmd)
-    subprocess.call(cmd, shell=True)
+def runHMMSearch(fastaFile, hmmFile, ouputDir, sampleType, sampleStr, protType, window, interval, ncpus=4):
+    hmmTblFileName = sampleStr + "_" + interval + ".tbl"
+    hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
+    if not os.path.exists(hmmTblFilePath):
+        print('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
+        cmd = "hmmsearch --cpu " + str(ncpus) + " --F1 0.02 --F2 0.02 --F3 0.02 --tblout " + hmmTblFilePath + " " + hmmFile + " "+ fastaFile + " > /dev/null"
+        print(cmd)
+        subprocess.call(cmd, shell=True)
+    else:
+        print("HMM search skipped... Using existing result for: ", fastaFile)
+    result_dict = parseHMM(hmmTblFilePath, "hmmer3-tab", sampleType, sampleStr, protType, window, interval)
+    hmmSearchFileName = sampleStr + "_" + interval + ".txt"
+    hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
+    createPandaDF(result_dict, hmmSearchFilePath)
     print("Done Running HMM Build with:",fastaFile)
 
 """

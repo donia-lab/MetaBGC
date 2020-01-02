@@ -5,9 +5,9 @@
 # This file is a component of MetaBGC (Metagenomic identifier of Biosynthetic Gene Clusters)
 # (contact Francine Camacho at camachofrancine@gmail.com).
 #####################################################################################
-from rpy2.robjects.vectors import StrVector
-import rpy2.robjects.packages as rpackages
-import rpy2.robjects as robjects
+# from rpy2.robjects.vectors import StrVector
+# import rpy2.robjects.packages as rpackages
+# import rpy2.robjects as robjects
 from metabgc.src.utils import *
 
 CPU_THREADS=4
@@ -26,30 +26,14 @@ def combine_blast_results(blast_dir_path, outdir, cohort_name):
 	return combinedBLAST
 
 def create_clustering_file(outdir,blast_result):
-	rpackages.importr('base')
-	utils = rpackages.importr('utils')
-	packageNames = ('tidyverse')
-	packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
-	if len(packnames_to_install) > 0:
-		utils.install_packages(StrVector(packnames_to_install))
-	rpackages.importr('tidyverse')
-	robjects.r['options'](warn=-1)
-	create_file = robjects.r('''
-		function(results_file,outdir) {
-			all_domains_blast_df <- read_tsv(results_file, col_names = F)
-			names(all_domains_blast_df) <- c("sseqid", "slen","sstart", "send", "qseqid", "qlen", "qstart", "qend", "qcovs", "pident"," evalue", "Sample", "cohort")
-			all_domains_blast_df_count <- all_domains_blast_df %>% group_by(Sample, qseqid) %>% count() %>% ungroup()
-			all_domains_blast_df_count_table <- all_domains_blast_df_count %>% spread(., Sample, n, fill =0 )
-			abundFile = file.path(outdir, "unique-biosynthetic-reads-abundance-table.txt")
-			abundWideFile = file.path(outdir, "unique-biosynthetic-reads-abundance-table-wide.txt")
-			write_tsv(all_domains_blast_df_count_table, abundFile, col_names = T)
-			write_tsv(all_domains_blast_df_count, abundWideFile, col_names = T)
-		}
-		''')
-
-	create_file(blast_result,outdir)
-	return os.path.join(outdir,"unique-biosynthetic-reads-abundance-table.txt")
-
+	all_domains_blast_df = pd.read_csv(blast_result, sep="\t",
+						   names=["sseqid", "slen","sstart", "send", "qseqid", "qlen", "qstart", "qend", "qcovs", "pident"," evalue", "Sample", "cohort"])
+	all_domains_blast_df_count = all_domains_blast_df.groupby(['Sample','qseqid']).qseqid.agg('count').to_frame('count').reset_index()
+	all_domains_blast_df_count_table = all_domains_blast_df_count.pivot_table(index='qseqid', columns='Sample', values='count',fill_value=0)
+	abundFile = os.path.join(outdir, "unique-biosynthetic-reads-abundance-table.txt")
+	abundWideFile = os.path.join(outdir, "unique-biosynthetic-reads-abundance-table-wide.txt")
+	all_domains_blast_df_count_table.to_csv(abundFile,sep='\t')
+	all_domains_blast_df_count.to_csv(abundWideFile, index=False,sep='\t')
 
 def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directory,
              seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix, blastn_search_directory,
