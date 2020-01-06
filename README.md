@@ -149,19 +149,34 @@ MetaBGC consists of four main modules:
 	9. --output_directory, required=True: Directory to save results.
 	10. --cpu, required=False: Number of CPU threads to use (Def.=4). 
 	```
-2. The output of the quantify command is an abundance profile file **unique-biosynthetic-reads-abundance-table.txt**. 
+2. The output of the quantify command is are abundance profile files:
+ ```
+    1. unique-biosynthetic-reads-abundance-table.txt : Contains the read level abundance matrix.
+    2. unique-biosynthetic-reads-abundance-table-wide.txt : Contains the sample and read level abundance values.  
+ ``` 
 
 ### Running Cluster to generate biosynthetic read bins
 1. To generate BGC bins of **unique biosynthetic reads**, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by Quantify as input for ```metabgc cluster```. The input parameters to the script are:
 
 	```
 	1. --table, required=True: Path of tab-delimited abundance table,unique-biosynthetic-reads-abundance-table.txt, produced by MetaBGC-Quantify.
-	2. --max_dist, required=True: Maximum Pearson distance between two reads to be in the same cluster. (Def.=0.1)
-	3. --min_samples, required=True: Minimum number of samples required for a cluster. If min_samples > 1, noise are labelled as -1. (Def.=1).
-	4. --cpu, required=False: Number of CPU threads. (Def.=1)
+	2. --table_wide, required=True: Path of tab-delimited sample and read level abundance table,unique-biosynthetic-reads-abundance-table-wide.txt, produced by MetaBGC-Quantify.
+	3. --identify_fasta, required=True: Path to the identified-biosynthetic-reads.fasta file produced by MetaBGC-Identify.
+	4. --max_dist, required=False: Maximum Pearson distance between two reads to be in the same cluster. (Def.=0.1)
+	5. --min_samples, required=False: Minimum number of samples required for a cluster. If min_samples > 1, noise are labelled as -1. (Def.=1).
+	6. --min_reads_bin, required=False: Minimum number of reads required in a bin to be considered in analytics output files. (Def.=10)
+	7. --min_abund_bin, required=False: Minimum total read abundance required in a bin to be considered in analytics output files. (Def.=10)
+	8. --cpu, required=False: Number of CPU threads. (Def.=1)
 	```
 
-2. The cluster command produces a file, unique-biosynthetic-reads-abundance-table_DBSCAN.json, comprised of all the biosynthetic reads clustered in json format.   
+2. The cluster command produces the following files:
+```
+    1. unique-biosynthetic-reads-abundance-table_DBSCAN.json: Bin labels assigned DBSCAN, comprised of all the biosynthetic reads clustered in json format.
+    2. BinSummary.txt : Summary of the bins and other statistics. 
+    3. ReadLevelAbundance.tsv: Abundance of each biosynthetic read in each assigned bin with >= min_reads_bin reads. 
+    4. SampleAbundanceMatrix.tsv : Abundance matrix of each sample against the bin ids for each bin with >= min_reads_bin reads.
+    5. bin_fasta: Directory with FASTA files containing reads belonging each bin.  
+```   
 
 3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
@@ -181,8 +196,12 @@ MetaBGC consists of four main modules:
 	9. --cohort_name, required=True: Name of the cohort of metagenomic samples used for analysis.
 	10. --blastn_search_directory, required=False: Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see job_scripts in development.
 	11. --hmm_search_directory, required=False: Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.
-	12. --output_directory, required=True: Directory to save results in.
-	13. --cpu, required=False: Number of CPU threads to use (Def.=4). 
+    12. --max_dist, required=False: Maximum Pearson distance between two reads to be in the same cluster. (Def.=0.1)
+	13. --min_samples, required=False: Minimum number of samples required for a cluster. If min_samples > 1, noise are labelled as -1. (Def.=1).
+	14. --min_reads_bin, required=False: Minimum number of reads required in a bin to be considered in analytics output files. (Def.=10)
+	15. --min_abund_bin, required=False: Minimum total read abundance required in a bin to be considered in analytics output files. (Def.=10)
+	16. --output_directory, required=True: Directory to save results in.
+	17. --cpu, required=False: Number of CPU threads to use (Def.=4). 
 	```
 
 2. Search will produce the same output as the Cluster command described above and all the intermediate files from each step. 
