@@ -7,26 +7,27 @@ from metabgc.src.extractfastaseq import *
 
 
 def test_parseHMM():
-    sampleStr = "MetaHit"
-    input_dir = "AbcK/data/identify/hmmsearch_result"
-    ouputDir = "AbcK/output/MetaHit/identify/parsed_tables"
-    os.makedirs(ouputDir, 0o777, True)
+    cohortStr = "MetaHit"
+    input_dir = "AbcK/data/"+cohortStr+"/hmmsearch_result"
+    ouputDir = "AbcK/output/"+cohortStr
+    parsedOuputDir = "AbcK/output/"+cohortStr+"/parsed_tables"
+    os.makedirs(parsedOuputDir, 0o777, True)
     window = "30_10"
     protType="AbcK"
     for subdir, dirs, files in os.walk(input_dir):
         for file in files:
             filePath = os.path.join(subdir, file)
-            if re.match(r".*.txt$", file) and os.path.getsize(filePath) > 0 and "parsed_tables" not in filePath:
-                hmm_dir = os.path.dirname(filePath)
-                interval = hmm_dir.split("__")[2].split('-')[0]
-                read_sample = file.split("-against-")[0]
-                result_dict = parseHMM(filePath, 'hmmer3-text',sampleStr, read_sample, protType, window, interval)
-                hmmSearchFileName = read_sample + "_" + interval + ".txt"
-                hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
+            if re.match(r".*.tbl$", file) and os.path.getsize(filePath) > 0 and "parsed_tables" not in filePath:
+                hmm_tok = os.path.splitext(file)[0].split("_")
+                interval = hmm_tok[1] + "_" + hmm_tok[2]
+                read_sample = hmm_tok[0]
+                result_dict = parseHMM(filePath, 'hmmer3-tab',cohortStr, read_sample, protType, window, interval)
+                hmmSearchFileName = read_sample + "__" + interval + ".txt"
+                hmmSearchFilePath = os.path.join(parsedOuputDir, hmmSearchFileName)
                 createPandaDF(result_dict, hmmSearchFilePath)
-    allHMMResult = "AbcK/output/MetaHit/identify/CombinedHmmSearch.txt"
+    allHMMResult = os.path.join(ouputDir, "CombinedHmmSearch.txt")
     with open(allHMMResult, 'w') as outfile:
-        for subdir, dirs, files in os.walk(ouputDir):
+        for subdir, dirs, files in os.walk(parsedOuputDir):
             for file in files:
                 filePath = os.path.join(subdir, file)
                 if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
@@ -35,17 +36,18 @@ def test_parseHMM():
                             outfile.write(line)
 
 def test_identify():
-    sampleStr = "MetaHit"
-    allHMMResult = "AbcK/output/MetaHit/identify/CombinedHmmSearch.txt"
+    cohortStr = "MetaHit"
+    allHMMResult = "AbcK/output/"+cohortStr+"/CombinedHmmSearch.txt"
     cutoff_file = "AbcK/output/build/HiPer_spHMMs/AbcK_F1_Cutoff.tsv"
-    filteredTableFile="AbcK/output/MetaHit/identify/spHMM-filtered-results.txt"
-    identifyReadIdFile="AbcK/output/MetaHit/identify/CombinedReadIds.txt"
+    filteredTableFile="AbcK/output/"+cohortStr+"/identify/spHMM-filtered-results.txt"
+    identifyReadIdFile="AbcK/output/"+cohortStr+"/identify/CombinedReadIds.txt"
     runidentify(allHMMResult, cutoff_file, filteredTableFile,identifyReadIdFile)
 
-
 def test_extract():
-    filteredTableFile = "AbcK/output/MetaHit/identify/spHMM-filtered-results.txt"
-    readsDir = "AbcK/data/reads"
-    outputDir = "AbcK/output/MetaHit/identify/reads"
+    cohortStr = "MetaHit"
+    filteredTableFile = "AbcK/output/"+cohortStr+"/identify/spHMM-filtered-results.txt"
+    readsDir = "AbcK/data/"+cohortStr+"/nucl"
+    outputDir = "AbcK/output/"+cohortStr+"/identify/reads"
+    identifyOutFile = "AbcK/output/"+cohortStr+"/identify/identified-biosynthetic-reads.fasta"
     os.makedirs(outputDir, 0o777, True)
-    RunExtractDirectoryPar(readsDir, filteredTableFile, outputDir, "identified-biosynthetic-reads.fasta", ncpus=4)
+    RunExtractDirectoryPar(readsDir, filteredTableFile, outputDir, identifyOutFile, ncpus=4)

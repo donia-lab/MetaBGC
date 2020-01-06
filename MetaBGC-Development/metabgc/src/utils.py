@@ -59,7 +59,7 @@ def HMMSearchParallel(fastaFileList, hmmFile, ouputDir, sampleType,sampleStrList
 Function searches FASTA file against HMM. 
 """
 def runHMMSearch(fastaFile, hmmFile, ouputDir, sampleType, sampleStr, protType, window, interval, ncpus=4):
-    hmmTblFileName = sampleStr + "_" + interval + ".tbl"
+    hmmTblFileName = sampleStr + "__" + interval + ".tbl"
     hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
     if not os.path.exists(hmmTblFilePath):
         print('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
@@ -69,7 +69,7 @@ def runHMMSearch(fastaFile, hmmFile, ouputDir, sampleType, sampleStr, protType, 
     else:
         print("HMM search skipped... Using existing result for: ", fastaFile)
     result_dict = parseHMM(hmmTblFilePath, "hmmer3-tab", sampleType, sampleStr, protType, window, interval)
-    hmmSearchFileName = sampleStr + "_" + interval + ".txt"
+    hmmSearchFileName = sampleStr + "__" + interval + ".txt"
     hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
     createPandaDF(result_dict, hmmSearchFilePath)
     print("Done Running HMM Build with:",fastaFile)
@@ -98,7 +98,7 @@ def runMakeBLASTDB(fastaFile, dbName, dbOpPath, type):
 Function BLAST search a FASTA. 
 """
 def runBLASTN(fastaFile, database, outFile, ncpus=4):
-    cmd = "blastn -num_threads " + str(ncpus) +  " -query " + fastaFile + " -db " + database + " -perc_identity 90.0 -max_target_seqs 10000 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" -out " + outFile
+    cmd = "blastn -num_threads " + str(ncpus) +  " -query " + fastaFile + " -db " + database + " -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" -out " + outFile
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done running BLAST Build on:",fastaFile)

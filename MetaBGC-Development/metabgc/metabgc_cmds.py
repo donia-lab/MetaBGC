@@ -4,7 +4,7 @@ from metabgc.src.metabgcidentify import mbgcidentify
 from metabgc.src.metabgcquantify import mbgcquantify
 from metabgc.src.metabgccluster import mbgccluster
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 @click.group()
 def cli():
@@ -145,13 +145,22 @@ def quantify(identify_fasta,prot_family_name,cohort_name,nucl_seq_directory,
 @cli.command()
 @click.option("--table",required=True,type=click.Path(exists=True,file_okay=True,readable=True),
               help="Path of tab-delimited abundance table.")
+@click.option("--table_wide",required=True,type=click.Path(exists=True,file_okay=True,readable=True),
+              help="Path of tab-delimited abundance wide file.")
+@click.option('--identify_fasta', required=True,
+              type=click.Path(exists=True,file_okay=True,readable=True),
+              help= "Path to the file produced by MetaBGC-Identify.")
+@click.option("--table",required=True,type=click.Path(exists=True,file_okay=True,readable=True),
+              help="Path of tab-delimited abundance table.")
 @click.option("--max_dist", type=float, default=0.1,help="Maximum Pearson distance between two reads to be in the same cluster. Default is 0.1")
 @click.option("--min_samples", type=float, default=1,help="Minimum number of samples required for a cluster. " \
                                                           "If min_samples > 1, noise are labelled as -1")
+@click.option("--min_reads_bin", type=float, default=10,help="Minimum number of reads required in a bin to be considered in analytics output files.")
+@click.option("--min_abund_bin", type=float, default=10,help="Minimum total read abundance required in a bin to be considered in analytics output files.")
 @click.option("--cpu", type=int, default=1,help="Number of threads.")
-def cluster(table,max_dist,min_samples,cpu):
+def cluster(table,table_wide,identify_fasta,max_dist,min_samples,min_reads_bin,min_abund_bin,cpu):
     click.echo('Invoking MetaBGC Cluster...')
-    cluster_file = mbgccluster(table,max_dist,min_samples,cpu)
+    cluster_file = mbgccluster(table,table_wide, identify_fasta, max_dist, min_samples,min_reads_bin, min_abund_bin, cpu)
     print('Clustered file: ' + cluster_file)
 
 
@@ -180,6 +189,8 @@ def cluster(table,max_dist,min_samples,cpu):
 @click.option("--max_dist", type=float, default=0.1,help="Maximum Pearson distance between two reads to be in the same cluster. Default is 0.1")
 @click.option("--min_samples", type=float, default=1,help="Minimum number of samples required for a cluster. " \
                                                           "If min_samples > 1, noise are labelled as -1")
+@click.option("--min_reads_bin", type=float, default=10,help="Minimum number of reads required in a bin to be considered in analytics output files.")
+@click.option("--min_abund_bin", type=float, default=10,help="Minimum total read abundance required in a bin to be considered in analytics output files.")
 @click.option('--hmm_search_directory', required=False,
               type=click.Path(exists=True,dir_okay=True,readable=True),
               help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.")
@@ -194,18 +205,18 @@ def cluster(table,max_dist,min_samples,cpu):
               help="Number of threads. Def.: 4")
 def search(sphmm_directory,prot_family_name,cohort_name,
             nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,
-            r1_file_suffix,r2_file_suffix,max_dist,
-            min_samples, hmm_search_directory, blastn_search_directory, output_directory,cpu):
+            r1_file_suffix,r2_file_suffix,max_dist,min_samples,min_reads_bin,min_abund_bin,
+            hmm_search_directory, blastn_search_directory, output_directory,cpu):
     click.echo('Invoking MetaBGC search...')
     ident_reads_file = mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,prot_seq_directory,
                                     seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,
                                     prot_family_name, hmm_search_directory, output_directory, cpu)
 
-    abund_file = mbgcquantify(ident_reads_file, prot_family_name, cohort_name, nucl_seq_directory,
+    abund_file, abund_wide_table = mbgcquantify(ident_reads_file, prot_family_name, cohort_name, nucl_seq_directory,
              seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,blastn_search_directory,
              output_directory, cpu)
 
-    cluster_file = mbgccluster(abund_file, max_dist, min_samples, cpu)
+    cluster_file = mbgccluster(abund_file,abund_wide_table, ident_reads_file, max_dist, min_samples,min_reads_bin, min_abund_bin, cpu)
 
     print('Clustered file: ' + cluster_file)
 

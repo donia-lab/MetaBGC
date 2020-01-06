@@ -34,6 +34,7 @@ def create_clustering_file(outdir,blast_result):
 	abundWideFile = os.path.join(outdir, "unique-biosynthetic-reads-abundance-table-wide.txt")
 	all_domains_blast_df_count_table.to_csv(abundFile,sep='\t')
 	all_domains_blast_df_count.to_csv(abundWideFile, index=False,sep='\t')
+	return (abundFile,abundWideFile)
 
 def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directory,
              seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix, blastn_search_directory,
@@ -62,5 +63,5 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 		RunBLASTNDirectoryPar(nucl_seq_directory, cdHitFile, blastn_search_directory,CPU_THREADS)
 
 	combinedBLASTPath = combine_blast_results(blastn_search_directory, quant_op_dir, cohort_name)
-	abund_file = create_clustering_file(quant_op_dir, combinedBLASTPath)
-	return abund_file
+	abund_file, abund_wide_file = create_clustering_file(quant_op_dir, combinedBLASTPath)
+	return (abund_file, abund_wide_file)
