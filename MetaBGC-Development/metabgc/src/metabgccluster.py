@@ -98,7 +98,6 @@ def mbgccluster(table, tableAbundance, identifiedReadFile,max_dist,min_samples, 
     outF.write("Maximum Bin Abundance of Bins with >= {0} Reads: {1}\n".format(readThresh,round(max(df_bins['BinAbundance'].tolist()),2)))
     outF.write("Minimum Bin Abundance of Bins with >= {0} Reads: {1}\n".format(readThresh,round(min(df_bins['BinAbundance'].tolist()),2)))
 
-
     df_abundance_sample = df_abundance_sample[df_abundance_sample['BinAbundance']>=abundThresh]
     df_abundance_sample_pivot = df_abundance_sample.pivot_table(index='Sample', columns='bin',values='BinAbundance', fill_value=0)
     df_abundance_sample_pivot.to_csv(out_file_abund_sample,sep='\t')

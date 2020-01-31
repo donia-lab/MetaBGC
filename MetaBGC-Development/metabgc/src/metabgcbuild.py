@@ -155,7 +155,7 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
     # BLAST Alignment
     if not os.path.isdir(blastn_search_directory):
         os.makedirs(blastn_search_directory,0o777,True)
-        RunBLASTNDirectoryPar(nucl_seq_directory, tp_genes_nucl, blastn_search_directory,CPU_THREADS)
+        RunBLASTNDirectoryPar(nucl_seq_directory, tp_genes_nucl, "-max_target_seqs 10000 -perc_identity 90.0", blastn_search_directory,CPU_THREADS)
 
     with open(allBLASTResult, 'w') as outfile:
         outfile.write("sseqid\tslen\tsstart\tsend\tqseqid\tqlen\tqstart\tqend\tpident\tevalue\tSample\tsampleType\n")

@@ -60,7 +60,7 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 
 	if not os.path.isdir(blastn_search_directory):
 		os.makedirs(blastn_search_directory, 0o777, True)
-		RunBLASTNDirectoryPar(nucl_seq_directory, cdHitFile, blastn_search_directory,CPU_THREADS)
+		RunBLASTNDirectoryPar(nucl_seq_directory, cdHitFile, "-dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11",blastn_search_directory,CPU_THREADS)
 
 	combinedBLASTPath = combine_blast_results(blastn_search_directory, quant_op_dir, cohort_name)
 	abund_file, abund_wide_file = create_clustering_file(quant_op_dir, combinedBLASTPath)

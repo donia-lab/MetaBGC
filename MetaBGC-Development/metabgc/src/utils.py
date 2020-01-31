@@ -97,8 +97,8 @@ def runMakeBLASTDB(fastaFile, dbName, dbOpPath, type):
 """
 Function BLAST search a FASTA. 
 """
-def runBLASTN(fastaFile, database, outFile, ncpus=4):
-    cmd = "blastn -num_threads " + str(ncpus) +  " -query " + fastaFile + " -db " + database + " -dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" -out " + outFile
+def runBLASTN(fastaFile, database, blastParamStr, outFile, ncpus=4):
+    cmd = "blastn -num_threads " + str(ncpus) + " -query " + fastaFile + " -db " + database + " " + blastParamStr + " -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" -out " + outFile
     print(cmd)
     subprocess.call(cmd, shell=True)
     print("Done running BLAST Build on:",fastaFile)
@@ -106,22 +106,22 @@ def runBLASTN(fastaFile, database, outFile, ncpus=4):
 """
 Function to run make BLAST db and search a FASTA file. 
 """
-def MakeSearchBLASTN(dbFile, dbOpPath, searchFile, outFile):
+def MakeSearchBLASTN(dbFile, dbOpPath, searchFile, blastParamStr, outFile):
     basename = os.path.basename(dbFile)
     dbOpPath = dbOpPath + os.sep + basename
     os.makedirs(dbOpPath, 0o777, True)
     dbName = os.path.splitext(basename)[0]
     dbOut = runMakeBLASTDB(dbFile,dbName,dbOpPath,'nucl')
-    runBLASTN(searchFile, dbOut, outFile, 1)
+    runBLASTN(searchFile, dbOut, blastParamStr,outFile, 1)
     shutil.rmtree(dbOpPath)
 
 """
 Function to run make BLAST db and search a FASTA file. 
 """
-def MakeSearchBLASTNParallel(dbFileList, dbOpPath, searchFileList, outFileList):
+def MakeSearchBLASTNParallel(dbFileList, dbOpPath, searchFileList, blastParamStr, outFileList):
     numOfprocess = len(dbFileList)
     pool = Pool(processes=numOfprocess)
-    pool.starmap(MakeSearchBLASTN, zip(dbFileList, repeat(dbOpPath), searchFileList, outFileList))
+    pool.starmap(MakeSearchBLASTN, zip(dbFileList, repeat(dbOpPath), searchFileList, repeat(blastParamStr), outFileList))
     pool.close()
     pool.join()
     pool.terminate()  # garbage collector
@@ -129,7 +129,7 @@ def MakeSearchBLASTNParallel(dbFileList, dbOpPath, searchFileList, outFileList):
 """
 Function to run BLAST against a directory. 
 """
-def RunBLASTNDirectoryPar(dbDir, queryFile, ouputDir,ncpus=4):
+def RunBLASTNDirectoryPar(dbDir, queryFile, blastParamStr, ouputDir,ncpus=4):
     for subdir, dirs, files in os.walk(dbDir):
         dbFileList=[]
         searchFileList = []
@@ -144,17 +144,17 @@ def RunBLASTNDirectoryPar(dbDir, queryFile, ouputDir,ncpus=4):
                 searchFileList.append(queryFile)
                 outFileList.append(outputFilePath)
                 if len(dbFileList)>=ncpus:
-                    MakeSearchBLASTNParallel(dbFileList,ouputDir,searchFileList,outFileList)
+                    MakeSearchBLASTNParallel(dbFileList,ouputDir,searchFileList, blastParamStr,outFileList)
                     dbFileList = []
                     searchFileList = []
                     outFileList = []
         if len(dbFileList) > 0:
-            MakeSearchBLASTNParallel(dbFileList, ouputDir, searchFileList, outFileList)
+            MakeSearchBLASTNParallel(dbFileList, ouputDir, searchFileList , blastParamStr, outFileList)
 
 """
 Function to run BLAST against a directory. 
 """
-def RunBLASTNDirectory(dbDir, queryFile, ouputDir,ncpus=4):
+def RunBLASTNDirectory(dbDir, queryFile, blastParamStr, ouputDir,ncpus=4):
     for subdir, dirs, files in os.walk(dbDir):
         for file in files:
             filePath = os.path.join(subdir, file)
@@ -163,7 +163,7 @@ def RunBLASTNDirectory(dbDir, queryFile, ouputDir,ncpus=4):
                 sampleStr = os.path.splitext(file)[0]
                 outputFileName = sampleStr + ".txt"
                 outputFilePath = os.path.join(ouputDir, outputFileName)
-                runBLASTN(queryFile, ouputDir+os.sep+"TMPDB", outputFilePath, ncpus)
+                runBLASTN(queryFile, ouputDir+os.sep+"TMPDB", blastParamStr,outputFilePath, ncpus)
 
 """
 Function to parse HMM file into HMMRecord dict. 

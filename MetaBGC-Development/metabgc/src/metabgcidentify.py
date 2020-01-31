@@ -59,6 +59,8 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,prot_seq_direc
 		r1_file_suffix = ""
 	if r2_file_suffix is None:
 		r2_file_suffix = ""
+	if prot_seq_directory is None:
+		prot_seq_directory = ""
 
 	if hmm_search_directory is None:
 		hmm_search_directory = os.path.join(identify_op_dir, 'hmm_identify_search')
