@@ -141,7 +141,7 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
     os.makedirs(hmm_search_directory,0o777,True)
     for hmmSeqPosKey, hmmFileObj in hmmDict.items():
         hmmInterval = str(hmmDict[hmmSeqPosKey].intervalStart)+"_"+str(hmmDict[hmmSeqPosKey].intervalEnd)
-        RunHMMDirectory(prot_seq_directory,hmmFileObj.hmmFile, cohort_name, prot_family_name, "30_10", hmmInterval, hmm_search_directory, CPU_THREADS)
+        RunHMMDirectoryParallel(prot_seq_directory,hmmFileObj.hmmFile, cohort_name, prot_family_name, "30_10", hmmInterval, hmm_search_directory, CPU_THREADS)
 
     with open(allHMMResult, 'w') as outfile:
         for subdir, dirs, files in os.walk(hmm_search_directory):

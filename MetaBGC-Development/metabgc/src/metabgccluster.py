@@ -106,13 +106,9 @@ def mbgccluster(table, tableAbundance, identifiedReadFile,max_dist,min_samples, 
     df_abundance['log10BinAdbundance'] = np.log10(df_abundance['BinAbundance'])
     df_abundance.to_csv(out_file_abund, index=False,sep='\t')
 
-    #outF.write("Number of Clusters with >= {0} Reads and >= {1} Abundance: {2}\n".format(readThresh, abundThresh,
-    #                                                                                     len(Counter(df_abundance_sample['bin'].tolist()).keys())))
-
     outF.write("Average Number of Reads in Bins with >= {0} Reads: {1}\n".format(readThresh,round(mean(clusterFreqGTThresh),2)))
     outF.write("Average Abundance of Bins with >= {0} Reads: {1}\n".format(readThresh,round(mean(clusterFreqGTThresh),2)))
     outF.write("Number Samples in containing Bins with >= {0} Reads at Bin Abundance: {1}\n".format(readThresh, len(Counter(df_abundance_sample['Sample'].tolist()).keys())))
-
     outF.close()
 
     return out_file_json
