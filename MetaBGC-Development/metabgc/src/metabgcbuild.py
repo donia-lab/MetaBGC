@@ -138,35 +138,37 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
         prot_seq_directory = TranseqReadsDir(build_op_dir, nucl_seq_directory, CPU_THREADS)
 
     # HMMER Search
-    os.makedirs(hmm_search_directory,0o777,True)
-    for hmmSeqPosKey, hmmFileObj in hmmDict.items():
-        hmmInterval = str(hmmDict[hmmSeqPosKey].intervalStart)+"_"+str(hmmDict[hmmSeqPosKey].intervalEnd)
-        RunHMMDirectoryParallel(prot_seq_directory,hmmFileObj.hmmFile, cohort_name, prot_family_name, "30_10", hmmInterval, hmm_search_directory, CPU_THREADS)
+    if not os.path.exists(allHMMResult) and os.path.getsize(allHMMResult) > 0:
+        os.makedirs(hmm_search_directory,0o777,True)
+        for hmmSeqPosKey, hmmFileObj in hmmDict.items():
+            hmmInterval = str(hmmDict[hmmSeqPosKey].intervalStart)+"_"+str(hmmDict[hmmSeqPosKey].intervalEnd)
+            RunHMMDirectoryParallel(prot_seq_directory,hmmFileObj.hmmFile, cohort_name, prot_family_name, "30_10", hmmInterval, hmm_search_directory, CPU_THREADS)
 
-    with open(allHMMResult, 'w') as outfile:
-        for subdir, dirs, files in os.walk(hmm_search_directory):
-            for file in files:
-                filePath = os.path.join(subdir, file)
-                if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
-                   with open(filePath) as infile:
-                        for line in infile:
-                            outfile.write(line)
+        with open(allHMMResult, 'w') as outfile:
+            for subdir, dirs, files in os.walk(hmm_search_directory):
+                for file in files:
+                    filePath = os.path.join(subdir, file)
+                    if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
+                       with open(filePath) as infile:
+                            for line in infile:
+                                outfile.write(line)
 
     # BLAST Alignment
-    if not os.path.isdir(blastn_search_directory):
-        os.makedirs(blastn_search_directory,0o777,True)
-        RunBLASTNDirectoryPar(nucl_seq_directory, tp_genes_nucl, "-max_target_seqs 10000 -perc_identity 90.0", blastn_search_directory,CPU_THREADS)
+    if not os.path.exists(allBLASTResult) and os.path.getsize(allBLASTResult) > 0:
+        if not os.path.isdir(blastn_search_directory):
+            os.makedirs(blastn_search_directory,0o777,True)
+            RunBLASTNDirectoryPar(nucl_seq_directory, tp_genes_nucl, "-max_target_seqs 10000 -perc_identity 90.0", blastn_search_directory,CPU_THREADS)
 
-    with open(allBLASTResult, 'w') as outfile:
-        outfile.write("sseqid\tslen\tsstart\tsend\tqseqid\tqlen\tqstart\tqend\tpident\tevalue\tSample\tsampleType\n")
-        for subdir, dirs, files in os.walk(blastn_search_directory):
-            for file in files:
-                filePath = os.path.join(subdir, file)
-                if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
-                    with open(filePath) as infile:
-                        for line in infile:
-                            sampleName = ntpath.basename(filePath).split(".txt")[0]
-                            outfile.write(line.strip() + "\t" + sampleName + "\t" + cohort_name + "\n")
+        with open(allBLASTResult, 'w') as outfile:
+            outfile.write("sseqid\tslen\tsstart\tsend\tqseqid\tqlen\tqstart\tqend\tpident\tevalue\tSample\tsampleType\n")
+            for subdir, dirs, files in os.walk(blastn_search_directory):
+                for file in files:
+                    filePath = os.path.join(subdir, file)
+                    if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
+                        with open(filePath) as infile:
+                            for line in infile:
+                                sampleName = ntpath.basename(filePath).split(".txt")[0]
+                                outfile.write(line.strip() + "\t" + sampleName + "\t" + cohort_name + "\n")
 
     # Eval spHMMs
     rpackages.importr('base')
@@ -183,7 +185,8 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     hp_hmm_directory = os.path.join(build_op_dir, 'HiPer_spHMMs')
     os.makedirs(hp_hmm_directory,0o777,True)
-    r_script = os.path.join(sys.path[0],'metabgc','src','EvaluateSpHMMs.R')
+    module_dir = os.path.dirname(GenerateSpHMM.__file__)
+    r_script = os.path.join(module_dir,'metabgc','src','EvaluateSpHMMs.R')
 
     with open(r_script, 'r') as f:
         rStr = f.read()
