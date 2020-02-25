@@ -434,3 +434,55 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
         print("Invalid file format inputs.\n")
         exit(0)
 
+
+
+"""
+Function searches all FASTA file in a directory against a HMM in parallel. 
+"""
+def RunHMMDirectoryParallel(inputDir, hmmModel, ouputDir, ncpus=4):
+    print('Number of pool processes:{0}.'.format(ncpus))
+    for subdir, dirs, files in os.walk(inputDir):
+        fastaFileList=[]
+        sampleStrList = []
+        for file in files:
+            filePath = os.path.join(subdir, file)
+            if re.match(r".*.faa$", file) and os.path.getsize(filePath) > 0:
+                sampleStr = os.path.splitext(file)[0]
+                fastaFileList.append(filePath)
+                sampleStrList.append(sampleStr)
+                if len(fastaFileList) >= ncpus:
+                    HMMSearchParallel(fastaFileList, hmmModel, ouputDir)
+                    fastaFileList = []
+                    sampleStrList = []
+        if len(fastaFileList) > 0:
+            HMMSearchParallel(fastaFileList, hmmModel, ouputDir)
+
+"""
+Function to run make HMM search against FASTA files in parallel. 
+"""
+def HMMSearchParallel(fastaFileList,hmmFile,ouputDir):
+    numOfprocess = len(fastaFileList)
+    pool = Pool(processes=numOfprocess)
+    pool.starmap(runHMMSearch, zip(fastaFileList, repeat(hmmFile), repeat(ouputDir), repeat(1)))
+    pool.close()
+    pool.join()
+    pool.terminate()  # garbage collector
+
+"""
+Function searches FASTA file against HMM. 
+"""
+def runHMMSearch(fastaFile, hmmFile, ouputDir, ncpus=4):
+    hmmTblFileName = fastaFile.split('.faa')[0] + ".tbl"
+    hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
+    if not os.path.exists(hmmTblFilePath):
+        print('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
+        cmd = "hmmsearch --cpu " + str(ncpus) + " --F1 0.02 --F2 0.02 --F3 0.02 --tblout " + hmmTblFilePath + " " + hmmFile + " "+ fastaFile + " > /dev/null"
+        print(cmd)
+        subprocess.call(cmd, shell=True)
+    else:
+        print("HMM search skipped... Using existing result for: ", fastaFile)
+    result_dict = parseHMM(hmmTblFilePath, "hmmer3-tab", "", "", "", "", "")
+    hmmSearchFileName = fastaFile.split('.faa')[0] + ".txt"
+    hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
+    createPandaDF(result_dict, hmmSearchFilePath)
+    print("Done Running HMM Build with:",fastaFile)
