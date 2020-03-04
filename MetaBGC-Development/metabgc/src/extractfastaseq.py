@@ -52,7 +52,7 @@ def sampleHasMatch(sample_list, sampleStr):
 """
 Function to run BLAST against a directory. 
 """
-def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, ncpus=4):
+def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_file_ext, ncpus=4):
     df_reads = pd.read_csv(readIDFile, sep='\t')
     id_list = list(set(df_reads.readID.values.tolist()))
     sample_list = []
@@ -65,7 +65,8 @@ def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, ncpus=4)
         outFileList = []
         for file in files:
             filePath = os.path.join(subdir, file)
-            if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
+            match_str = r".*\."+ fasta_file_ext +"$"
+            if re.match(match_str, file) and os.path.getsize(filePath) > 0:
                 filePathDict[filePath] = os.path.getsize(filePath)
 
     dbFileList = []
@@ -74,7 +75,7 @@ def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, ncpus=4)
         file = os.path.basename(filePath)
         sampleStr = os.path.splitext(file)[0]
         if sampleHasMatch(sample_list, sampleStr):
-            outputFileName = sampleStr + ".fasta"
+            outputFileName = sampleStr + "." + fasta_file_ext
             outputFilePath = os.path.join(ouputDir, outputFileName)
             dbFileList.append(filePath)
             outFileList.append(outputFilePath)
@@ -87,7 +88,7 @@ def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, ncpus=4)
 
     with open(outputFasta, 'w') as outfile:
         for filename in os.listdir(ouputDir):
-            if filename.endswith(".fasta"):
+            if filename.endswith("."+fasta_file_ext):
                 filePath = os.path.join(ouputDir, filename)
                 with open(filePath) as infile:
                     for line in infile:

@@ -107,6 +107,6 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,prot_seq_direc
 	runidentify(allHMMResult, cutoff_file, filteredHMMResult, identifyReadIds)
 
 	os.makedirs(fasta_seq_dir, 0o777, True)
-	RunExtractDirectoryPar(nucl_seq_directory, filteredHMMResult, fasta_seq_dir, multiFastaFile, CPU_THREADS)
+	RunExtractDirectoryPar(nucl_seq_directory, filteredHMMResult, fasta_seq_dir, multiFastaFile, "fasta", CPU_THREADS)
 	return multiFastaFile
 

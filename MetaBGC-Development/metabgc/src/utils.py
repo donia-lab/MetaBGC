@@ -434,8 +434,6 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
         print("Invalid file format inputs.\n")
         exit(0)
 
-
-
 """
 Function searches all FASTA file in a directory against a HMM in parallel. 
 """
@@ -446,7 +444,7 @@ def RunHMMDirectoryParallel(inputDir, hmmModel, ouputDir, ncpus=4):
         sampleStrList = []
         for file in files:
             filePath = os.path.join(subdir, file)
-            if re.match(r".*.faa$", file) and os.path.getsize(filePath) > 0:
+            if os.path.getsize(filePath) > 0:
                 sampleStr = os.path.splitext(file)[0]
                 fastaFileList.append(filePath)
                 sampleStrList.append(sampleStr)
@@ -472,7 +470,7 @@ def HMMSearchParallel(fastaFileList,hmmFile,ouputDir):
 Function searches FASTA file against HMM. 
 """
 def runHMMSearch(fastaFile, hmmFile, ouputDir, ncpus=4):
-    hmmTblFileName = fastaFile.split('.faa')[0] + ".tbl"
+    hmmTblFileName = os.path.splitext(os.path.basename(fastaFile))[0] + ".tbl"
     hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
     if not os.path.exists(hmmTblFilePath):
         print('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
@@ -482,7 +480,7 @@ def runHMMSearch(fastaFile, hmmFile, ouputDir, ncpus=4):
     else:
         print("HMM search skipped... Using existing result for: ", fastaFile)
     result_dict = parseHMM(hmmTblFilePath, "hmmer3-tab", "", "", "", "", "")
-    hmmSearchFileName = fastaFile.split('.faa')[0] + ".txt"
+    hmmSearchFileName = os.path.splitext(os.path.basename(fastaFile))[0] + ".txt"
     hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
     createPandaDF(result_dict, hmmSearchFilePath)
     print("Done Running HMM Build with:",fastaFile)
