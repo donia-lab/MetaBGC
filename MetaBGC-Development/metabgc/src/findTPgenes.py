@@ -10,7 +10,7 @@ if __name__ == '__main__':
     hmm_search_directory = sys.argv[2]
     prot_seq_directory = sys.argv[3]
     out_dir = sys.argv[4]
-    do_alignment = sys.argv[5]
+    do_alignment = int(sys.argv[5])
     identifyReadIds = os.path.join(out_dir,'CombinedReadIds.txt')
     allHMMResult = os.path.join(out_dir,'CombinedHMMResults.txt')
     fasta_seq_dir = os.path.join(out_dir,'extract_seq')
