@@ -10,13 +10,18 @@ if __name__ == '__main__':
     hmm_search_directory = sys.argv[2]
     prot_seq_directory = sys.argv[3]
     out_dir = sys.argv[4]
+    do_alignment = sys.argv[5]
     identifyReadIds = os.path.join(out_dir,'CombinedReadIds.txt')
     allHMMResult = os.path.join(out_dir,'CombinedHMMResults.txt')
     fasta_seq_dir = os.path.join(out_dir,'extract_seq')
     multiFastaFile = os.path.join(out_dir,'CombinedHMMHits.faa')
 
     alnOutput=alnFile.split('.fasta')[0] +".faa"
-    runMUSCLE(alnFile, alnOutput)
+    if do_alignment == 1:
+        runMUSCLE(alnFile, alnOutput)
+    else:
+        alnOutput = alnFile
+
     hmmFile=alnFile.split('.fasta')[0] +".hmm"
     modelName=alnFile.split('.fasta')[0]
     runHMMBuild(alnOutput, hmmFile, modelName)
