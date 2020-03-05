@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     os.makedirs(fasta_seq_dir, 0o777, True)
     RunExtractDirectoryPar(prot_seq_directory, identifyReadIds, fasta_seq_dir, multiFastaFile, "faa", 1)
-    record_desc_dict = RunExtractDescription(multiFastaFile)
+    record_desc_dict = RunExtractDescription(multiFastaFile,"fasta")
     df_record_desc = DataFrame(list(record_desc_dict.items()), columns=['readID', 'Description'])
     df_HMMMatch = pd.merge(df_HMMMatch,df_record_desc,on=['readID'],how='inner')
     df_HMMMatch.to_csv(allHMMResult, index=False, sep='\t')
