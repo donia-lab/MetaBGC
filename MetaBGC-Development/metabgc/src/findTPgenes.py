@@ -1,8 +1,10 @@
 from metabgc.src.utils import *
 import pandas as pd
+from pandas import DataFrame
 import os
 import sys
 from metabgc.src.extractfastaseq import RunExtractDirectoryPar
+from metabgc.src.extractfastaseq import RunExtractDescription
 
 if __name__ == '__main__':
     # setup paths
@@ -38,10 +40,17 @@ if __name__ == '__main__':
                         for line in infile:
                             outfile.write(sample + '\t' +line)
 
+    RunExtractDirectoryPar(prot_seq_directory, identifyReadIds, fasta_seq_dir, multiFastaFile, "faa", 1)
+    record_desc_dict = RunExtractDescription(multiFastaFile)
+    df_record_desc = DataFrame(list(record_desc_dict.items()), columns=['readID', 'Description'])
+
     df_HMMMatch = pd.read_csv(allHMMResult, delimiter="\t", names=["Sample", "readID", "sampleType", "Sample2", "protType", "HMMScore", "window","interval"])
     df_HMMMatch = df_HMMMatch.drop(columns=["sampleType", "Sample2", "protType", "window","interval"])
+    df_HMMMatch = pd.merge(df_HMMMatch,df_record_desc,on=['readID'],how='inner')
     df_HMMMatch.to_csv(identifyReadIds, index=False, sep='\t')
     os.makedirs(fasta_seq_dir, 0o777, True)
-    RunExtractDirectoryPar(prot_seq_directory, identifyReadIds, fasta_seq_dir, multiFastaFile, "faa", 1)
+
+
+
 
 

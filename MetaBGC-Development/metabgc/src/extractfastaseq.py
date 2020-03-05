@@ -95,3 +95,10 @@ def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_fi
                         outfile.write(line)
             else:
                 continue
+
+def RunExtractDescription(inputFasta, fasta_file_type):
+    print("Processing " + inputFasta + "...")
+    record_dict={}
+    for record in SeqIO.parse(inputFasta, fasta_file_type):
+        record_dict[record.id] = record.description
+    return record_dict
