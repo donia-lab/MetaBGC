@@ -437,7 +437,7 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
 """
 Function searches all FASTA file in a directory against a HMM in parallel. 
 """
-def RunHMMDirectoryParallel(inputDir, hmmModel, ouputDir, ncpus=4):
+def RunHMMDirectoryParallelReduced(inputDir, hmmModel, ouputDir, ncpus=4):
     print('Number of pool processes:{0}.'.format(ncpus))
     for subdir, dirs, files in os.walk(inputDir):
         fastaFileList=[]
@@ -449,19 +449,19 @@ def RunHMMDirectoryParallel(inputDir, hmmModel, ouputDir, ncpus=4):
                 fastaFileList.append(filePath)
                 sampleStrList.append(sampleStr)
                 if len(fastaFileList) >= ncpus:
-                    HMMSearchParallel(fastaFileList, hmmModel, ouputDir)
+                    HMMSearchParallelReduced(fastaFileList, hmmModel, ouputDir)
                     fastaFileList = []
                     sampleStrList = []
         if len(fastaFileList) > 0:
-            HMMSearchParallel(fastaFileList, hmmModel, ouputDir)
+            HMMSearchParallelReduced(fastaFileList, hmmModel, ouputDir)
 
 """
 Function to run make HMM search against FASTA files in parallel. 
 """
-def HMMSearchParallel(fastaFileList,hmmFile,ouputDir):
+def HMMSearchParallelReduced(fastaFileList,hmmFile,ouputDir):
     numOfprocess = len(fastaFileList)
     pool = Pool(processes=numOfprocess)
-    pool.starmap(runHMMSearch, zip(fastaFileList, repeat(hmmFile), repeat(ouputDir), repeat(1)))
+    pool.starmap(runHMMSearchReduced, zip(fastaFileList, repeat(hmmFile), repeat(ouputDir), repeat(1)))
     pool.close()
     pool.join()
     pool.terminate()  # garbage collector
@@ -469,7 +469,7 @@ def HMMSearchParallel(fastaFileList,hmmFile,ouputDir):
 """
 Function searches FASTA file against HMM. 
 """
-def runHMMSearch(fastaFile, hmmFile, ouputDir, ncpus=4):
+def runHMMSearchReduced(fastaFile, hmmFile, ouputDir, ncpus=4):
     hmmTblFileName = os.path.splitext(os.path.basename(fastaFile))[0] + ".tbl"
     hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
     if not os.path.exists(hmmTblFilePath):

@@ -28,7 +28,7 @@ if __name__ == '__main__':
     modelName=alnFile.split('.fasta')[0]
     runHMMBuild(alnOutput, hmmFile, modelName)
     os.makedirs(hmm_search_directory, 0o777, True)
-    RunHMMDirectoryParallel(prot_seq_directory, hmmFile, hmm_search_directory, 4)
+    RunHMMDirectoryParallelReduced(prot_seq_directory, hmmFile, hmm_search_directory, 4)
 
     with open(allHMMResult, 'w') as outfile:
         for subdir, dirs, files in os.walk(hmm_search_directory):
