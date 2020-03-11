@@ -5,7 +5,6 @@ from metabgc.src.utils import *
 from metabgc.src.metabgcidentify import *
 from metabgc.src.extractfastaseq import *
 
-
 def test_parseHMM():
     cohortStr = "MetaHit"
     input_dir = "AbcK/data/"+cohortStr+"/hmmsearch_result"
@@ -50,4 +49,4 @@ def test_extract():
     outputDir = "AbcK/output/"+cohortStr+"/identify/reads"
     identifyOutFile = "AbcK/output/"+cohortStr+"/identify/identified-biosynthetic-reads.fasta"
     os.makedirs(outputDir, 0o777, True)
-    RunExtractDirectoryPar(readsDir, filteredTableFile, outputDir, identifyOutFile, ncpus=4)
+    RunExtractDirectoryPar(readsDir, filteredTableFile, outputDir, identifyOutFile, "fasta", ncpus=4)

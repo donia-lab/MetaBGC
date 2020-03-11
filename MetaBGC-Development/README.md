@@ -55,7 +55,7 @@ metabgc --help
 
 ### Quick Start
 
-To run a toy search example, please download the already constructed spHMMs and some search samples from [here](https://drive.google.com/open?id=1-6nhr7WpWFbAxj89F-Q4fmB83nBhBDI-) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
+To run a toy search example, please download the already constructed spHMMs and some search samples from [here](https://drive.google.com/file/d/1-6nhr7WpWFbAxj89F-Q4fmB83nBhBDI-/view?usp=sharing) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
 
 ```
 OP_PATH=<set a path>
