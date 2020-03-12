@@ -75,7 +75,7 @@ def gengeneposlist(prot_family_name,protAlnSeqs,hmmDict,alnOutput,gene_pos_file)
 
 def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
           nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
-          r2_file_suffix,tp_genes_nucl,blastn_search_directory,hmm_search_directory,f1_thresh,
+          r2_file_suffix,tp_genes_nucl,blast_db_directory,blastn_search_directory,hmm_search_directory,f1_thresh,
           output_directory,cpu):
     startTime = time.time()
     if cpu is not None:
@@ -133,6 +133,11 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
                                             r2_file_suffix.strip(),
                                             build_op_dir,
                                             CPU_THREADS)
+
+    #Check if BLAST DB directory is provided or not
+    if blast_db_directory is None:
+        blast_db_directory = ""
+
     # Translate nucleotide seq
     if not os.path.isdir(prot_seq_directory):
         prot_seq_directory = TranseqReadsDir(build_op_dir, nucl_seq_directory, CPU_THREADS)
@@ -157,7 +162,7 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
     if not os.path.exists(allBLASTResult) and os.path.getsize(allBLASTResult) > 0:
         if not os.path.isdir(blastn_search_directory):
             os.makedirs(blastn_search_directory,0o777,True)
-            RunBLASTNDirectoryPar(nucl_seq_directory, tp_genes_nucl, "-max_target_seqs 10000 -perc_identity 90.0", blastn_search_directory,CPU_THREADS)
+            RunBLASTNDirectoryPar(nucl_seq_directory, blast_db_directory, tp_genes_nucl, "-max_target_seqs 10000 -perc_identity 90.0", blastn_search_directory,CPU_THREADS)
 
         with open(allBLASTResult, 'w') as outfile:
             outfile.write("sseqid\tslen\tsstart\tsend\tqseqid\tqlen\tqstart\tqend\tpident\tevalue\tSample\tsampleType\n")

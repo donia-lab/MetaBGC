@@ -12,6 +12,15 @@ import ntpath
 
 
 """
+Constructs the expected BLAST DB path for DoniaLab; Specific to runs done in Donia environment.
+"""
+def ConstructDoniaDBPath(baseDir,sampleFileName):
+    sampleType = sampleFileName.splt('_')[2]
+    sampleName = os.path.splitext(sampleFileName)[0]
+    dbOut = os.path.join(baseDir,sampleType,sampleName,sampleName+"-raw-reads-fasta",sampleFileName)
+    return dbOut
+
+"""
 Function searches all FASTA file in a directory against a HMM. 
 """
 def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, ouputDir, ncpus=4):
@@ -106,22 +115,31 @@ def runBLASTN(fastaFile, database, blastParamStr, outFile, ncpus=4):
 """
 Function to run make BLAST db and search a FASTA file. 
 """
-def MakeSearchBLASTN(dbFile, dbOpPath, searchFile, blastParamStr, outFile):
+def MakeSearchBLASTN(dbFile, existingDbDir, dbOpPath, searchFile, blastParamStr, outFile):
     basename = os.path.basename(dbFile)
-    dbOpPath = dbOpPath + os.sep + basename
-    os.makedirs(dbOpPath, 0o777, True)
-    dbName = os.path.splitext(basename)[0]
-    dbOut = runMakeBLASTDB(dbFile,dbName,dbOpPath,'nucl')
+    if existingDbDir:
+        print("Existing database path provided:" + existingDbDir)
+        dbOut = ConstructDoniaDBPath(existingDbDir,basename)
+
+    if not os.path.isfile(dbOut):
+        print("Constructing BLAST DB for:" + dbFile)
+        dbOpPath = dbOpPath + os.sep + basename
+        os.makedirs(dbOpPath, 0o777, True)
+        dbName = os.path.splitext(basename)[0]
+        dbOut = runMakeBLASTDB(dbFile,dbName,dbOpPath,'nucl')
+    else:
+        print("Found existing database path:" + dbOut)
+
     runBLASTN(searchFile, dbOut, blastParamStr,outFile, 1)
     shutil.rmtree(dbOpPath)
 
 """
 Function to run make BLAST db and search a FASTA file. 
 """
-def MakeSearchBLASTNParallel(dbFileList, dbOpPath, searchFileList, blastParamStr, outFileList):
+def MakeSearchBLASTNParallel(dbFileList, existingDbDir,dbOpPath, searchFileList, blastParamStr, outFileList):
     numOfprocess = len(dbFileList)
     pool = Pool(processes=numOfprocess)
-    pool.starmap(MakeSearchBLASTN, zip(dbFileList, repeat(dbOpPath), searchFileList, repeat(blastParamStr), outFileList))
+    pool.starmap(MakeSearchBLASTN, zip(dbFileList, repeat(existingDbDir),repeat(dbOpPath), searchFileList, repeat(blastParamStr), outFileList))
     pool.close()
     pool.join()
     pool.terminate()  # garbage collector
@@ -129,7 +147,7 @@ def MakeSearchBLASTNParallel(dbFileList, dbOpPath, searchFileList, blastParamStr
 """
 Function to run BLAST against a directory. 
 """
-def RunBLASTNDirectoryPar(dbDir, queryFile, blastParamStr, ouputDir,ncpus=4):
+def RunBLASTNDirectoryPar(dbDir, existingDbDir,queryFile, blastParamStr, ouputDir,ncpus=4):
     for subdir, dirs, files in os.walk(dbDir):
         dbFileList=[]
         searchFileList = []
@@ -144,12 +162,12 @@ def RunBLASTNDirectoryPar(dbDir, queryFile, blastParamStr, ouputDir,ncpus=4):
                 searchFileList.append(queryFile)
                 outFileList.append(outputFilePath)
                 if len(dbFileList)>=ncpus:
-                    MakeSearchBLASTNParallel(dbFileList,ouputDir,searchFileList, blastParamStr,outFileList)
+                    MakeSearchBLASTNParallel(dbFileList,existingDbDir,ouputDir,searchFileList, blastParamStr,outFileList)
                     dbFileList = []
                     searchFileList = []
                     outFileList = []
         if len(dbFileList) > 0:
-            MakeSearchBLASTNParallel(dbFileList, ouputDir, searchFileList , blastParamStr, outFileList)
+            MakeSearchBLASTNParallel(dbFileList,existingDbDir,ouputDir, searchFileList , blastParamStr, outFileList)
 
 """
 Function to run BLAST against a directory. 
