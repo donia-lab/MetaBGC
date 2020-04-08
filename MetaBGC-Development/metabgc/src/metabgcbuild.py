@@ -3,9 +3,9 @@ from Bio import AlignIO
 from Bio import SeqIO
 from metabgc.src.utils import *
 from metabgc.src.createsphmms import GenerateSpHMM
-from rpy2.robjects.packages import STAP
-import rpy2.robjects.packages as rpackages
-from rpy2.robjects.vectors import StrVector
+#from rpy2.robjects.packages import STAP
+#import rpy2.robjects.packages as rpackages
+#from rpy2.robjects.vectors import StrVector
 from shutil import copyfile
 
 CPU_THREADS = 4
@@ -31,9 +31,9 @@ def ungappedseqsearch(reference_str, query_str):
             return [i, k]
     return [-1, -1]
 
-def gensphmmfiles(prot_family_name,prot_aln_file,hmm_directory):
+def gensphmmfiles(prot_family_name,prot_aln_file,tp_prot_file,hmm_directory,gene_pos_file,gene_pos_file_aa):
     alignment = AlignIO.read(prot_aln_file, "fasta")
-    hmmDict = GenerateSpHMM(prot_aln_file, 10, 30, hmm_directory, prot_family_name, 1, alignment.get_alignment_length()+1)
+    hmmDict = GenerateSpHMM(prot_aln_file, tp_prot_file,10, 30, hmm_directory, prot_family_name, 1, alignment.get_alignment_length()+1, gene_pos_file,gene_pos_file_aa)
     return hmmDict
 
 def gengeneposlist(prot_family_name,protAlnSeqs,hmmDict,alnOutput,gene_pos_file):
@@ -72,7 +72,6 @@ def gengeneposlist(prot_family_name,protAlnSeqs,hmmDict,alnOutput,gene_pos_file)
                               "\t"+prot_family_name+"\n")
     outfile.close()
 
-
 def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
           nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
           r2_file_suffix,tp_genes_nucl,blast_db_directory,blastn_search_directory,hmm_search_directory,f1_thresh,
@@ -84,26 +83,25 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
     # setup paths
     build_op_dir = output_directory + os.sep + "build"
     hmm_directory = os.path.join(build_op_dir, 'spHMMs')
-    prot_aln_file = os.path.join(hmm_directory, ntpath.basename(prot_alignment))
     tp_genes_prot = build_op_dir + os.sep + "TPGenes.faa"
-    alnOutput = os.path.join(build_op_dir,"tmp.afa")
+    alnOutput = os.path.join(build_op_dir,"TP_Homolog_Alignment.afa")
     gene_pos_file = os.path.join(build_op_dir, 'Gene_Interval_Pos.txt')
+    gene_pos_file_aa = os.path.join(build_op_dir, 'Gene_Interval_Pos_AA.txt')
     if hmm_search_directory is None:
         hmm_search_directory = os.path.join(build_op_dir, 'hmm_result')
-    allHMMResult = hmm_search_directory + os.sep + "CombinedHmmSearch.txt"
+    allHMMResult = os.path.join(build_op_dir,"CombinedHmmSearch.txt")
     if blastn_search_directory is None:
         blastn_search_directory = os.path.join(build_op_dir, 'blastn_result')
-    allBLASTResult = blastn_search_directory + os.sep + "CombinedBLASTSearch.txt"
+    allBLASTResult = os.path.join(build_op_dir,"CombinedBLASTSearch.txt")
 
-    # Gen spHMMs and interval pos
-    os.makedirs(hmm_directory,0o777,True)
-    copyfile(prot_alignment, prot_aln_file)
-    hmmDict = gensphmmfiles(prot_family_name, prot_aln_file, hmm_directory)
+    # Create OP dirs
+    os.makedirs(hmm_directory, 0o777, True)
 
+    # Translate protein sequence
     runTranSeq(tp_genes_nucl,"1",tp_genes_prot)
-    tmpFile = os.path.join(build_op_dir,"tmp.fa")
 
     # Join true positives in the sample with the BGC proteins
+    tmpFile = os.path.join(build_op_dir,"TP_Homolog.faa")
     joinedSeqs = []
     tpGeneSeqs = list(SeqIO.parse(tp_genes_prot, "fasta"))
     # Removing _1 added by TranSeq
@@ -111,15 +109,19 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
         seq.id = seq.id[:-2]
         seq.description = ""
         joinedSeqs.append(seq)
-    protAlnSeqs = list(SeqIO.parse(prot_aln_file, "fasta"))
+    SeqIO.write(joinedSeqs,tp_genes_prot,"fasta")
+    protAlnSeqs = list(SeqIO.parse(prot_alignment, "fasta"))
     for seq in protAlnSeqs:
         joinedSeqs.append(seq)
     SeqIO.write(joinedSeqs, tmpFile, "fasta")
 
     # MUSCLE align TP genes with markers
     runMUSCLE(tmpFile, alnOutput)
+
+    # Gen spHMMs and interval pos
     # Extract spHMM coordinates from MUSCLE alignment
-    gengeneposlist(prot_family_name,protAlnSeqs,hmmDict,alnOutput,gene_pos_file)
+    hmmDict = gensphmmfiles(prot_family_name, alnOutput, tp_genes_prot,
+                            hmm_directory, gene_pos_file, gene_pos_file_aa)
 
     if r1_file_suffix is None:
         r1_file_suffix = ""
@@ -143,7 +145,7 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
         prot_seq_directory = TranseqReadsDir(build_op_dir, nucl_seq_directory, CPU_THREADS)
 
     # HMMER Search
-    if not os.path.exists(allHMMResult) and os.path.getsize(allHMMResult) > 0:
+    if not os.path.exists(allHMMResult):
         os.makedirs(hmm_search_directory,0o777,True)
         for hmmSeqPosKey, hmmFileObj in hmmDict.items():
             hmmInterval = str(hmmDict[hmmSeqPosKey].intervalStart)+"_"+str(hmmDict[hmmSeqPosKey].intervalEnd)
@@ -154,13 +156,14 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
                 for file in files:
                     filePath = os.path.join(subdir, file)
                     if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
-                       with open(filePath) as infile:
+                        with open(filePath) as infile:
                             for line in infile:
                                 outfile.write(line)
 
     # BLAST Alignment
-    if not os.path.exists(allBLASTResult) and os.path.getsize(allBLASTResult) > 0:
+    if not os.path.exists(allBLASTResult):
         if not os.path.isdir(blastn_search_directory):
+            print("Constructing BLAST Search Dir:" + blastn_search_directory)
             os.makedirs(blastn_search_directory,0o777,True)
             RunBLASTNDirectoryPar(nucl_seq_directory, blast_db_directory, tp_genes_nucl, "-max_target_seqs 10000 -perc_identity 90.0", blastn_search_directory,CPU_THREADS)
 
@@ -190,8 +193,9 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     hp_hmm_directory = os.path.join(build_op_dir, 'HiPer_spHMMs')
     os.makedirs(hp_hmm_directory,0o777,True)
-    module_dir = os.path.dirname(GenerateSpHMM.__file__)
-    r_script = os.path.join(module_dir,'metabgc','src','EvaluateSpHMMs.R')
+    #module_dir = os.path.dirname(GenerateSpHMM.__file__)
+    module_dir = os.path.join(os.path.dirname(__file__))
+    r_script = os.path.join('/projects/DONIA/abiswas/git/MetaBGC/MetaBGC-Development','metabgc','src','EvaluateSpHMMs.R')
 
     with open(r_script, 'r') as f:
         rStr = f.read()

@@ -20,3 +20,12 @@ def test_gengeneposlist():
     hmmDict = gensphmmfiles("AbcK", prot_aln_file, hmm_directory)
     protAlnSeqs = list(SeqIO.parse(prot_aln_file, "fasta"))
     gengeneposlist(prot_family_name, protAlnSeqs, hmmDict, alnOutput, gene_pos_file)
+
+def test_GenerateSpHMM():
+    prot_family_name="C7-Cyclases"
+    prot_aln_file="AbcK/data/TP_Homolog_Alignment.afa"
+    hmm_directory="AbcK/output/build/HiPerf"
+    tp_prot_file="AbcK/data/TPGenes.faa"
+    gene_pos_file="AbcK/output/build/Gene_Interval_Pos.txt"
+    gene_pos_file_aa = "AbcK/output/build/Gene_Interval_Pos_AA.txt"
+    gensphmmfiles(prot_family_name, prot_aln_file, tp_prot_file, hmm_directory, gene_pos_file, gene_pos_file_aa)

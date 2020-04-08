@@ -15,7 +15,7 @@ import ntpath
 Constructs the expected BLAST DB path for DoniaLab; Specific to runs done in Donia environment.
 """
 def ConstructDoniaDBPath(baseDir,sampleFileName):
-    sampleType = sampleFileName.splt('_')[2]
+    sampleType = sampleFileName.split('_')[2]
     sampleName = os.path.splitext(sampleFileName)[0]
     dbOut = os.path.join(baseDir,sampleType,sampleName,sampleName+"-raw-reads-fasta",sampleFileName)
     return dbOut
@@ -127,11 +127,11 @@ def MakeSearchBLASTN(dbFile, existingDbDir, dbOpPath, searchFile, blastParamStr,
         os.makedirs(dbOpPath, 0o777, True)
         dbName = os.path.splitext(basename)[0]
         dbOut = runMakeBLASTDB(dbFile,dbName,dbOpPath,'nucl')
+        runBLASTN(searchFile, dbOut, blastParamStr, outFile, 1)
+        shutil.rmtree(dbOpPath)
     else:
         print("Found existing database path:" + dbOut)
-
-    runBLASTN(searchFile, dbOut, blastParamStr,outFile, 1)
-    shutil.rmtree(dbOpPath)
+        runBLASTN(searchFile, dbOut, blastParamStr, outFile, 1)
 
 """
 Function to run make BLAST db and search a FASTA file. 

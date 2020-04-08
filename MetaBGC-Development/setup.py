@@ -35,6 +35,7 @@ setup(
     python_requires='>=3.6',
     version=read_version(),
     packages=find_packages(exclude=["*.test", "*.test.*", "test.*", "test"]),
+    package_data={'': ['license.txt']},
     author='MetaBGC development team.',
     author_email='ab50@princeton.edu',
     description='Metagenomic identifier of Biosynthetic Gene Clusters.',
