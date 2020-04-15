@@ -2,10 +2,10 @@ import time, sys
 from Bio import AlignIO
 from Bio import SeqIO
 from metabgc.src.utils import *
-from metabgc.src.createsphmms import GenerateSpHMM
-#from rpy2.robjects.packages import STAP
-#import rpy2.robjects.packages as rpackages
-#from rpy2.robjects.vectors import StrVector
+import metabgc.src.createsphmms as createhmm
+from rpy2.robjects.packages import STAP
+import rpy2.robjects.packages as rpackages
+from rpy2.robjects.vectors import StrVector
 from shutil import copyfile
 
 CPU_THREADS = 4
@@ -33,7 +33,7 @@ def ungappedseqsearch(reference_str, query_str):
 
 def gensphmmfiles(prot_family_name,prot_aln_file,tp_prot_file,hmm_directory,gene_pos_file,gene_pos_file_aa):
     alignment = AlignIO.read(prot_aln_file, "fasta")
-    hmmDict = GenerateSpHMM(prot_aln_file, tp_prot_file,10, 30, hmm_directory, prot_family_name, 1, alignment.get_alignment_length()+1, gene_pos_file,gene_pos_file_aa)
+    hmmDict = createhmm.GenerateSpHMM(prot_aln_file, tp_prot_file,10, 30, hmm_directory, prot_family_name, 1, alignment.get_alignment_length()+1, gene_pos_file,gene_pos_file_aa)
     return hmmDict
 
 def gengeneposlist(prot_family_name,protAlnSeqs,hmmDict,alnOutput,gene_pos_file):
@@ -193,9 +193,11 @@ def mbgcbuild(prot_alignment,prot_family_name,cohort_name,
 
     hp_hmm_directory = os.path.join(build_op_dir, 'HiPer_spHMMs')
     os.makedirs(hp_hmm_directory,0o777,True)
-    #module_dir = os.path.dirname(GenerateSpHMM.__file__)
-    module_dir = os.path.join(os.path.dirname(__file__))
-    r_script = os.path.join('/projects/DONIA/abiswas/git/MetaBGC/MetaBGC-Development','metabgc','src','EvaluateSpHMMs.R')
+    module_dir = os.path.dirname(os.path.abspath(createhmm.__file__))
+    print("\nR-script path : " + module_dir)
+    #module_dir = os.path.join(os.path.dirname(__file__))
+    #r_script = os.path.join('/projects/DONIA/abiswas/git/MetaBGC/MetaBGC-Development','metabgc','src','EvaluateSpHMMs.R')
+    r_script = os.path.join(module_dir,'EvaluateSpHMMs.R')
 
     with open(r_script, 'r') as f:
         rStr = f.read()

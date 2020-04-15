@@ -73,7 +73,7 @@ def getKmers(k, interval, outdir, msaFile, tp_prot_file, modelName, start, end, 
             kmer = alignment[:,startPos:endPos] #[ rows (different domains),columns (Amino Acids)]
             spHMMAlign = MultipleSeqAlignment([],Gapped(IUPAC.extended_protein, "-"))
 
-            if str(kmer[0].seq).count("-") > 15:
+            if str(kmer[0].seq).count("-") <= 15:
                 # Remove the TP genes
                 for align in kmer:
                     if align.id not in pprot_TP_dict:
