@@ -23,7 +23,7 @@ def ConstructDoniaDBPath(baseDir,sampleFileName):
 """
 Function searches all FASTA file in a directory against a HMM. 
 """
-def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, ouputDir, ncpus=4):
+def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, ouputDir, ncpus=16):
     for subdir, dirs, files in os.walk(inputDir):
         for file in files:
             filePath = os.path.join(subdir, file)
@@ -67,7 +67,7 @@ def HMMSearchParallel(fastaFileList, hmmFile, ouputDir, sampleType,sampleStrList
 """
 Function searches FASTA file against HMM. 
 """
-def runHMMSearch(fastaFile, hmmFile, ouputDir, sampleType, sampleStr, protType, window, interval, ncpus=4):
+def runHMMSearch(fastaFile, hmmFile, ouputDir, sampleType, sampleStr, protType, window, interval, ncpus=16):
     hmmTblFileName = sampleStr + "__" + interval + ".tbl"
     hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
     if not os.path.exists(hmmTblFilePath):
@@ -106,7 +106,7 @@ def runMakeBLASTDB(fastaFile, dbName, dbOpPath, type):
 """
 Function BLAST search a FASTA. 
 """
-def runBLASTN(fastaFile, database, blastParamStr, outFile, ncpus=4):
+def runBLASTN(fastaFile, database, blastParamStr, outFile, ncpus=16):
     cmd = "blastn -num_threads " + str(ncpus) + " -query " + fastaFile + " -db " + database + " " + blastParamStr + " -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" -out " + outFile
     print(cmd)
     subprocess.call(cmd, shell=True)
