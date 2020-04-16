@@ -354,7 +354,7 @@ def PreProcessReadsPar(nucl_seq_directory, seq_fmt, pair_fmt, R1_file_suffix, R2
                     filePath = os.path.join(subdir, file)
                     if re.match(r".*.fastq$", file) and os.path.getsize(filePath) > 0:
                         print("Pre-processing:", file)
-                        out_seq_path = os.path.join(out_seq_directory, file)
+                        out_seq_path = os.path.join(out_seq_directory, file[:-1]+"a") #change .fastq to .fasta
                         count = SeqIO.convert(filePath, "fastq", out_seq_path, "fasta")
         elif pair_fmt.lower() == "split":
             for subdir, dirs, files in os.walk(nucl_seq_directory):
@@ -426,7 +426,7 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
                     filePath = os.path.join(subdir, file)
                     if re.match(r".*.fastq$", file) and os.path.getsize(filePath) > 0:
                         print("Pre-processing:", file)
-                        out_seq_path = os.path.join(out_seq_directory, file)
+                        out_seq_path = os.path.join(out_seq_directory, file[:-1]+"a") #change .fastq to .fasta
                         count = SeqIO.convert(filePath, "fastq", out_seq_path, "fasta")
         elif pair_fmt.lower() == "split":
             for subdir, dirs, files in os.walk(nucl_seq_directory):
