@@ -12,6 +12,13 @@ See [A metagenomic strategy for harnessing the chemical repertoire of the human 
 
 These instructions will get you setup to run MetaBGC on your local Linux or Apple environment. 
 
+## Important Notes
+
+* Users can test the pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
+* Running your own read libraries against the test cyclase model provided may not work considering that cyclases are rare in metagenomic datasets.
+  * Currently the tool does not fail gracefully with user friendly error messages.
+  * We are working on adding a failure logging module that does various sanity checks.  
+  
 ## Bioconda Distribution 
 
 Coming soon...
@@ -37,7 +44,7 @@ To run MetaBGC, please make sure you have the following dependencies installed a
 
 ### Installing the Package
 
-Obtain the package from PyPI:
+All general purpose users should obtain the package from PyPI:
 ```
 pip install metabgc
 ```
@@ -45,7 +52,7 @@ All the internal python dependencies are specified in the setup will be installe
 ```
 metabgc --help
 ```
-To install the latest development build from GitHub:
+The latest development build build is available for other developers and may often contain bugs and is not stable. To install the latest development build from GitHub:
 ```
 git clone https://github.com/donia-lab/MetaBGC.git
 cd MetaBGC/MetaBGC-Development
