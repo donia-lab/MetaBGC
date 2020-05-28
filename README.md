@@ -76,7 +76,7 @@ metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_nam
 
 MetaBGC consists of four main modules:
 
-**Build** - ```metabgc build --help``` - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs).  If any of these protein families is to be used, this step can be skipped.
+**Build** - ```metabgc build --help``` - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs).  If any of these protein families is to be used, this step can be skipped. The models are here: https://github.com/donia-lab/MetaBGC/tree/master/Models
 
 **Identify** - ```metabgc identify --help``` -  This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
 
