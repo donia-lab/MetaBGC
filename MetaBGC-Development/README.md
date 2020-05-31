@@ -12,6 +12,14 @@ See [A metagenomic strategy for harnessing the chemical repertoire of the human 
 
 These instructions will get you setup to run MetaBGC on your local Linux or Apple environment. 
 
+## Important Notes
+
+* Users can test the pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
+* Running your own read libraries against the test cyclase model provided may not work considering that cyclases are rare in metagenomic datasets.
+  * Currently the tool does not fail gracefully with user friendly error messages.
+  * We are working on adding a failure logging module that does various sanity checks.  
+* For non-cyclase spHMMs you can de novo create your own using the build module. In addition, we are currently developing high-performance spHMMs for several other biosynthetic classes and will be releasing them in a few months (as pre-built models) in a follow-up release/publication.
+  
 ## Bioconda Distribution 
 
 Coming soon...
@@ -37,7 +45,7 @@ To run MetaBGC, please make sure you have the following dependencies installed a
 
 ### Installing the Package
 
-Obtain the package from PyPI:
+All general purpose users should obtain the package from PyPI:
 ```
 pip install metabgc
 ```
@@ -45,7 +53,7 @@ All the internal python dependencies are specified in the setup will be installe
 ```
 metabgc --help
 ```
-To install the latest development build from GitHub:
+The latest development build build is available for other developers and may often contain bugs and is not stable. To install the latest development build from GitHub:
 ```
 git clone https://github.com/donia-lab/MetaBGC.git
 cd MetaBGC/MetaBGC-Development
@@ -68,7 +76,7 @@ metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_nam
 
 MetaBGC consists of four main modules:
 
-**Build** - ```metabgc build --help``` - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs). If any of these protein families is to be used, this step can be skipped.
+**Build** - ```metabgc build --help``` - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs).  If any of these protein families is to be used, this step can be skipped. The models are here: https://github.com/donia-lab/MetaBGC/tree/master/Models
 
 **Identify** - ```metabgc identify --help``` -  This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
 
@@ -80,7 +88,7 @@ MetaBGC consists of four main modules:
 
 ### Running Build to construct the spHMMs
 
-1. To build and evaluate spHMMs for the protein family of interest, the ```metabgc build``` command has to be executed with required input files. To select high performance spHMMs, a synthetic metagenomic dataset must be generated with reads from true positive genes spiked in to test the performance of each spHMM.
+1. To build and evaluate spHMMs for the protein family of interest, the ```metabgc build``` command has to be executed with required input files. To select high performance spHMMs, a synthetic metagenomic dataset must be generated with reads from true positive genes spiked in to test the performance of each spHMM. To generate synthetic metagenomes for the build process, one can choose any publicly available tools, including ART (https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm), wgsim (https://github.com/lh3/wgsim), etc. If using ART, as what we did in this paper, you can generate reads for individual genomes and concatenate the resulting reads to simulate a metagenome. To control the abundance of each genome, you need to control number of reads to generate from each genome. Users may also refer to pipelines such as CAMISIM (https://github.com/CAMI-challenge/CAMISIM) to facilitate this process.
 
 	```
     1. --prot_alignment, required=True: Alignment of homologs from the protein family of interest in FASTA format.

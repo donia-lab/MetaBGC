@@ -50,49 +50,57 @@ def sampleHasMatch(sample_list, sampleStr):
 """
 Function to run BLAST against a directory. 
 """
-def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_file_ext, ncpus=4):
-    df_reads = pd.read_csv(readIDFile, sep='\t')
-    id_list = list(set(df_reads.readID.values.tolist()))
-    sample_list = []
-    for sample in list(set(df_reads.Sample.values.tolist())):
-        sample_list.append(sample.split('-')[0])
+def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_file_ext, ncpus):
+    try:
+        df_reads = pd.read_csv(readIDFile, sep='\t')
+        id_list = list(set(df_reads.readID.values.tolist()))
+        sample_list = []
+        for sample in list(set(df_reads.Sample.values.tolist())):
+            sample_list.append(sample.split('-')[0])
 
-    filePathDict={}
-    for subdir, dirs, files in os.walk(readsDir):
-        dbFileList=[]
+        filePathDict={}
+        for subdir, dirs, files in os.walk(readsDir):
+            for file in files:
+                filePath = os.path.join(subdir, file)
+                match_str = r".*\."+ fasta_file_ext +"$"
+                if re.match(match_str, file) and os.path.getsize(filePath) > 0:
+                    filePathDict[filePath] = os.path.getsize(filePath)
+
+        print("Found " + str(len(filePathDict)) + " read files from which to extract.",flush=True)
+
+        dbFileList = []
         outFileList = []
-        for file in files:
-            filePath = os.path.join(subdir, file)
-            match_str = r".*\."+ fasta_file_ext +"$"
-            if re.match(match_str, file) and os.path.getsize(filePath) > 0:
-                filePathDict[filePath] = os.path.getsize(filePath)
-
-    dbFileList = []
-    outFileList = []
-    for filePath in sorted(filePathDict, key=filePathDict.get):
-        file = os.path.basename(filePath)
-        sampleStr = os.path.splitext(file)[0]
-        if sampleHasMatch(sample_list, sampleStr):
-            outputFileName = sampleStr + "." + fasta_file_ext
-            outputFilePath = os.path.join(ouputDir, outputFileName)
-            dbFileList.append(filePath)
-            outFileList.append(outputFilePath)
-        if len(dbFileList) >= ncpus:
+        setCtr=0
+        for filePath in sorted(filePathDict, key=filePathDict.get):
+            file = os.path.basename(filePath)
+            sampleStr = os.path.splitext(file)[0]
+            if sampleHasMatch(sample_list, sampleStr):
+                outputFileName = sampleStr + "." + fasta_file_ext
+                outputFilePath = os.path.join(ouputDir, outputFileName)
+                dbFileList.append(filePath)
+                outFileList.append(outputFilePath)
+            if len(dbFileList) >= ncpus:
+                setCtr = setCtr + 1
+                print("Running " + str(setCtr) + " of " + str(int(len(filePathDict)/ncpus)) + " extract rounds.",flush=True)
+                RunExtractParallel(dbFileList, id_list, outFileList)
+                dbFileList = []
+                outFileList = []
+        if len(dbFileList) > 0:
+            print("Running remaining " + str(len(dbFileList)) + " extracts.", flush=True)
             RunExtractParallel(dbFileList, id_list, outFileList)
-            dbFileList = []
-            outFileList = []
-    if len(dbFileList) > 0:
-        RunExtractParallel(dbFileList, id_list, outFileList)
 
-    with open(outputFasta, 'w') as outfile:
-        for filename in os.listdir(ouputDir):
-            if filename.endswith("."+fasta_file_ext):
-                filePath = os.path.join(ouputDir, filename)
-                with open(filePath) as infile:
-                    for line in infile:
-                        outfile.write(line)
-            else:
-                continue
+        with open(outputFasta, 'w') as outfile:
+            for filename in os.listdir(ouputDir):
+                if filename.endswith("."+fasta_file_ext):
+                    filePath = os.path.join(ouputDir, filename)
+                    with open(filePath) as infile:
+                        for line in infile:
+                            outfile.write(line)
+                else:
+                    continue
+    except:
+        print("Metabgc-identify read extraction has failed. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
+        exit()
 
 def RunExtractDescription(inputFasta, fasta_file_type):
     print("Processing " + inputFasta + "...")
