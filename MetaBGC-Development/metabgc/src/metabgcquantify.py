@@ -43,10 +43,9 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 		if blast_db_directory_map_file is None:
 			blast_db_directory_map_file = ""
 
-		output_directory = ""
 		if blastn_search_directory is None:
 			blastn_search_directory = os.path.join(output_directory, 'quantify_blastn_result')
-		combinedBLASTFile = os.path.join(output_directory, "CobminedQuantifyBLAST.txt")
+		combinedBLASTFile = os.path.join(output_directory, "CombinedQuantifyBLAST.txt")
 		abundFile = os.path.join(output_directory, "unique-biosynthetic-reads-abundance-table.txt")
 		abundWideFile = os.path.join(output_directory, "unique-biosynthetic-reads-abundance-table-wide.txt")
 

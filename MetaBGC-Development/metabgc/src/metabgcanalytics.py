@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from Bio import SeqIO
+from metabgc.src.utils import *
 
 def ReadLevelBinAnalytics(readTableAbundance,
                           sampleTableAbundance,
@@ -419,7 +420,7 @@ def SampleStacked(sampleTableAbundance, cohortMetadataFile, output_dir):
     out_stacked = os.path.join(output_dir, "SampleAbundanceBodysite_Stacked.tsv")
     df_subject_abundance_stacked.to_csv(out_stacked, index=False, sep='\t')
 
-def mbgcanalytics(nr_blast_db,metabgc_op_dir,cohort_metadata_file,output_dir,cpu):
+def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,output_dir,cpu):
     try:
         CPU_THREADS = 4
         if cpu is not None:
@@ -430,16 +431,40 @@ def mbgcanalytics(nr_blast_db,metabgc_op_dir,cohort_metadata_file,output_dir,cpu
         blastResultFile = os.path.join(metabgc_op_dir, "identify_result",'identified-biosynthetic-reads-blast.txt')
         fastaFile = os.path.join(metabgc_op_dir, "identify_result",'identified-biosynthetic-reads.fasta')
 
-        if os.path.exists(readTableAbundance) and \
-            os.path.exists(sampleTableAbundance) and \
-            os.path.exists(spHMMFile) and \
-            os.path.exists(readTableAbundance):
+        if not os.path.exists(readTableAbundance) and \
+            not os.path.exists(sampleTableAbundance) and \
+            not os.path.exists(spHMMFile) and \
+            not os.path.exists(readTableAbundance):
             print("Metabgc-analytics has failed because metabgc_output_dir is not pointing to a successful run of metabgc search")
 
         if not os.path.exists(blastResultFile):
             blastn_search_directory = os.path.join(output_dir, 'blastx_result')
             os.makedirs(blastn_search_directory, 0o777, True)
-            RunBlastSearch(nr_blast_db, queryFileList, "blastx", "", blastn_search_directory, CPU_THREADS)
+            records = list(SeqIO.parse(fastaFile, "fasta"))
+            write_rec = []
+            output_file_list=[]
+            file_count = 0
+            for seq_rec in records:
+                if len(write_rec) < 500:
+                    write_rec.append(seq_rec)
+                else:
+                    output_file = os.path.join(blastn_search_directory, str(file_count)+"_seg.fasta")
+                    count = SeqIO.write(write_rec, output_file, "fasta")
+                    output_file_list.append(output_file)
+                    file_count = file_count + 1
+                    write_rec.clear()
+
+            RunBlastSearch("nr", output_file_list, "blastx", "-max_target_seqs 1", blastn_search_directory, CPU_THREADS)
+            blastResultFile = os.path.join(output_dir,'identified-biosynthetic-reads-blast.txt')
+            found_hit_ctr=0
+            with open(blastResultFile, 'w') as outfile:
+                for filePath in output_file_list:
+                    if os.path.exists(filePath):
+                        with open(filePath) as infile:
+                            for line in infile:
+                                outfile.write(line)
+                                found_hit_ctr = found_hit_ctr + 1
+            print("Metabgc-analytics BLAST search is complete.")
 
         #Generate read level analytics table
         ReadLevelBinAnalytics(readTableAbundance,

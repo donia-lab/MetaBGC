@@ -10,6 +10,7 @@ from metabgc.src.utils import *
 import os
 import pandas as pd
 from pathlib import Path
+import logging
 
 #Filter HMM results using predetermined spHMM models score cutoffs 
 def filter_spHMM_data(spHMM_df, cutoff_df):
@@ -102,13 +103,13 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory, prot_seq_dire
 										outfile.write(line)
 										found_hit_ctr = found_hit_ctr + 1
 				if found_hit_ctr == 0:
-					print("Metabgc-identify has failed has failed to identify any reads for this protein family model. Please try with a different metagenome.")
+					logging.info("Metabgc-identify has failed to identify any reads for this protein family model. Please try with a different metagenome.")
+					print("Metabgc-identify has failed to identify any reads for this protein family model. Please try with a different metagenome.")
 					exit()
 				print("Metabgc-identify HMMER search is complete.")
 			else:
 				print("Metabgc-identify is using the existing HMMER search result found.")
 
-			os.makedirs(identify_directory, 0o777, True)
 			cutoff_file = os.path.join(sphmm_directory, prot_family_name + "_F1_Cutoff.tsv")
 			if not os.path.exists(allHMMResult):
 				print("Metabgc-identify did not find the spHMM cutoff threshold file at the expected location.:" + cutoff_file)

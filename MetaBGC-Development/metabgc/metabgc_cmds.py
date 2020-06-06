@@ -1,4 +1,7 @@
 import click
+import logging
+import time
+import os
 from metabgc.src.metabgcbuild import mbgcbuild
 from metabgc.src.metabgcidentify import mbgcidentify
 from metabgc.src.metabgcquantify import mbgcquantify
@@ -217,7 +220,10 @@ def search(sphmm_directory,prot_family_name,cohort_name,
             nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,
             r1_file_suffix,r2_file_suffix,max_dist,min_samples,min_reads_bin,min_abund_bin,
             hmm_search_directory, blastn_search_directory, blast_db_directory_map_file, output_directory,cpu):
+    logging.basicConfig(filename=os.path.join(output_directory,'metabgc.log'), level=logging.INFO)
+    logging.info('Invoking MetaBGC search...')
     click.echo('Invoking MetaBGC search...')
+    t0 = time.clock()
     ident_reads_file = mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory,prot_seq_directory,
                                     seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,
                                     prot_family_name, hmm_search_directory, output_directory, cpu)
@@ -227,13 +233,12 @@ def search(sphmm_directory,prot_family_name,cohort_name,
              output_directory, cpu)
 
     cluster_file = mbgccluster(abund_file,abund_wide_table, ident_reads_file, max_dist, min_samples,min_reads_bin, min_abund_bin, cpu)
-
-    print('Cluster file: ' + cluster_file)
+    click.echo('Cluster file: ' + cluster_file)
+    t1 = time.clock() - t0
+    logging.info("Time elapsed: ", t1 - t0)
+    logging.info("MetaBGC search complete...")
 
 @cli.command()
-@click.option('--nr_blast_directory', required=True,
-              type=click.Path(exists=True,dir_okay=True,readable=True),
-              help="Directory containing the NCBI nr database.")
 @click.option('--metabgc_output_dir',
               required=True,
               type=click.Path(exists=True, dir_okay=True, writable=True),
@@ -249,8 +254,8 @@ def search(sphmm_directory,prot_family_name,cohort_name,
 @click.option('--cpu', required=False,
               type=click.INT,default=4,
               help="Number of threads. Def.: 4")
-def analytics(nr_blast_directory,metabgc_output_dir,cohort_metadata_file,output_directory,cpu):
-    mbgcanalytics(nr_blast_directory,metabgc_output_dir,cohort_metadata_file,output_directory,cpu)
+def analytics(metabgc_output_dir,cohort_metadata_file,output_directory,cpu):
+    mbgcanalytics(metabgc_output_dir,cohort_metadata_file,output_directory,cpu)
 
 
 def main():
