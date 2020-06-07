@@ -65,7 +65,7 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory, prot_seq_dire
 			hmm_search_output_directory = os.path.join(output_directory, 'hmm_identify_search')
 		identify_directory = os.path.join(output_directory, 'identify_result')
 		os.makedirs(identify_directory, 0o777, True)
-		
+
 		fasta_seq_dir = os.path.join(output_directory, 'fasta_seq_result')
 		identifyReadIds = identify_directory + os.sep + "CombinedReadIds.txt"
 		filteredHMMResult = identify_directory + os.sep + "spHMM-filtered-results.txt"

@@ -146,7 +146,7 @@ def quantify(identify_fasta,prot_family_name,cohort_name,nucl_seq_directory,
              seq_fmt,pair_fmt,r1_file_suffix,r2_file_suffix,blastn_search_directory,blast_db_directory_map_file,
              output_directory,cpu):
     click.echo('Invoking MetaBGC Quantify...')
-    abund_file = mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directory,
+    abund_file, abund_wide_table = mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directory,
              seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,blast_db_directory_map_file,blastn_search_directory,
              output_directory, cpu)
     print('Reads abundance file: ' + abund_file)
@@ -170,8 +170,9 @@ def quantify(identify_fasta,prot_family_name,cohort_name,nucl_seq_directory,
 @click.option("--cpu", type=int, default=1,help="Number of threads.")
 def cluster(table,table_wide,identify_fasta,max_dist,min_samples,min_reads_bin,min_abund_bin,cpu):
     click.echo('Invoking MetaBGC Cluster...')
-    cluster_file = mbgccluster(table,table_wide, identify_fasta, max_dist, min_samples,min_reads_bin, min_abund_bin, cpu)
-    print('Clustered file: ' + cluster_file)
+    summary_file, cluster_file = mbgccluster(table,table_wide, identify_fasta, max_dist, min_samples,min_reads_bin, min_abund_bin, cpu)
+    click.echo('Cluster summary file: ' + summary_file)
+    click.echo('Cluster detail file: ' + cluster_file)
 
 
 @cli.command()
@@ -232,11 +233,15 @@ def search(sphmm_directory,prot_family_name,cohort_name,
              seq_fmt, pair_fmt, r1_file_suffix, r2_file_suffix,blast_db_directory_map_file,blastn_search_directory,
              output_directory, cpu)
 
-    cluster_file = mbgccluster(abund_file,abund_wide_table, ident_reads_file, max_dist, min_samples,min_reads_bin, min_abund_bin, cpu)
-    click.echo('Cluster file: ' + cluster_file)
+    summary_file, cluster_file = mbgccluster(abund_file,abund_wide_table, ident_reads_file, max_dist, min_samples,min_reads_bin, min_abund_bin, cpu)
+    click.echo('Cluster summary file: ' + summary_file)
+    click.echo('Cluster detail file: ' + cluster_file)
+    logging.info('Cluster summary file: ' + summary_file)
+    logging.info('Cluster detail file: ' + cluster_file)
     t1 = time.clock() - t0
-    logging.info("Time elapsed: ", t1 - t0)
+    logging.info("Time elapsed: " + str(t1))
     logging.info("MetaBGC search complete...")
+    click.echo("MetaBGC search complete...")
 
 @cli.command()
 @click.option('--metabgc_output_dir',

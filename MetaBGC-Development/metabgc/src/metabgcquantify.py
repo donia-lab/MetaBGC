@@ -72,9 +72,8 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 				raise
 		else:
 			print("Metabgc-quantify is using the existing BLASTN hits found.")
-
-		create_clustering_file(combinedBLASTFile,abundFile,abundWideFile)
-		return (abundFile, abundWideFile)
 	except:
 		print("Metabgc-quantify has failed. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
 		exit()
+	create_clustering_file(combinedBLASTFile, abundFile, abundWideFile)
+	return abundFile, abundWideFile

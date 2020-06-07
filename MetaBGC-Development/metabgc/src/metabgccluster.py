@@ -88,7 +88,7 @@ def mbgccluster(abundance_matrix, abundance_table_pivot,
         outF.write("Number of Bins with 2-4 Reads: {0}\n".format(len([i for i in clusterFreq if i >= 2 and i<=4])))
         outF.write("Number of Singleton Read Bins: {0}\n".format(len([i for i in clusterFreq if i == 1])))
 
-        if clusterCtr > 0:
+        if len(clusterFreqGTThresh) > 0:
             df_read_labels = pd.DataFrame(list(read_labels.items()),columns=['qseqid', 'bin'])
             df_abundance = pd.merge(df_abundance, df_read_labels, how='inner')
             PrintBinSeqs(clusterIDs,df_read_labels,identifiedReadFile,dir_path)
@@ -117,8 +117,9 @@ def mbgccluster(abundance_matrix, abundance_table_pivot,
             outF.write("Average Abundance of Bins with >= {0} Reads: {1}\n".format(readThresh,round(mean(clusterFreqGTThresh),2)))
             outF.write("Number Samples in containing Bins with >= {0} Reads at Bin Abundance: {1}\n".format(readThresh, len(Counter(df_abundance_sample['Sample'].tolist()).keys())))
         else:
-            print("Metabgc-cluster detected all bins with very low abundance.")
+            print("Metabgc-cluster detected only bins with very low abundance. No further analytics will be performed. Please adjust --min_reads_bin and --min_abund_bin.")
         outF.close()
+        return out_file_summary,out_file_abund
     except:
         print("Metabgc-cluster has failed. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
         exit()
