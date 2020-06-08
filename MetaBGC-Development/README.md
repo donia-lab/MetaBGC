@@ -69,8 +69,10 @@ To run a toy search example, please download the already constructed spHMMs and 
 OP_PATH=<set a path>
 cd ${OP_PATH}
 tar -zxvf OxyN_Build.tar.gz
-metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${OP_PATH}/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${OP_PATH}/output --cpu 20
+metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${OP_PATH}/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${OP_PATH}/output --cpu 4
 ```
+
+The run will take about 60GB or so of memory and 200 minutes to run using 4 threads. Please reduce the number of threads if you are running out of memory, but execution will take longer.  
 
 ### Program Structure
 

@@ -18,7 +18,8 @@ def combine_blast_results(blast_dir_path, combinedBLASTFile, cohort_name):
 		dataframe['cohort'] = cohort_name
 	combined_df = pd.concat(list_of_dfs, ignore_index=True)
 	combined_df.to_csv(combinedBLASTFile, index=False, sep='\t', header=False)
-	return combined_df.count()
+	numOfRows = combined_df.shape[0]
+	return 	numOfRows
 
 def create_clustering_file(blast_result,abundFile,abundWideFile):
 	all_domains_blast_df = pd.read_csv(blast_result, sep="\t",
@@ -66,14 +67,16 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 			RunMakeDBandBlastN(nucl_seq_directory, blast_db_directory_map_file,
 							   cdHitFile, "blastn", "-dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11",
 							   blastn_search_directory, CPU_THREADS)
-			blastCount = combine_blast_results(blastn_search_directory, combinedBLASTFile, cohort_name)
-			if blastCount == 0:
-				print("Metabgc-quantify could not find any reads during quanify BLAST search.")
-				raise
 		else:
 			print("Metabgc-quantify is using the existing BLASTN hits found.")
+
+		blastCount = combine_blast_results(blastn_search_directory, combinedBLASTFile, cohort_name)
+		if blastCount == 0:
+			print("Metabgc-quantify could not find any reads during quanify BLAST search.")
+		else:
+			print("Metabgc-quantify found " + str(blastCount) + " BLAST hits.")
+		create_clustering_file(combinedBLASTFile, abundFile, abundWideFile)
+		return abundFile, abundWideFile
 	except:
-		print("Metabgc-quantify has failed. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
+		print("Metabgc-quantify has failed because no reads could be quantified. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
 		exit()
-	create_clustering_file(combinedBLASTFile, abundFile, abundWideFile)
-	return abundFile, abundWideFile
