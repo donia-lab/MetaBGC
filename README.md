@@ -16,8 +16,6 @@ These instructions will get you setup to run MetaBGC on your local Linux or Appl
 
 * Users can test the pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
 * Running your own read libraries against the test cyclase model provided may not work considering that cyclases are rare in metagenomic datasets.
-  * Currently the tool does not fail gracefully with user friendly error messages.
-  * We are working on adding a failure logging module that does various sanity checks.  
 * For non-cyclase spHMMs you can de novo create your own using the build module. In addition, we are currently developing high-performance spHMMs for several other biosynthetic classes and will be releasing them in a few months (as pre-built models) in a follow-up release/publication.
   
 ## Bioconda Distribution 
@@ -69,8 +67,10 @@ To run a toy search example, please download the already constructed spHMMs and 
 OP_PATH=<set a path>
 cd ${OP_PATH}
 tar -zxvf OxyN_Build.tar.gz
-metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${OP_PATH}/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${OP_PATH}/output --cpu 20
+metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${OP_PATH}/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${OP_PATH}/output --cpu 4
 ```
+
+The run will take about 60GB of memory and 200 minutes to run using 4 threads. Please reduce the number of threads if you are running out of memory, but execution will take longer.  
 
 ### Program Structure
 
