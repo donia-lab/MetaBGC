@@ -6,3 +6,5 @@ __pycache__
 .pytest_cache
 pip-egg-info/*
 metabgc.egg-info/*
+metabgc/src/__pycache__/*
+metabgc/test/AbcK/*
