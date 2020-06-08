@@ -51,7 +51,7 @@ All the internal python dependencies are specified in the setup will be installe
 ```
 metabgc --help
 ```
-The latest development build build is available for other developers and may often contain bugs and is not stable. To install the latest development build from GitHub:
+The latest development build is available for other developers and may often contain bugs and is not stable. To install the latest development build from GitHub:
 ```
 git clone https://github.com/donia-lab/MetaBGC.git
 cd MetaBGC/MetaBGC-Development
