@@ -65,7 +65,7 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 		if not os.path.exists(combinedBLASTFile):
 			os.makedirs(blastn_search_directory, 0o777, True)
 			RunMakeDBandBlastN(nucl_seq_directory, blast_db_directory_map_file,
-							   cdHitFile, "blastn", "-dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11",
+							   cdHitFile, "blastn", "-dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" ",
 							   blastn_search_directory, CPU_THREADS)
 		else:
 			print("Metabgc-quantify is using the existing BLASTN hits found.")

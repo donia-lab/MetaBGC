@@ -454,16 +454,18 @@ def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,output_dir,cpu):
                     file_count = file_count + 1
                     write_rec.clear()
 
-            RunBlastSearch("nr", output_file_list, "blastx", "-max_target_seqs 1", blastn_search_directory, CPU_THREADS)
+            RunBlastSearch("nr", output_file_list, "blastx", "-max_target_seqs 1 -outfmt \"6 qseqid sseqid pident evalue staxids sscinames scomnames sskingdoms stitle\" ", blastn_search_directory, CPU_THREADS)
             blastResultFile = os.path.join(output_dir,'identified-biosynthetic-reads-blast.txt')
             found_hit_ctr=0
             with open(blastResultFile, 'w') as outfile:
-                for filePath in output_file_list:
-                    if os.path.exists(filePath):
-                        with open(filePath) as infile:
-                            for line in infile:
-                                outfile.write(line)
-                                found_hit_ctr = found_hit_ctr + 1
+                for subdir, dirs, files in os.walk(blastn_search_directory):
+                    for file in files:
+                        filePath = os.path.join(subdir, file)
+                        if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
+                            with open(filePath) as infile:
+                                for line in infile:
+                                    outfile.write(line)
+                                    found_hit_ctr = found_hit_ctr + 1
             print("Metabgc-analytics BLAST search is complete.")
 
         #Generate read level analytics table

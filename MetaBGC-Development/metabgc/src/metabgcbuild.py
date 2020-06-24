@@ -7,6 +7,7 @@ from rpy2.robjects.packages import STAP
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects.vectors import StrVector
 from shutil import copyfile
+import os
 
 def ungappedseqsearch(reference_str, query_str):
     for i in range(0, len(reference_str)):
@@ -165,7 +166,7 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
                 print("Constructing BLAST Search Dir:" + blastn_search_directory)
                 os.makedirs(blastn_search_directory,0o777,True)
                 RunMakeDBandBlastN(nucl_seq_directory, blast_db_directory_map_file,
-                                   tp_genes_nucl, "blastn", "-max_target_seqs 10000 -perc_identity 90.0",
+                                   tp_genes_nucl, "blastn", "-max_target_seqs 10000 -perc_identity 90.0 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" ",
                                    blastn_search_directory, CPU_THREADS)
 
             with open(allBLASTResult, 'w') as outfile:
@@ -176,7 +177,7 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
                         if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
                             with open(filePath) as infile:
                                 for line in infile:
-                                    sampleName = ntpath.basename(filePath).split(".txt")[0]
+                                    sampleName = os.path.basename(filePath).split(".txt")[0]
                                     outfile.write(line.strip() + "\t" + sampleName + "\t" + cohort_name + "\n")
 
         # Eval spHMMs

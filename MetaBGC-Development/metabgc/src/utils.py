@@ -98,7 +98,7 @@ def runMakeBLASTDB(fastaFile, dbName, dbOpPath, type):
 Function BLAST search a FASTA. 
 """
 def runBLASTN(fastaFile, database, blastCommand, blastParamStr, outFile, ncpus=4):
-    cmd = blastCommand + " -num_threads " + str(ncpus) + " -query " + fastaFile + " -db " + database + " " + blastParamStr + " -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" -out " + outFile
+    cmd = blastCommand + " -num_threads " + str(ncpus) + " -query " + fastaFile + " -db " + database + " " + blastParamStr + " -out " + outFile
     logging.info(cmd)
     subprocess.call(cmd, shell=True)
     logging.info("Done running BLAST search on:" + fastaFile)
@@ -199,7 +199,8 @@ def RunBlastSearch(blastdb, queryFileList, blastCmdString, blastParamStr, ouputD
         if os.path.exists(file):
             searchFileList.append(file)
             rootFileName = os.path.splitext(os.path.basename(file))[0]
-            outFileList.append(rootFileName + ".txt")
+            outFileName = os.path.join(ouputDir,rootFileName + ".txt")
+            outFileList.append(outFileName)
         if len(searchFileList) >= ncpus:
             BLASTParallel(blastdb, searchFileList,
                             blastCmdString, blastParamStr,outFileList)
