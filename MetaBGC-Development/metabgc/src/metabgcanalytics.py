@@ -1,28 +1,33 @@
 import os
 import pandas as pd
 import numpy as np
+from Bio import SeqIO
+from metabgc.src.utils import *
 
-def ReadLevelBinAnalytics(data_dir):
-
-    readTableAbundance = os.path.join(data_dir,'ReadLevelAbundance.tsv')
-    sampleTableAbundance = os.path.join(data_dir,'SampleAbundanceMatrix.tsv')
-    spHMMFile = os.path.join(data_dir, 'spHMM-filtered-results.tsv')
-    bodySiteFile = os.path.join(data_dir, 'combined_cohort.csv')
-    blastResultFile = os.path.join(data_dir, 'identified-biosynthetic-reads-blast.txt')
-    fastaFile = os.path.join(data_dir, 'identified-biosynthetic-reads.fasta.csv')
+def ReadLevelBinAnalytics(readTableAbundance,
+                          sampleTableAbundance,
+                          spHMMFile,
+                          blastResultFile,
+                          fastaFile,
+                          cohortMetadataFile,
+                          output_dir):
     df_read_abundance = pd.read_csv(readTableAbundance, delimiter="\t")
     df_sample_abundance = pd.read_csv(sampleTableAbundance, delimiter="\t")
     df_spHMM = pd.read_csv(spHMMFile, delimiter="\t")
 
-    df_bodysite = pd.read_csv(bodySiteFile, delimiter=",",keep_default_na=False)
-    df_bodysite = df_bodysite.drop(columns=['Subject','Cohort','BodyAggSite','Subject_Status'])
-    df_bodysite.rename(columns={'Sample': 'derived_sample','Bodysite': 'derived_bodysite'}, inplace=True)
+    df_metadata = pd.read_csv(cohortMetadataFile, delimiter=",", keep_default_na=False)
+    df_metadata = df_metadata.drop(columns=['Subject','BodyAggSite','Subject_Status','Visits'])
+    df_metadata.rename(columns={'Sample': 'derived_sample', 'Cohort': 'derived_cohort','Bodysite': 'derived_bodysite'}, inplace=True)
 
     df_BLAST = pd.read_csv(blastResultFile, delimiter="\t",header=None,names=['qseqid','sseqid','identity','e-value','staxids','genome','scomnames','sskingdoms','stitle'])
     df_BLAST = df_BLAST.drop(columns=['sseqid','staxids','scomnames','sskingdoms'])
 
-    df_fasta = pd.read_csv(fastaFile, delimiter=",", header=None,
-                              names=['qseqid', 'read_seq'])
+    record_dict = SeqIO.index(fastaFile, "fasta")
+    df_fasta = pd.DataFrame(columns=['qseqid', 'read_seq'])
+    for read_id in record_dict:
+        seq_str = str(record_dict[read_id].seq)
+        df_fasta = df_fasta.append({'qseqid': read_id,
+                                    'read_seq': seq_str}, ignore_index=True)
 
     # Read stats
     df_abundance_max = df_read_abundance.groupby(['qseqid','bin'])['ReadAbundance'].max().reset_index(name='max_sample_abundance_read')
@@ -64,10 +69,12 @@ def ReadLevelBinAnalytics(data_dir):
     # Read Bin Stats
     df_read_bin = pd.merge(df_read, df_sample,on=['bin'], how='inner')
     df_spHMM = df_spHMM[['readID','sampleType','Sample','HMMScore','interval']]
-    df_spHMM.rename(columns={'readID':'qseqid','sampleType': 'derived_cohort', 'Sample': 'derived_sample','HMMScore':'hmm_score'},inplace=True)
+    df_spHMM = df_spHMM.drop(columns={'sampleType'})
+    df_spHMM.rename(columns={'readID':'qseqid','Sample': 'derived_sample','HMMScore':'hmm_score'},inplace=True)
+
     df_summary = pd.merge(df_read_bin, df_spHMM,on=['qseqid'], how='inner')
 
-    df_summary = pd.merge(df_summary, df_bodysite, on=['derived_sample'], how='left')
+    df_summary = pd.merge(df_summary, df_metadata, on=['derived_sample'], how='left')
     df_summary = pd.merge(df_summary, df_BLAST, on=['qseqid'], how='left')
     df_summary = pd.merge(df_summary, df_fasta, on=['qseqid'], how='left')
 
@@ -94,19 +101,16 @@ def ReadLevelBinAnalytics(data_dir):
                             'stitle',
                             'read_seq']]
 
-    out_file_abund = os.path.join(data_dir, 'ReadLevelBinStats.tsv')
+    out_file_abund = os.path.join(output_dir, 'ReadLevelBinStats.tsv')
     df_summary.to_csv(out_file_abund, index=False, sep='\t')
 
-    df_bin_sample =  df_sample.groupby(['bin','max_sample_bin']).count().reset_index()
-    out_bin_max_sample_file = os.path.join(data_dir, 'MaxBinSample.tsv')
-    df_bin_sample.to_csv(out_bin_max_sample_file, index=False, sep='\t')
+    out_bin_max_sample_file = os.path.join(output_dir, 'MaxBinSample.tsv')
+    df_sample.to_csv(out_bin_max_sample_file, index=False, sep='\t')
 
-def BinSubjectCount(data_dir):
-    cohortMetadataFile = os.path.join(data_dir, 'combined_cohort.csv')
-    subjectTableAbundance = os.path.join(data_dir, 'SampleAbundanceMatrix.tsv')
+def BinSubjectCount(subjectTableAbundance, cohortMetadataFile, output_dir):
     df_subject_abundance = pd.read_csv(subjectTableAbundance, delimiter="\t",keep_default_na=False)
     df_cohort = pd.read_csv(cohortMetadataFile,keep_default_na=False)
-
+    df_cohort = df_cohort.drop(columns=['Visits'])
     #Add metadata
     df_subject_abundance = pd.merge(df_cohort,df_subject_abundance,on=['Sample'], how='inner')
 
@@ -114,8 +118,6 @@ def BinSubjectCount(data_dir):
     df_subject_bodysite = df_cohort.drop(columns=['Sample'])
     df_subject_bodysite.drop_duplicates(keep='first', inplace=True)
     df_subject_count_bodysite = df_subject_bodysite.groupby(['Cohort','Bodysite','BodyAggSite','Subject_Status'])['Subject'].count().reset_index(name='Subject_Count')
-    #out_subject_bodysite_count = "C:/Users/ab50/Documents/data/MetaBGCRuns/AcbK-homologs/output/quantify/combined_2/SubjectTotals_Bodysite.tsv"
-    #df_subject_count_bodysite.to_csv(out_subject_bodysite_count, index=False, sep='\t')
 
     df_subject_bin_counts = df_subject_abundance.drop(columns=['Sample'])
     df_subject_bin_counts.rename(columns={'Subject': 'Subject_Count'}, inplace=True)
@@ -145,7 +147,7 @@ def BinSubjectCount(data_dir):
     cols.remove('Subject_Count')
     cols.insert(4,'Subject_Count')
     df_subject_bin_counts = df_subject_bin_counts[cols]
-    out_subject_bin_count = os.path.join(data_dir, 'BinSubjectCounts_Bodysite.tsv')
+    out_subject_bin_count = os.path.join(output_dir, 'BinSubjectCounts_Bodysite.tsv')
     df_subject_bin_counts.to_csv(out_subject_bin_count, index=False, sep='\t')
 
 
@@ -180,15 +182,14 @@ def BinSubjectCount(data_dir):
     cols.remove('Subject_Count')
     cols.insert(3,'Subject_Count')
     df_agg_subject_bin_counts = df_agg_subject_bin_counts[cols]
-    out_agg_subject_bin_count = os.path.join(data_dir, 'BinSubjectCounts_BodysiteAgg.tsv')
+    out_agg_subject_bin_count = os.path.join(output_dir, 'BinSubjectCounts_BodysiteAgg.tsv')
     df_agg_subject_bin_counts.to_csv(out_agg_subject_bin_count, index=False, sep='\t')
 
-def BinSampleCount(data_dir):
-    cohortMetadataFile = os.path.join(data_dir, 'combined_cohort.csv')
-    subjectTableAbundance = os.path.join(data_dir, 'SampleAbundanceMatrix.tsv')
+def BinSampleCount(subjectTableAbundance, cohortMetadataFile, output_dir):
+
     df_subject_abundance = pd.read_csv(subjectTableAbundance, delimiter="\t",keep_default_na=False)
     df_cohort = pd.read_csv(cohortMetadataFile,keep_default_na=False)
-
+    df_cohort = df_cohort.drop(columns=['Visits'])
     #Add metadata
     df_subject_abundance = pd.merge(df_cohort,df_subject_abundance,on=['Sample'], how='inner')
 
@@ -223,7 +224,7 @@ def BinSampleCount(data_dir):
     cols.insert(4,'Sample_Count')
     df_subject_bin_counts = df_subject_bin_counts[cols]
 
-    out_subject_bin_count = os.path.join(data_dir, 'BinSampleCounts_Bodysite.tsv')
+    out_subject_bin_count = os.path.join(output_dir, 'BinSampleCounts_Bodysite.tsv')
     df_subject_bin_counts.to_csv(out_subject_bin_count, index=False, sep='\t')
 
 
@@ -254,13 +255,18 @@ def BinSampleCount(data_dir):
     cols.remove('Sample_Count')
     cols.insert(3,'Sample_Count')
     df_agg_subject_bin_counts = df_agg_subject_bin_counts[cols]
-    out_agg_subject_bin_count = os.path.join(data_dir, 'BinSampleCounts_BodysiteAgg.tsv')
+    out_agg_subject_bin_count = os.path.join(output_dir, 'BinSampleCounts_BodysiteAgg.tsv')
     df_agg_subject_bin_counts.to_csv(out_agg_subject_bin_count, index=False, sep='\t')
 
-def test_bin_consistancy():
-    visitTableAbundance = "C:/Users/ab50/Documents/data/MetaBGCRuns/AcbK-homologs/output/quantify/combined_2/SampleAbundanceVisits.tsv"
-    df_subject_visit_abundance = pd.read_csv(visitTableAbundance, delimiter="\t", keep_default_na=False)
+def HMP_BinConsistancy(sampleTableAbundance,cohortMetadataFile,output_dir):
+    df_sample_abundance = pd.read_csv(sampleTableAbundance, delimiter="\t")
+    df_bodysite = pd.read_csv(cohortMetadataFile, delimiter=",",keep_default_na=False)
 
+    df_subject_visit_abundance = pd.merge(df_bodysite, df_sample_abundance, on=['Sample'], how='inner')
+
+    df_subject_visit_abundance = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Cohort'] == 'HMP') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'HMP-1_2')]
+    df_subject_visit_abundance["Visits"] = pd.to_numeric(df_subject_visit_abundance["Visits"])
     df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject','Cohort','Bodysite','BodyAggSite','Subject_Status'])['Subject'].count().reset_index(name='Subject_Count')
     df_bodysite_sample = pd.DataFrame(columns=['Subject', 'Cohort', 'Bodysite', 'BodyAggSite', 'Bin', 'Visit 1 Sample', 'Visit 1 Bin Abundance',
                  'Visit 2 Sample', 'Visit 2 Bin Abundance',
@@ -344,13 +350,20 @@ def test_bin_consistancy():
                                                (df_bodysite_sample['Bin'] == bin),'Visit 2 Bin Abundance'] = visit_2[bin].item()
     df_bodysite_sample = df_bodysite_sample.sort_values(by=['Visit 3 Bin Abundance', 'Visit 2 Bin Abundance', 'Visit 1 Bin Abundance'],
                                                       ascending=[False, False, False])
-    out_bin_visits = "C:/Users/ab50/Documents/data/MetaBGCRuns/AcbK-homologs/output/quantify/combined_2/BodysiteBinVisitsAbundances.tsv"
+
+    out_bin_visits = os.path.join(output_dir, "BodysiteBinVisitsAbundances.tsv")
     df_bodysite_sample.to_csv(out_bin_visits, index=False, sep='\t')
 
-def test_bin_sample_abund():
-    visitTableAbundance = "C:/Users/ab50/Documents/data/MetaBGCRuns/AcbK-homologs/output/quantify/combined_2/SampleAbundanceVisits.tsv"
-    df_subject_visit_abundance = pd.read_csv(visitTableAbundance, delimiter="\t", keep_default_na=False)
-    df_subject_visit_abundance = df_subject_visit_abundance.drop(columns=['Bodysite','Subject_Status'])
+def HMP_BinSampleAbund(sampleTableAbundance, cohortMetadataFile, output_dir):
+    df_sample_abundance = pd.read_csv(sampleTableAbundance, delimiter="\t")
+    df_bodysite = pd.read_csv(cohortMetadataFile, delimiter=",",keep_default_na=False)
+
+    df_subject_visit_abundance = pd.merge(df_bodysite, df_sample_abundance, on=['Sample'], how='inner')
+    df_subject_visit_abundance = df_subject_visit_abundance.drop(columns=['Bodysite', 'Subject_Status'])
+    df_subject_visit_abundance = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Cohort'] == 'HMP') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'HMP-1_2')]
+
+    df_subject_visit_abundance["Visits"] = pd.to_numeric(df_subject_visit_abundance["Visits"])
     df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject','Cohort','BodyAggSite'])['Subject'].count().reset_index(name='Subject_Count')
     df_bodysite_sample = pd.DataFrame(columns=['Subject', 'Cohort', 'BodyAggSite', 'Bin', 'Total Visit 1 Samples', 'Visit 1 Samples',
                                                'Total Visit 2 Samples', 'Visit 2 Samples',
@@ -390,15 +403,93 @@ def test_bin_sample_abund():
                                                            ignore_index=True)
     df_bodysite_sample = df_bodysite_sample.sort_values(by=['Visit 3 Samples', 'Visit 2 Samples', 'Visit 1 Samples'],
                                                       ascending=[False, False, False])
-    out_bin_visits = "C:/Users/ab50/Documents/data/MetaBGCRuns/AcbK-homologs/output/quantify/combined_2/SubjectBinVisitCombined.tsv"
+    out_bin_visits = os.path.join(output_dir, "SubjectBinVisitCombined.tsv")
     df_bodysite_sample.to_csv(out_bin_visits, index=False, sep='\t')
 
-def test_stacked():
-    subjectTableAbundance = "C:/Users/ab50/Documents/data/MetaBGCRuns/AcbK-homologs/output/quantify/combined_2/SampleAbundanceBodysite.tsv"
-    df_subject_abundance = pd.read_csv(subjectTableAbundance, delimiter="\t",keep_default_na=False)
-    #df_subject_abundance = df_subject_abundance.set_index(['Sample','Subject','Cohort','Bodysite','BodyAggSite','Subject_Status'])
+def SampleStacked(sampleTableAbundance, cohortMetadataFile, output_dir):
+    df_sample_abundance = pd.read_csv(sampleTableAbundance, delimiter="\t")
+    df_bodysite = pd.read_csv(cohortMetadataFile, delimiter=",",keep_default_na=False)
+
+    df_subject_abundance = pd.merge(df_bodysite, df_sample_abundance, on=['Sample'], how='inner')
+    df_subject_abundance = df_subject_abundance.drop(columns=['Visits'])
+
     df_subject_abundance_stacked = pd.melt(df_subject_abundance,id_vars=['Sample','Subject','Cohort','Bodysite','BodyAggSite','Subject_Status'])
     df_subject_abundance_stacked.rename(columns={'variable': 'Bin',
                                                  'value': 'read_abundance'}, inplace=True)
-    out_stacked = "C:/Users/ab50/Documents/data/MetaBGCRuns/AcbK-homologs/output/quantify/combined_2/SampleAbundanceBodysite_Stacked.tsv"
+
+    out_stacked = os.path.join(output_dir, "SampleAbundanceBodysite_Stacked.tsv")
     df_subject_abundance_stacked.to_csv(out_stacked, index=False, sep='\t')
+
+def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,output_dir,cpu):
+    try:
+        CPU_THREADS = 4
+        if cpu is not None:
+            CPU_THREADS = int(cpu)
+        readTableAbundance = os.path.join(metabgc_op_dir,'ReadLevelAbundance.tsv')
+        sampleTableAbundance = os.path.join(metabgc_op_dir,'SampleAbundanceMatrix.tsv')
+        spHMMFile = os.path.join(metabgc_op_dir, "identify_result", 'spHMM-filtered-results.txt')
+        blastResultFile = os.path.join(metabgc_op_dir, "identify_result",'identified-biosynthetic-reads-blast.txt')
+        fastaFile = os.path.join(metabgc_op_dir, "identify_result",'identified-biosynthetic-reads.fasta')
+
+        if not os.path.exists(readTableAbundance) and \
+            not os.path.exists(sampleTableAbundance) and \
+            not os.path.exists(spHMMFile) and \
+            not os.path.exists(readTableAbundance):
+            print("Metabgc-analytics has failed because metabgc_output_dir is not pointing to a successful run of metabgc search")
+
+        if not os.path.exists(blastResultFile):
+            blastn_search_directory = os.path.join(output_dir, 'blastx_result')
+            os.makedirs(blastn_search_directory, 0o777, True)
+            records = list(SeqIO.parse(fastaFile, "fasta"))
+            write_rec = []
+            output_file_list=[]
+            file_count = 0
+            for seq_rec in records:
+                if len(write_rec) < 500:
+                    write_rec.append(seq_rec)
+                else:
+                    output_file = os.path.join(blastn_search_directory, str(file_count)+"_seg.fasta")
+                    count = SeqIO.write(write_rec, output_file, "fasta")
+                    output_file_list.append(output_file)
+                    file_count = file_count + 1
+                    write_rec.clear()
+
+            RunBlastSearch("nr", output_file_list, "blastx", "-max_target_seqs 1 -outfmt \"6 qseqid sseqid pident evalue staxids sscinames scomnames sskingdoms stitle\" ", blastn_search_directory, CPU_THREADS)
+            blastResultFile = os.path.join(output_dir,'identified-biosynthetic-reads-blast.txt')
+            found_hit_ctr=0
+            with open(blastResultFile, 'w') as outfile:
+                for subdir, dirs, files in os.walk(blastn_search_directory):
+                    for file in files:
+                        filePath = os.path.join(subdir, file)
+                        if re.match(r".*txt$", file) and os.path.getsize(filePath) > 0:
+                            with open(filePath) as infile:
+                                for line in infile:
+                                    outfile.write(line)
+                                    found_hit_ctr = found_hit_ctr + 1
+            print("Metabgc-analytics BLAST search is complete.")
+
+        #Generate read level analytics table
+        ReadLevelBinAnalytics(readTableAbundance,
+                              sampleTableAbundance,
+                              spHMMFile,
+                              blastResultFile,
+                              fastaFile,
+                              cohort_metadata_file,
+                              output_dir)
+        #Generate sample level analytics table
+        BinSubjectCount(sampleTableAbundance, cohort_metadata_file, output_dir)
+
+        #Generate bodysite aggregate file
+        BinSampleCount(sampleTableAbundance, cohort_metadata_file, output_dir)
+
+        #HMP bin abundance for each subject for each visit grouped by cohort and bodysite
+        HMP_BinConsistancy(sampleTableAbundance, cohort_metadata_file, output_dir)
+
+        # HMP abundance for each bin for each subject across visits
+        HMP_BinSampleAbund(sampleTableAbundance, cohort_metadata_file, output_dir)
+
+        #Sample abundance pivot table
+        SampleStacked(sampleTableAbundance, cohort_metadata_file, output_dir)
+    except:
+        print("Metabgc-analytics has failed. Please check your paths are correct and contact support on : https://github.com/donia-lab/MetaBGC")
+        exit()

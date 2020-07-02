@@ -2,23 +2,14 @@ from Bio import SearchIO
 from Bio import SeqIO
 import os
 import subprocess
-from metabgc.src.hmmrecord import HMMRecord
+import metabgc.src.hmmrecord as hmmrecord
 import pandas as pd
 import re
 from multiprocessing import Pool, freeze_support
 from itertools import repeat
 import shutil
-import ntpath
-
-
-"""
-Constructs the expected BLAST DB path for DoniaLab; Specific to runs done in Donia environment.
-"""
-def ConstructDoniaDBPath(baseDir,sampleFileName):
-    sampleType = sampleFileName.split('_')[2]
-    sampleName = os.path.splitext(sampleFileName)[0]
-    dbOut = os.path.join(baseDir,sampleType,sampleName,sampleName+"-raw-reads-fasta",sampleFileName)
-    return dbOut
+import csv
+import logging
 
 """
 Function searches all FASTA file in a directory against a HMM. 
@@ -35,7 +26,7 @@ def RunHMMDirectory(inputDir, hmmModel, sampleType, protType, window, interval, 
 Function searches all FASTA file in a directory against a HMM in parallel. 
 """
 def RunHMMDirectoryParallel(inputDir, hmmModel, sampleType, protType, window, interval, ouputDir, ncpus=4):
-    print('Number of pool processes:{0}.'.format(ncpus))
+    logging.info('Number of pool processes:{0}.'.format(ncpus))
     for subdir, dirs, files in os.walk(inputDir):
         fastaFileList=[]
         sampleStrList = []
@@ -55,7 +46,7 @@ def RunHMMDirectoryParallel(inputDir, hmmModel, sampleType, protType, window, in
 """
 Function to run make HMM search against FASTA files in parallel. 
 """
-def HMMSearchParallel(fastaFileList, hmmFile, ouputDir, sampleType,sampleStrList,protType,window,interval):
+def HMMSearchParallel(fastaFileList, hmmFile, ouputDir, sampleType, sampleStrList, protType, window, interval):
     numOfprocess = len(fastaFileList)
     pool = Pool(processes=numOfprocess)
     pool.starmap(runHMMSearch, zip(fastaFileList, repeat(hmmFile), repeat(ouputDir), repeat(sampleType),
@@ -71,26 +62,26 @@ def runHMMSearch(fastaFile, hmmFile, ouputDir, sampleType, sampleStr, protType, 
     hmmTblFileName = sampleStr + "__" + interval + ".tbl"
     hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
     if not os.path.exists(hmmTblFilePath):
-        print('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
+        logging.info('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
         cmd = "hmmsearch --cpu " + str(ncpus) + " --F1 0.02 --F2 0.02 --F3 0.02 --tblout " + hmmTblFilePath + " " + hmmFile + " "+ fastaFile + " > /dev/null"
-        print(cmd)
+        logging.info(cmd)
         subprocess.call(cmd, shell=True)
     else:
-        print("HMM search skipped... Using existing result for: ", fastaFile)
+        logging.info("HMM search skipped... Using existing result for: " + fastaFile)
     result_dict = parseHMM(hmmTblFilePath, "hmmer3-tab", sampleType, sampleStr, protType, window, interval)
     hmmSearchFileName = sampleStr + "__" + interval + ".txt"
     hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
     createPandaDF(result_dict, hmmSearchFilePath)
-    print("Done Running HMM Build with:",fastaFile)
+    logging.info("Done Running HMM Build with:" + fastaFile)
 
 """
 Function builds HMM profile with the parsed portion of the alignment file. 
 """
 def runHMMBuild(alnFile, hmmFile, modelName):
     cmd = "hmmbuild -n " + modelName + " --amino "+ hmmFile + " "+ alnFile
-    print(cmd)
+    logging.info(cmd)
     subprocess.call(cmd, shell=True)
-    print("Done Running HMM Build on:",alnFile)
+    logging.info("Done Running HMM Build on:" + alnFile)
 
 """
 Function build a BLAST DB with a FASTA. 
@@ -98,56 +89,65 @@ Function build a BLAST DB with a FASTA.
 def runMakeBLASTDB(fastaFile, dbName, dbOpPath, type):
     dbOut = dbOpPath + os.sep + dbName
     cmd = "makeblastdb -in " + fastaFile + " -title " + dbName +" -dbtype nucl -out " + dbOut
-    print(cmd)
+    logging.info(cmd)
     subprocess.call(cmd, shell=True)
-    print("Done building BLAST Build on:",fastaFile)
+    logging.info("Done building BLAST build on:" + fastaFile)
     return dbOut
 
 """
 Function BLAST search a FASTA. 
 """
-def runBLASTN(fastaFile, database, blastParamStr, outFile, ncpus=16):
-    cmd = "blastn -num_threads " + str(ncpus) + " -query " + fastaFile + " -db " + database + " " + blastParamStr + " -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" -out " + outFile
-    print(cmd)
+def runBLASTN(fastaFile, database, blastCommand, blastParamStr, outFile, ncpus=4):
+    cmd = blastCommand + " -num_threads " + str(ncpus) + " -query " + fastaFile + " -db " + database + " " + blastParamStr + " -out " + outFile
+    logging.info(cmd)
     subprocess.call(cmd, shell=True)
-    print("Done running BLAST Build on:",fastaFile)
+    logging.info("Done running BLAST search on:" + fastaFile)
 
 """
 Function to run make BLAST db and search a FASTA file. 
 """
-def MakeSearchBLASTN(dbFile, existingDbDir, dbOpPath, searchFile, blastParamStr, outFile):
-    basename = os.path.basename(dbFile)
-    if existingDbDir:
-        print("Existing database path provided:" + existingDbDir)
-        dbOut = ConstructDoniaDBPath(existingDbDir,basename)
+def MakeSearchBLASTN(dbInputFile, existingDbDirMapFile, dbOpPath, searchFile, blastCmdString, blastParamStr, outFile):
+    sample_basename = os.path.basename(dbInputFile)
+    dbOut = ""
+    if existingDbDirMapFile:
+        logging.info("Existing database path map provided:" + existingDbDirMapFile)
+        map_dict = {}
+        map_file = os.path.join(existingDbDirMapFile)
+        with open(map_file) as f:
+            reader = csv.reader(f, skipinitialspace=True)
+            map_dict = dict(reader)
+        dbOut = map_dict[sample_basename]
 
     if not os.path.isfile(dbOut):
-        print("Constructing BLAST DB for:" + dbFile)
-        dbOpPath = dbOpPath + os.sep + basename
+        logging.info("Constructing BLAST DB for:" + dbInputFile)
+        dbOpPath = dbOpPath + os.sep + sample_basename
         os.makedirs(dbOpPath, 0o777, True)
-        dbName = os.path.splitext(basename)[0]
-        dbOut = runMakeBLASTDB(dbFile,dbName,dbOpPath,'nucl')
-        runBLASTN(searchFile, dbOut, blastParamStr, outFile, 1)
+        dbName = os.path.splitext(sample_basename)[0]
+        dbOut = runMakeBLASTDB(dbInputFile, dbName, dbOpPath, 'nucl')
+        runBLASTN(searchFile, dbOut, blastCmdString, blastParamStr, outFile, 1)
         shutil.rmtree(dbOpPath)
     else:
-        print("Found existing database path:" + dbOut)
-        runBLASTN(searchFile, dbOut, blastParamStr, outFile, 1)
-
+        logging.info("Found existing database path:" + dbOut)
+        runBLASTN(searchFile, dbOut, blastCmdString, blastParamStr, outFile, 1)
 """
 Function to run make BLAST db and search a FASTA file. 
 """
-def MakeSearchBLASTNParallel(dbFileList, existingDbDir,dbOpPath, searchFileList, blastParamStr, outFileList):
+def MakeSearchBLASTNParallel(dbFileList, existingDbDir, dbOpPath,
+                             searchFileList, blastCmdString, blastParamStr,
+                             outFileList):
     numOfprocess = len(dbFileList)
     pool = Pool(processes=numOfprocess)
-    pool.starmap(MakeSearchBLASTN, zip(dbFileList, repeat(existingDbDir),repeat(dbOpPath), searchFileList, repeat(blastParamStr), outFileList))
+    pool.starmap(MakeSearchBLASTN, zip(dbFileList, repeat(existingDbDir),repeat(dbOpPath),
+                                       searchFileList, repeat(blastCmdString), repeat(blastParamStr),
+                                       outFileList))
     pool.close()
     pool.join()
     pool.terminate()  # garbage collector
 
 """
-Function to run BLAST against a directory. 
+Function to create blast databases from the fasta files in dbDir and running a query against the directory. 
 """
-def RunBLASTNDirectoryPar(dbDir, existingDbDir,queryFile, blastParamStr, ouputDir,ncpus=4):
+def RunMakeDBandBlastN(dbDir, existingDbDir, queryFile, blastCmdString, blastParamStr, ouputDir, ncpus=4):
     for subdir, dirs, files in os.walk(dbDir):
         dbFileList=[]
         searchFileList = []
@@ -162,26 +162,53 @@ def RunBLASTNDirectoryPar(dbDir, existingDbDir,queryFile, blastParamStr, ouputDi
                 searchFileList.append(queryFile)
                 outFileList.append(outputFilePath)
                 if len(dbFileList)>=ncpus:
-                    MakeSearchBLASTNParallel(dbFileList,existingDbDir,ouputDir,searchFileList, blastParamStr,outFileList)
+                    MakeSearchBLASTNParallel(dbFileList,existingDbDir,
+                                             ouputDir,searchFileList,
+                                             blastCmdString,blastParamStr,
+                                             outFileList)
                     dbFileList = []
                     searchFileList = []
                     outFileList = []
         if len(dbFileList) > 0:
-            MakeSearchBLASTNParallel(dbFileList,existingDbDir,ouputDir, searchFileList , blastParamStr, outFileList)
+            MakeSearchBLASTNParallel(dbFileList,existingDbDir,
+                                     ouputDir, searchFileList, blastCmdString,
+                                     blastParamStr, outFileList)
+
+
 
 """
-Function to run BLAST against a directory. 
+Function to run BLAST search against a FASTA file. 
 """
-def RunBLASTNDirectory(dbDir, queryFile, blastParamStr, ouputDir,ncpus=4):
-    for subdir, dirs, files in os.walk(dbDir):
-        for file in files:
-            filePath = os.path.join(subdir, file)
-            if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
-                runMakeBLASTDB(filePath, "TMPDB", ouputDir, 'nucl')
-                sampleStr = os.path.splitext(file)[0]
-                outputFileName = sampleStr + ".txt"
-                outputFilePath = os.path.join(ouputDir, outputFileName)
-                runBLASTN(queryFile, ouputDir+os.sep+"TMPDB", blastParamStr,outputFilePath, ncpus)
+def BLASTParallel(blastdb, searchFileList, blastCmdString, blastParamStr,outFileList):
+    numOfprocess = len(searchFileList)
+    pool = Pool(processes=numOfprocess)
+    pool.starmap(runBLASTN, zip(searchFileList, repeat(blastdb),
+                                repeat(blastCmdString), repeat(blastParamStr),
+                                outFileList,repeat(1)))
+    pool.close()
+    pool.join()
+    pool.terminate()  # garbage collector
+
+"""
+Function to search a bunch of blast queries against the database provided. 
+"""
+def RunBlastSearch(blastdb, queryFileList, blastCmdString, blastParamStr, ouputDir, ncpus=4):
+    searchFileList = []
+    outFileList = []
+    for file in queryFileList:
+        if os.path.exists(file):
+            searchFileList.append(file)
+            rootFileName = os.path.splitext(os.path.basename(file))[0]
+            outFileName = os.path.join(ouputDir,rootFileName + ".txt")
+            outFileList.append(outFileName)
+        if len(searchFileList) >= ncpus:
+            BLASTParallel(blastdb, searchFileList,
+                            blastCmdString, blastParamStr,outFileList)
+            searchFileList = []
+            outFileList = []
+    if len(searchFileList) > 0:
+        BLASTParallel(blastdb, searchFileList,
+                      blastCmdString, blastParamStr, outFileList)
 
 """
 Function to parse HMM file into HMMRecord dict. 
@@ -198,7 +225,7 @@ def parseHMM(hmmPathFile, hmm_string_fmt,sampleType, sampleID, protType, window,
                         hmm_name = hits[i].id
                         hmm_bitscore = hits[i].bitscore
                         if hmm_name not in results_dict: # add hits to results dictionary
-                            hmmRec = HMMRecord(hmm_name, sampleType, sampleID, protType, hmm_bitscore, window, interval)
+                            hmmRec = hmmrecord.HMMRecord(hmm_name, sampleType, sampleID, protType, hmm_bitscore, window, interval)
                             results_dict[hmm_name] = hmmRec
             handle.close()
         except ValueError:
@@ -224,33 +251,32 @@ def createPandaDF(hmm_dict, outfile):
 Function runs MSA against FASTA file. 
 """
 def runMUSCLE(fastaFile,outputFile):
-    print('Running MUSCLE with {0}.'.format(fastaFile))
+    logging.info('Running MUSCLE with {0}.'.format(fastaFile))
     cmd = "muscle -in " + fastaFile + " -out " + outputFile
-    print(cmd)
+    logging.info(cmd)
     subprocess.call(cmd, shell=True)
-    print("Done Running MUSCLE with:",fastaFile)
+    logging.info("Done Running MUSCLE with:" + fastaFile)
 
 """
 Function to generate a 6 frame translated amino acid sequence from the nucleotide sequence. 
 """
 def runTranSeq(fastaFile,frameCode,outputFile):
-    print('Running transeq with {0}.'.format(fastaFile))
+    logging.info('Running transeq with {0}.'.format(fastaFile))
     cmd = "transeq " + fastaFile + " " + outputFile + " -frame="+ frameCode +" -table=11 -sformat pearson"
-    print(cmd)
+    logging.info(cmd)
     subprocess.call(cmd, shell=True)
-    print("Done Running transeq with:",fastaFile)
+    logging.info("Done Running transeq with:" + fastaFile)
 
 
 """
 Function runs cd-hit on a FASTA file. 
 """
 def runCDHit(fastaFile,outputFile,ncpu):
-    print('Running CD-Hit with {0}.'.format(fastaFile))
-    cmd = "cd-hit-est -i " + fastaFile + " -o " + outputFile + " -c .95 -n 10 -d 0 -aS .95 -T "+ str(ncpu)
-    print(cmd)
+    logging.info('Running CD-Hit with {0}.'.format(fastaFile))
+    cmd = "cd-hit-est -i " + fastaFile + " -o " + outputFile + " -c .95 -n 10 -d 0 -aS .95 -M 4098 -T "+ str(ncpu)
+    logging.info(cmd)
     subprocess.call(cmd, shell=True)
-    print("Done Running Cd-Hit with:",fastaFile)
-
+    logging.info("Done Running Cd-Hit with:" + fastaFile)
 
 """
 Interleave FR reads. 
@@ -297,7 +323,7 @@ def TranseqReadsDir(build_op_dir,nucl_seq_directory,ncpus):
         for file in files:
             filePath = os.path.join(subdir, file)
             if re.match(r".*\.fasta$", file) and os.path.getsize(filePath) > 0:
-                prot_file = prot_seq_directory + os.sep + ntpath.basename(filePath)
+                prot_file = prot_seq_directory + os.sep + os.path.basename(filePath)
                 nSeqFileNameList.append(filePath)
                 protFileNameList.append(prot_file)
             if len(nSeqFileNameList) >= ncpus:
@@ -331,7 +357,7 @@ def PreProcessReadsPar(nucl_seq_directory, seq_fmt, pair_fmt, R1_file_suffix, R2
                 regF = r".*" + R1_file_suffix + "$"
                 regR = r".*" + R2_file_suffix + "$"
                 if re.match(regF, file) and not re.match(regR, file) and os.path.getsize(filePath) > 0:
-                    print("Pre-processing:", file)
+                    logging.info("Pre-processing:" + file)
                     sampleName = file.split(R1_file_suffix)[0]
                     r2FilePath = os.path.join(subdir, sampleName + R2_file_suffix)
                     sampleNameList.append(sampleName)
@@ -353,8 +379,8 @@ def PreProcessReadsPar(nucl_seq_directory, seq_fmt, pair_fmt, R1_file_suffix, R2
                 for file in files:
                     filePath = os.path.join(subdir, file)
                     if re.match(r".*.fastq$", file) and os.path.getsize(filePath) > 0:
-                        print("Pre-processing:", file)
-                        out_seq_path = os.path.join(out_seq_directory, file[:-1]+"a") #change .fastq to .fasta
+                        logging.info("Pre-processing:" + file)
+                        out_seq_path = os.path.join(out_seq_directory, file)
                         count = SeqIO.convert(filePath, "fastq", out_seq_path, "fasta")
         elif pair_fmt.lower() == "split":
             for subdir, dirs, files in os.walk(nucl_seq_directory):
@@ -367,7 +393,7 @@ def PreProcessReadsPar(nucl_seq_directory, seq_fmt, pair_fmt, R1_file_suffix, R2
                     regF = r".*" + R1_file_suffix + "$"
                     regR = r".*" + R2_file_suffix + "$"
                     if re.match(regF, file) and not re.match(regR, file) and os.path.getsize(filePath) > 0:
-                        print("Pre-processing:", file)
+                        logging.info("Pre-processing:" + file)
                         sampleName = file.split(R1_file_suffix)[0]
                         r2FilePath = os.path.join(subdir, sampleName + R2_file_suffix)
                         sampleNameList.append(sampleName)
@@ -383,11 +409,11 @@ def PreProcessReadsPar(nucl_seq_directory, seq_fmt, pair_fmt, R1_file_suffix, R2
                     InterleaveReadsParallel(out_seq_directory, sampleNameList, r1FilePathList, r2FilePathList,
                                             seq_fmt.lower())
         else:
-            print("Invalid sequence pair format inputs.\n")
+            logging.info("Invalid sequence pair format inputs.\n")
             exit(0)
         return out_seq_directory
     else:
-        print("Invalid file format inputs.\n")
+        logging.info("Invalid file format inputs.\n")
         exit(0)
 
 
@@ -425,8 +451,8 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
                 for file in files:
                     filePath = os.path.join(subdir, file)
                     if re.match(r".*.fastq$", file) and os.path.getsize(filePath) > 0:
-                        print("Pre-processing:", file)
-                        out_seq_path = os.path.join(out_seq_directory, file[:-1]+"a") #change .fastq to .fasta
+                        logging.info("Pre-processing:" + file)
+                        out_seq_path = os.path.join(out_seq_directory, file)
                         count = SeqIO.convert(filePath, "fastq", out_seq_path, "fasta")
         elif pair_fmt.lower() == "split":
             for subdir, dirs, files in os.walk(nucl_seq_directory):
@@ -435,7 +461,7 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
                     regF = r".*"+R1_file_suffix+"$"
                     regR = r".*"+R2_file_suffix+"$"
                     if re.match(regF, file) and not re.match(regR, file) and os.path.getsize(filePath) > 0:
-                        print("Pre-processing:", file)
+                        logging.info("Pre-processing:" + file)
                         sampleName = file.split(R1_file_suffix)[0]
                         r2FilePath = os.path.join(subdir,sampleName + R2_file_suffix)
                         file_out = os.path.join(out_seq_directory,sampleName + ".fasta")
@@ -445,18 +471,18 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
                         count = SeqIO.write(interleave(records_f, records_r), handle, "fasta")
                         handle.close()
         else:
-            print("Invalid sequence pair format inputs.\n")
+            logging.info("Invalid sequence pair format inputs.\n")
             exit(0)
         return out_seq_directory
     else:
-        print("Invalid file format inputs.\n")
+        logging.info("Invalid file format inputs.\n")
         exit(0)
 
 """
 Function searches all FASTA file in a directory against a HMM in parallel. 
 """
 def RunHMMDirectoryParallelReduced(inputDir, hmmModel, ouputDir, ncpus=4):
-    print('Number of pool processes:{0}.'.format(ncpus))
+    logging.info('Number of pool processes:{0}.'.format(ncpus))
     for subdir, dirs, files in os.walk(inputDir):
         fastaFileList=[]
         sampleStrList = []
@@ -491,14 +517,14 @@ def runHMMSearchReduced(fastaFile, hmmFile, ouputDir, ncpus=4):
     hmmTblFileName = os.path.splitext(os.path.basename(fastaFile))[0] + ".tbl"
     hmmTblFilePath = os.path.join(ouputDir, hmmTblFileName)
     if not os.path.exists(hmmTblFilePath):
-        print('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
+        logging.info('Running HMM Search with {0} against {1}.'.format(fastaFile, hmmFile))
         cmd = "hmmsearch --cpu " + str(ncpus) + " --F1 0.02 --F2 0.02 --F3 0.02 --tblout " + hmmTblFilePath + " " + hmmFile + " "+ fastaFile + " > /dev/null"
-        print(cmd)
+        logging.info(cmd)
         subprocess.call(cmd, shell=True)
     else:
-        print("HMM search skipped... Using existing result for: ", fastaFile)
+        logging.info("HMM search skipped... Using existing result for: " + fastaFile)
     result_dict = parseHMM(hmmTblFilePath, "hmmer3-tab", "", "", "", "", "")
     hmmSearchFileName = os.path.splitext(os.path.basename(fastaFile))[0] + ".txt"
     hmmSearchFilePath = os.path.join(ouputDir, hmmSearchFileName)
     createPandaDF(result_dict, hmmSearchFilePath)
-    print("Done Running HMM Build with:",fastaFile)
+    logging.info("Done running HMM Build with:" + fastaFile)

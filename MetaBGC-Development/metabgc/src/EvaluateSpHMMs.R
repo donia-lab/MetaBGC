@@ -33,34 +33,30 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	  results <- data.frame()
 	  for (i in 1:nrow(pos_df)){
 		gene_data <- pos_df[i,]
-		#print(gene_data$gene_name)
+		cat("Completed ",gene_data$gene_name," ",gene_data$start,"\n")
 		#filters datatframe for edges and internal reads compared to model interval
 		interval_df_1 <- df %>% filter(qseqid ==gene_data$gene_name) %>%
 		  filter(qstart %in% gene_data$start:gene_data$end | qend %in% gene_data$start:gene_data$end)
-		# need to get reads that are bigger than the interval 
-		interval_df_2 <- df %>% filter(qseqid ==gene_data$gene_name) %>% 
+		# need to get reads that are bigger than the interval
+		interval_df_2 <- df %>% filter(qseqid ==gene_data$gene_name) %>%
 		  filter(qstart < gene_data$start & qend > gene_data$end)
 		interval_df <- rbind(interval_df_1,interval_df_2)
-  		if (nrow(interval_df) > 0){
-  		  for (j in 1:nrow(interval_df)){
-    			in_interval_count <- sum(interval_df[j,]$qstart:interval_df[j,]$qend %in% gene_data$start:gene_data$end)
-    			interval_count <- length(gene_data$start:gene_data$end)
-    			interval_cov <- (in_interval_count/interval_count) * 100
-    			if (interval_cov >=90){
-    			  res_df<-interval_df[j,]
-    			  res_df$model_cov <- interval_cov
-    			  res_df$interval <- gene_data$interval
-    			  results <- rbind(results,res_df)
-    			}
-  		  }
-  		}
+		if (nrow(interval_df) > 0){
+			interval_df <- interval_df %>% rowwise() %>% mutate(model_cov=(sum(qstart:qend %in% gene_data$start:gene_data$end) / length(gene_data$start:gene_data$end)) * 100)
+			interval_df$interval <- gene_data$interval
+			res_df <- interval_df %>% filter(model_cov >= 90)
+			results <- rbind(results,res_df)
+		}
 	  }
 	  return(results)
 	}
 
 	#Filter BLAST reads that are within the genes intervals and cover 90% of the model interval
+	start_time <- Sys.time()
 	blast_intervals<- filter_blast(all_blast_df, gene_positions)
-
+	end_time <- Sys.time()
+	sprintf("Genes interval finding:")
+	end_time - start_time
 
 	##### Determine cutoffs for each interval within the model
 	compare_reads <- function(hmm_df, blast_df){
@@ -182,6 +178,7 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 
 	f1_cutoff_median<- calculate_F1(filtered_median, median_remaining_hmm, blast_intervals, unique(hmm_df_recoded$interval))
 	f1_cutoff_median$cutoff<- "median"
+	FP_Reads_Fname <- paste0(InputParam.HMM_Model_Name, "-FP_Reads.csv")
 	write.csv(median_remaining_hmm,file=file.path(OutputFiles.HMMHighPerfOutDir,"FP_Reads.csv"))
 
 	f1_cutoff_plusfive<- calculate_F1(filtered_plusfive, plusfive_remaining_hmm, blast_intervals, unique(hmm_df_recoded$interval))
@@ -244,7 +241,8 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	  geom_hline(yintercept=c(as.numeric(InputParam.F1_Threshold)), linetype="dashed", color = c("green"), size=1) +
 	  theme_pubclean() +  
 	  scale_color_npg(name="HMM Score Cutoff")
-	ggsave(supp_fig_f1, file=file.path(OutputFiles.HMMHighPerfOutDir,"F1_Plot.eps"), device="eps", width = 20, height = 7)
+	F1_Plot_Fname <- paste0(InputParam.HMM_Model_Name, "-F1_Plot.eps")
+	ggsave(supp_fig_f1, file=file.path(OutputFiles.HMMHighPerfOutDir,F1_Plot_Fname), device="eps", width = 20, height = 7)
 	
 	supp_fig_tp <-ggplot(f1_df,mapping = aes(x=interval,y=TP,group=cutoff,colour=cutoff)) +
 	  geom_line(data=f1_cutoff_median,aes(x = interval, y = TP,color='Median',group=1)) + 
@@ -253,9 +251,11 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	  geom_point(data=f1_cutoff_plusfive,aes(x = interval, y = TP,color='+5',group=2)) + 
 	  geom_line(data=f1_cutoff_subfive,aes(x = interval, y = TP,color='-5',group=3)) + 
 	  geom_point(data=f1_cutoff_subfive,aes(x = interval, y = TP,color='-5',group=3)) + 
-	  theme_pubclean() +  
+	  theme_pubclean() +
+	  scale_y_continuous(breaks = round(seq(min(f1_df$FP), max(f1_df$FP), by = 1000),1)) +
 	  scale_color_npg(name="HMM Score Cutoff")
-	ggsave(supp_fig_tp, file=file.path(OutputFiles.HMMHighPerfOutDir,"TP_Plot.eps"), device="eps", width = 20, height = 7)
+	TP_Plot_Fname <- paste0(InputParam.HMM_Model_Name, "-TP_Plot.eps")
+	ggsave(supp_fig_tp, file=file.path(OutputFiles.HMMHighPerfOutDir,TP_Plot_Fname), device="eps", width = 20, height = 7)
 	
 	supp_fig_fp <-ggplot(f1_df,mapping = aes(x=interval,y=FP,group=cutoff,colour=cutoff)) +
 	  geom_line(data=f1_cutoff_median,aes(x = interval, y = FP,color='Median',group=1)) + 
@@ -267,9 +267,8 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	  theme_pubclean() +  
 	  scale_y_continuous(breaks = round(seq(min(f1_df$FP), max(f1_df$FP), by = 1000),1)) +
 	  scale_color_npg(name="HMM Score Cutoff")
-	ggsave(supp_fig_fp, file=file.path(OutputFiles.HMMHighPerfOutDir,"FP_Plot.eps"), device="eps", width = 20, height = 7)
-	
-	
+	FP_Plot_Fname <- paste0(InputParam.HMM_Model_Name, "-FP_Plot.eps")
+	ggsave(supp_fig_fp, file=file.path(OutputFiles.HMMHighPerfOutDir,FP_Plot_Fname), device="eps", width = 20, height = 7)
 
 }
 

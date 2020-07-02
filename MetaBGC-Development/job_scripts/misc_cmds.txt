@@ -1,0 +1,43 @@
+
+# Diabetes Commands
+for f in `ls /tigress/DONIA/data/diabetes/stage2/diseased/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/diabetes/stage2/healthy/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/diabetes/stage2/undetermined/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; ln -- "$f" ${newf}; done
+
+for f in `ls /tigress/DONIA/data/diabetes/stage2/diseased/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/diabetes/stage2/healthy/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/diabetes/stage2/undetermined/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+
+
+# Fiji Commands
+for f in `ls /tigress/DONIA/data/fijicomp/Stool/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/fijicomp/Saliva/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; ln -- "$f" ${newf}; done
+
+for f in `ls /tigress/DONIA/data/fijicomp/Stool/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/fijicomp/Saliva/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+
+# HMP Commands
+for f in `ls /tigress/DONIA/data/HMP/healthy/published/*/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; ln -- "$f" ${newf}; done
+
+for f in `ls /tigress/DONIA/data/HMP/healthy/published/*/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+
+
+# HMP-1_2 Commands
+for f in `ls /tigress/DONIA/data/HMP-1-2/HMP-1-2-real/*/*/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; ln -- "$f" ${newf}; done
+
+for f in `ls /tigress/DONIA/data/HMP-1-2/HMP-1-2-real/*/*/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+
+#MetaHIT Commands
+for f in `ls /tigress/DONIA/data/MetaHIT_Gut/danish-healthy/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/MetaHIT_Gut/spanish-CD/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/MetaHIT_Gut/spanish-healthy/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/MetaHIT_Gut/spanish-UC/*/*-filtered-reads-fasta/*-merged.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+
+
+for f in `ls /tigress/DONIA/data/MetaHIT_Gut/danish-healthy/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/MetaHIT_Gut/spanish-CD/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/MetaHIT_Gut/spanish-healthy/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+for f in `ls /tigress/DONIA/data/MetaHIT_Gut/spanish-UC/*/*-filtered-reads-fasta/*-filtered-reads-fasta-translated/*-merged-translated.fasta`; do newf="$(basename -- $f)"; newf="${newf/-translated/}"; ln -- "$f" ${newf}; done
+
+
+partition.sh in=file.fasta out=out_%.fasta ways=100
