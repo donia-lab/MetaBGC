@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from Bio import SeqIO
+import math
 from metabgc.src.utils import *
 
 def ReadLevelBinAnalytics(readTableAbundance,
@@ -10,6 +11,7 @@ def ReadLevelBinAnalytics(readTableAbundance,
                           blastResultFile,
                           fastaFile,
                           cohortMetadataFile,
+                          assembly_metadata_file,
                           output_dir):
     df_read_abundance = pd.read_csv(readTableAbundance, delimiter="\t")
     df_sample_abundance = pd.read_csv(sampleTableAbundance, delimiter="\t")
@@ -106,6 +108,22 @@ def ReadLevelBinAnalytics(readTableAbundance,
 
     out_bin_max_sample_file = os.path.join(output_dir, 'MaxBinSample.tsv')
     df_sample.to_csv(out_bin_max_sample_file, index=False, sep='\t')
+
+
+    ## For implementation of scaffold extraction
+    df_assembly_metadata = pd.read_csv(assembly_metadata_file, delimiter=",", header=None, names=['Sample','Sample_Path'])
+    df_assembly_metadata.set_index('Sample',inplace=True)
+    f_asm = open(os.path.join(output_dir,"max_sample_assemblies.txt"), "w")
+    f_bin = open(os.path.join(output_dir,"bin_paths.txt"), "w")
+    for index, row in df_sample.iterrows():
+        bin_id = row[0]
+        max_sample_id = row[6]
+        if max_sample_id in df_assembly_metadata.index:
+            bin_path = os.path.join(output_dir,'bin_fasta/gt10',str(bin_id)+'.fasta')
+            f_bin.write(bin_path + '\n')
+            f_asm.write(df_assembly_metadata.loc[max_sample_id].at['Sample_Path'] + '\n')
+    f_bin.close()
+    f_asm.close()
 
 def BinSubjectCount(subjectTableAbundance, cohortMetadataFile, output_dir):
     df_subject_abundance = pd.read_csv(subjectTableAbundance, delimiter="\t",keep_default_na=False)
@@ -265,7 +283,8 @@ def HMP_BinConsistancy(sampleTableAbundance,cohortMetadataFile,output_dir):
     df_subject_visit_abundance = pd.merge(df_bodysite, df_sample_abundance, on=['Sample'], how='inner')
 
     df_subject_visit_abundance = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Cohort'] == 'HMP') |
-                                                                (df_subject_visit_abundance['Cohort'] == 'HMP-1_2')]
+                                                                (df_subject_visit_abundance['Cohort'] == 'HMP-1_2') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'MetaHit')]
     df_subject_visit_abundance["Visits"] = pd.to_numeric(df_subject_visit_abundance["Visits"])
     df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject','Cohort','Bodysite','BodyAggSite','Subject_Status'])['Subject'].count().reset_index(name='Subject_Count')
     df_bodysite_sample = pd.DataFrame(columns=['Subject', 'Cohort', 'Bodysite', 'BodyAggSite', 'Bin', 'Visit 1 Sample', 'Visit 1 Bin Abundance',
@@ -361,7 +380,8 @@ def HMP_BinSampleAbund(sampleTableAbundance, cohortMetadataFile, output_dir):
     df_subject_visit_abundance = pd.merge(df_bodysite, df_sample_abundance, on=['Sample'], how='inner')
     df_subject_visit_abundance = df_subject_visit_abundance.drop(columns=['Bodysite', 'Subject_Status'])
     df_subject_visit_abundance = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Cohort'] == 'HMP') |
-                                                                (df_subject_visit_abundance['Cohort'] == 'HMP-1_2')]
+                                                                (df_subject_visit_abundance['Cohort'] == 'HMP-1_2') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'MetaHit')]
 
     df_subject_visit_abundance["Visits"] = pd.to_numeric(df_subject_visit_abundance["Visits"])
     df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject','Cohort','BodyAggSite'])['Subject'].count().reset_index(name='Subject_Count')
@@ -397,7 +417,7 @@ def HMP_BinSampleAbund(sampleTableAbundance, cohortMetadataFile, output_dir):
                                                             'Total Visit 1 Samples': len(all_visit_1),
                                                             'Visit 1 Samples': len(visit_1),
                                                             'Total Visit 2 Samples': len(all_visit_2),
-                                                            'Visit 2 Samples': len(visit_1),
+                                                            'Visit 2 Samples': len(visit_2),
                                                             'Total Visit 3 Samples': len(all_visit_3),
                                                             'Visit 3 Samples': len(visit_3)},
                                                            ignore_index=True)
@@ -413,14 +433,22 @@ def SampleStacked(sampleTableAbundance, cohortMetadataFile, output_dir):
     df_subject_abundance = pd.merge(df_bodysite, df_sample_abundance, on=['Sample'], how='inner')
     df_subject_abundance = df_subject_abundance.drop(columns=['Visits'])
 
-    df_subject_abundance_stacked = pd.melt(df_subject_abundance,id_vars=['Sample','Subject','Cohort','Bodysite','BodyAggSite','Subject_Status'])
+    col_list = ['Sample','Subject','Cohort','Bodysite','BodyAggSite','Subject_Status']
+    for col_name in reversed(col_list):
+        temp_col = df_subject_abundance.pop(col_name)
+        df_subject_abundance.insert(0,col_name,temp_col)
+
+    out_sample_abund = os.path.join(output_dir, "SampleAbundanceBodysite.tsv")
+    df_subject_abundance.to_csv(out_sample_abund, index=False, sep='\t')
+
+    df_subject_abundance_stacked = pd.melt(df_subject_abundance,id_vars=col_list)
     df_subject_abundance_stacked.rename(columns={'variable': 'Bin',
                                                  'value': 'read_abundance'}, inplace=True)
 
     out_stacked = os.path.join(output_dir, "SampleAbundanceBodysite_Stacked.tsv")
     df_subject_abundance_stacked.to_csv(out_stacked, index=False, sep='\t')
 
-def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,output_dir,cpu):
+def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,assembly_metadata_file,output_dir,cpu):
     try:
         CPU_THREADS = 4
         if cpu is not None:
@@ -444,8 +472,9 @@ def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,output_dir,cpu):
             write_rec = []
             output_file_list=[]
             file_count = 0
+            seq_count = math.ceil(len(records)/cpu) + 1
             for seq_rec in records:
-                if len(write_rec) < 500:
+                if len(write_rec) < seq_count:
                     write_rec.append(seq_rec)
                 else:
                     output_file = os.path.join(blastn_search_directory, str(file_count)+"_seg.fasta")
@@ -453,9 +482,14 @@ def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,output_dir,cpu):
                     output_file_list.append(output_file)
                     file_count = file_count + 1
                     write_rec.clear()
+            if len(write_rec)>0:
+                output_file = os.path.join(blastn_search_directory, str(file_count) + "_seg.fasta")
+                count = SeqIO.write(write_rec, output_file, "fasta")
+                output_file_list.append(output_file)
+                file_count = file_count + 1
+                write_rec.clear()
 
             RunBlastSearch("nr", output_file_list, "blastx", "-max_target_seqs 1 -outfmt \"6 qseqid sseqid pident evalue staxids sscinames scomnames sskingdoms stitle\" ", blastn_search_directory, CPU_THREADS)
-            blastResultFile = os.path.join(output_dir,'identified-biosynthetic-reads-blast.txt')
             found_hit_ctr=0
             with open(blastResultFile, 'w') as outfile:
                 for subdir, dirs, files in os.walk(blastn_search_directory):
@@ -475,6 +509,7 @@ def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,output_dir,cpu):
                               blastResultFile,
                               fastaFile,
                               cohort_metadata_file,
+                              assembly_metadata_file,
                               output_dir)
         #Generate sample level analytics table
         BinSubjectCount(sampleTableAbundance, cohort_metadata_file, output_dir)

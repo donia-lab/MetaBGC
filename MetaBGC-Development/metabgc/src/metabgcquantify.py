@@ -62,7 +62,7 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 			print("Metabgc-quantify has failed during clustering of identified reads.")
 			raise
 
-		if not os.path.exists(combinedBLASTFile):
+		if not os.path.exists(blastn_search_directory):
 			os.makedirs(blastn_search_directory, 0o777, True)
 			RunMakeDBandBlastN(nucl_seq_directory, blast_db_directory_map_file,
 							   cdHitFile, "blastn", "-dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" ",
