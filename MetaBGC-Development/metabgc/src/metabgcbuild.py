@@ -2,6 +2,7 @@ import time, sys
 from Bio import AlignIO
 from Bio import SeqIO
 from metabgc.src.utils import *
+from metabgc.src.blastrunlib import *
 import metabgc.src.createsphmms as createhmm
 from rpy2.robjects.packages import STAP
 import rpy2.robjects.packages as rpackages
@@ -165,7 +166,7 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
             if not os.path.isdir(blastn_search_directory):
                 print("Constructing BLAST Search Dir:" + blastn_search_directory)
                 os.makedirs(blastn_search_directory,0o777,True)
-                RunMakeDBandBlastN(nucl_seq_directory, blast_db_directory_map_file,
+                RunPCMakeDBandBlastN(nucl_seq_directory, blast_db_directory_map_file,
                                    tp_genes_nucl, "blastn", "-max_target_seqs 10000 -perc_identity 90.0 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" ",
                                    blastn_search_directory, CPU_THREADS)
 

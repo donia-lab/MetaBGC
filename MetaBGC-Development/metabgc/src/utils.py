@@ -132,12 +132,12 @@ def MakeSearchBLASTN(dbInputFile, existingDbDirMapFile, dbOpPath, searchFile, bl
 """
 Function to run make BLAST db and search a FASTA file. 
 """
-def MakeSearchBLASTNParallel(dbFileList, existingDbDir, dbOpPath,
+def MakeSearchBLASTNParallel(dbFileList, existingDbDirMapFile, dbOpPath,
                              searchFileList, blastCmdString, blastParamStr,
                              outFileList):
     numOfprocess = len(dbFileList)
     pool = Pool(processes=numOfprocess)
-    pool.starmap(MakeSearchBLASTN, zip(dbFileList, repeat(existingDbDir),repeat(dbOpPath),
+    pool.starmap(MakeSearchBLASTN, zip(dbFileList, repeat(existingDbDirMapFile),repeat(dbOpPath),
                                        searchFileList, repeat(blastCmdString), repeat(blastParamStr),
                                        outFileList))
     pool.close()
@@ -147,7 +147,7 @@ def MakeSearchBLASTNParallel(dbFileList, existingDbDir, dbOpPath,
 """
 Function to create blast databases from the fasta files in dbDir and running a query against the directory. 
 """
-def RunMakeDBandBlastN(dbDir, existingDbDir, queryFile, blastCmdString, blastParamStr, ouputDir, ncpus=4):
+def RunMakeDBandBlastN(dbDir, existingDbDirMapFile, queryFile, blastCmdString, blastParamStr, ouputDir, ncpus=4):
     for subdir, dirs, files in os.walk(dbDir):
         dbFileList=[]
         searchFileList = []
@@ -162,7 +162,7 @@ def RunMakeDBandBlastN(dbDir, existingDbDir, queryFile, blastCmdString, blastPar
                 searchFileList.append(queryFile)
                 outFileList.append(outputFilePath)
                 if len(dbFileList)>=ncpus:
-                    MakeSearchBLASTNParallel(dbFileList,existingDbDir,
+                    MakeSearchBLASTNParallel(dbFileList,existingDbDirMapFile,
                                              ouputDir,searchFileList,
                                              blastCmdString,blastParamStr,
                                              outFileList)
@@ -170,7 +170,7 @@ def RunMakeDBandBlastN(dbDir, existingDbDir, queryFile, blastCmdString, blastPar
                     searchFileList = []
                     outFileList = []
         if len(dbFileList) > 0:
-            MakeSearchBLASTNParallel(dbFileList,existingDbDir,
+            MakeSearchBLASTNParallel(dbFileList,existingDbDirMapFile,
                                      ouputDir, searchFileList, blastCmdString,
                                      blastParamStr, outFileList)
 

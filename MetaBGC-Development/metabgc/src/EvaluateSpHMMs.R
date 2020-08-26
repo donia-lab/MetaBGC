@@ -152,8 +152,6 @@ EvaluateSpHMM <- function(InputFiles.HMMRun,InputFiles.BLAST_TP_NoCov,InputFiles
 	plusfive_remaining_hmm <- plusfive_hmmunique %>% anti_join(.,plusfive_hmmunique_less_model_cov)
 	table(plusfive_remaining_hmm$interval)
 
-
-
 	calculate_F1 <- function(hmm_df, hmm_fp, blast_df, intervals){
 	  #added this because factor vector 
 	  hmm_df$interval <- as.character(hmm_df$interval)

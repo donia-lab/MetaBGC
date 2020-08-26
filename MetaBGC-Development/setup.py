@@ -1,9 +1,6 @@
 """Setuptools magic to install MetaBGC."""
-import glob
 import os
 from setuptools import setup, find_packages
-import subprocess
-import sys
 
 
 def read(fname):

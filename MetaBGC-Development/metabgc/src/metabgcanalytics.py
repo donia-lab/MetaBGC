@@ -4,6 +4,7 @@ import numpy as np
 from Bio import SeqIO
 import math
 from metabgc.src.utils import *
+from metabgc.src.blastrunlib import *
 
 def ReadLevelBinAnalytics(readTableAbundance,
                           sampleTableAbundance,
@@ -489,7 +490,7 @@ def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,assembly_metadata_file,out
                 file_count = file_count + 1
                 write_rec.clear()
 
-            RunBlastSearch("nr", output_file_list, "blastx", "-max_target_seqs 1 -outfmt \"6 qseqid sseqid pident evalue staxids sscinames scomnames sskingdoms stitle\" ", blastn_search_directory, CPU_THREADS)
+            RunPCBlastSearch("nr", output_file_list, "blastx", "-max_target_seqs 1 -outfmt \"6 qseqid sseqid pident evalue staxids sscinames scomnames sskingdoms stitle\" ", blastn_search_directory, CPU_THREADS)
             found_hit_ctr=0
             with open(blastResultFile, 'w') as outfile:
                 for subdir, dirs, files in os.walk(blastn_search_directory):
