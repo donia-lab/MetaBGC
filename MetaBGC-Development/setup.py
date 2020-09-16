@@ -14,7 +14,7 @@ install_requires = [
     'numpy',
     'matplotlib',
     'scipy',
-    'biopython >= 1.72',
+    'biopython >= 1.72, < 1.78',
     'scikit-learn >= 0.20.1',
     'pandas >= 0.19.2',
     'rpy2 >= 2.9.1'
