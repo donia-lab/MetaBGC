@@ -464,7 +464,7 @@ def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,assembly_metadata_file,out
             not os.path.exists(sampleTableAbundance) and \
             not os.path.exists(spHMMFile) and \
             not os.path.exists(readTableAbundance):
-            print("Metabgc-analytics has failed because metabgc_output_dir is not pointing to a successful run of metabgc search")
+            print("Metabgc-analytics has failed because metabgc_output_dir is not pointing to a successful run of metabgc search.")
 
         if not os.path.exists(blastResultFile):
             blastn_search_directory = os.path.join(output_dir, 'blastx_result')

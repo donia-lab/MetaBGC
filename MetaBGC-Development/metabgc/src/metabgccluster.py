@@ -16,7 +16,7 @@ import json
 import re
 import os
 
-def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,outDir):
+def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,readThresh,outDir):
     seq_dict = SeqIO.index(identifiedReadFile, "fasta")
     single_records = []
     fastaDirGT10 = outDir + "/bin_fasta/gt10"
@@ -27,7 +27,7 @@ def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,outDir):
         df_bin_reads = df_read_labels[df_read_labels['bin']==bin]
         records = []
         count_row = df_bin_reads.shape[0]
-        if count_row >= 10:
+        if count_row >= readThresh:
             for index, row in df_bin_reads.iterrows():
                 seq_record = seq_dict[row['qseqid']]
                 records.append(seq_record)
@@ -91,7 +91,7 @@ def mbgccluster(abundance_matrix, abundance_table_pivot,
         if len(clusterFreqGTThresh) > 0:
             df_read_labels = pd.DataFrame(list(read_labels.items()),columns=['qseqid', 'bin'])
             df_abundance = pd.merge(df_abundance, df_read_labels, how='inner')
-            PrintBinSeqs(clusterIDs,df_read_labels,identifiedReadFile,dir_path)
+            PrintBinSeqs(clusterIDs,df_read_labels,identifiedReadFile,readThresh,dir_path)
 
             df_abundance = df_abundance[df_abundance['bin'].isin(clusterIdsGTThresh)]
             df_abundance.rename(columns={'count': 'ReadAbundance'}, inplace=True)
@@ -108,6 +108,8 @@ def mbgccluster(abundance_matrix, abundance_table_pivot,
             df_abundance_sample = df_abundance_sample[df_abundance_sample['BinAbundance']>=abundThresh]
             df_abundance_sample_pivot = df_abundance_sample.pivot_table(index='Sample', columns='bin',values='BinAbundance', fill_value=0)
             df_abundance_sample_pivot.to_csv(out_file_abund_sample,sep='\t')
+            outF.write("Number of Bins with >= {0} Reads and Bin Abundance >= {1}: {2}\n".format(readThresh,abundThresh,len(df_abundance_sample_pivot.columns)-1))
+
 
             df_abundance = pd.merge(df_abundance, df_abundance_sample, how='inner')
             df_abundance['log10BinAdbundance'] = np.log10(df_abundance['BinAbundance'])

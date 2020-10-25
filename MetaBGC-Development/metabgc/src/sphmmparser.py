@@ -25,7 +25,7 @@ def parseHMM(hmmFile, hmmDir, sampleType, sampleID, protType, window, interval):
 	with open(os.path.join(hmmDir,hmmFile), 'rU') as handle:
 		results_dict = {}
 		try:
-			for record in SearchIO.parse(handle, 'hmmer3-text'):
+			for record in SearchIO.parse(handle, 'hmmer3-tab'):
 
 				hits = record.hits
 				num_hits = len(hits)  #calculate how many hits per query
@@ -43,7 +43,6 @@ def parseHMM(hmmFile, hmmDir, sampleType, sampleID, protType, window, interval):
 	return results_dict
 
 def createPandaDF(cyclase_dict, outdir, outfile):
-
 	os.chdir(outdir)
 	outputDF = pd.DataFrame()
 	if len(cyclase_dict) != 0:  # check if counter dict is not empty to add to df
@@ -60,14 +59,18 @@ def createPandaDF(cyclase_dict, outdir, outfile):
 		outputDF_empty = pd.DataFrame(columns=outputDF_empty_columns)
 		outputDF_empty.to_csv(outfile, index=False, sep='\t', header=False)
 
-def main(hmmscan_file_dir, outdir, cyclase_type, window, interval, sampleID, sampleType):
-	os.makedirs(outdir)
+def main(hmmscan_file_dir, outdir, cyclase_type, window, sampleType):
+	os.makedirs(outdir,0o777,True)
 	for hmmscan_file in os.listdir(hmmscan_file_dir):
 		baseOutFile = hmmscan_file.split('.')[0]
 		outfile = baseOutFile + "-PARSED.txt"
+		sample_tok = baseOutFile.split('_')
+		interval = sample_tok[-2] + '_' + sample_tok[-1]
+		sample_tok.pop()
+		sample_tok.pop()
+		sampleID = '_'.join(sample_tok)
 		protType = cyclase_type
 		result_cyclase_Dict = parseHMM(hmmscan_file, hmmscan_file_dir, sampleType, sampleID, protType, window, interval)
-
 		createPandaDF(result_cyclase_Dict, outdir, outfile)
 if __name__ == '__main__':
 	import argparse
@@ -76,11 +79,11 @@ if __name__ == '__main__':
 	parser.add_argument('--outdir', required=True, help= "output directory name")
 	parser.add_argument('--cyclase_type',required=True, help="cyclase model name")
 	parser.add_argument('--window', required=False, default='30_10')
-	parser.add_argument('--interval', required=True, help="spHMM interval")
-	parser.add_argument('--sampleID', required=True, help="sample name")
+	# parser.add_argument('--interval', required=True, help="spHMM interval")
+	# parser.add_argument('--sampleID', required=True, help="sample name")
 	parser.add_argument('--sampleType', required=True, help="type of sample, bodysite, isolation_source")
 
 
 	args = parser.parse_args()
 
-	main(args.hmmscan_file_dir, args.outdir, args.cyclase_type, args.window, args.interval, args.sampleID, args.sampleType)
+	main(args.hmmscan_file_dir, args.outdir, args.cyclase_type, args.window, args.sampleType)

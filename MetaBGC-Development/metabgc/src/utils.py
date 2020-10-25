@@ -213,7 +213,7 @@ def RunBlastSearch(blastdb, queryFileList, blastCmdString, blastParamStr, ouputD
 """
 Function to parse HMM file into HMMRecord dict. 
 """
-def parseHMM(hmmPathFile, hmm_string_fmt,sampleType, sampleID, protType, window, interval):
+def parseHMM(hmmPathFile, hmm_string_fmt, sampleType, sampleID, protType, window, interval):
     with open(hmmPathFile, 'r') as handle:
         results_dict = {}
         try:

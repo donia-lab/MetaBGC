@@ -73,8 +73,8 @@ def gengeneposlist(prot_family_name,protAlnSeqs,hmmDict,alnOutput,gene_pos_file)
 
 def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
               nucl_seq_directory, prot_seq_directory, seq_fmt, pair_fmt, r1_file_suffix,
-              r2_file_suffix, tp_genes_nucl, blast_db_directory_map_file, blastn_search_directory, hmm_search_directory, f1_thresh,
-              output_directory, cpu):
+              r2_file_suffix, tp_genes_nucl, blast_db_directory_map_file,
+              blastn_search_directory, hmm_search_directory, f1_thresh, output_directory, cpu):
     try:
         CPU_THREADS = 4
         startTime = time.time()
@@ -94,23 +94,26 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
         if blastn_search_directory is None:
             blastn_search_directory = os.path.join(build_op_dir, 'blastn_result')
         allBLASTResult = os.path.join(build_op_dir,"CombinedBLASTSearch.txt")
+        if prot_seq_directory is None:
+            prot_seq_directory = ""
 
         # Create OP dirs
         os.makedirs(hmm_directory, 0o777, True)
 
-        # Translate protein sequence
-        runTranSeq(tp_genes_nucl,"1",tp_genes_prot)
-
-        # Join true positives in the sample with the BGC proteins
-        tmpFile = os.path.join(build_op_dir,"TP_Homolog.faa")
         joinedSeqs = []
-        tpGeneSeqs = list(SeqIO.parse(tp_genes_prot, "fasta"))
-        # Removing _1 added by TranSeq
-        for seq in tpGeneSeqs:
-            seq.id = seq.id[:-2]
-            seq.description = ""
-            joinedSeqs.append(seq)
-        SeqIO.write(joinedSeqs,tp_genes_prot,"fasta")
+        tmpFile = os.path.join(build_op_dir, "TP_Homolog.faa")
+        # Translate protein sequence
+        if os.path.getsize(tp_genes_nucl) > 0:
+            runTranSeq(tp_genes_nucl,"1",tp_genes_prot)
+            # Join true positives in the sample with the BGC proteins
+            tpGeneSeqs = list(SeqIO.parse(tp_genes_prot, "fasta"))
+            # Removing _1 added by TranSeq
+            for seq in tpGeneSeqs:
+                seq.id = seq.id[:-2]
+                seq.description = ""
+                joinedSeqs.append(seq)
+            SeqIO.write(joinedSeqs,tp_genes_prot,"fasta")
+
         protAlnSeqs = list(SeqIO.parse(prot_alignment, "fasta"))
         for seq in protAlnSeqs:
             joinedSeqs.append(seq)
@@ -160,6 +163,8 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
                             with open(filePath) as infile:
                                 for line in infile:
                                     outfile.write(line)
+        else:
+            print("Using existing HMM search result file:" + allHMMResult)
 
         # BLAST Alignment
         if not os.path.exists(allBLASTResult):
@@ -180,6 +185,8 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
                                 for line in infile:
                                     sampleName = os.path.basename(filePath).split(".txt")[0]
                                     outfile.write(line.strip() + "\t" + sampleName + "\t" + cohort_name + "\n")
+        else:
+            print("Using existing BLAST search result file:" + allBLASTResult)
 
         # Eval spHMMs
         rpackages.importr('base')

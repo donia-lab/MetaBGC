@@ -63,6 +63,7 @@ def build(prot_alignment,prot_family_name,cohort_name,
           r2_file_suffix,tp_genes_nucl,blast_db_directory_map_file,blastn_search_directory,hmm_search_directory,f1_thresh,
           output_directory,cpu):
     click.echo('Invoking MetaBGC Build...')
+    logging.basicConfig(filename=os.path.join(output_directory, 'metabgc.log'), level=logging.INFO)
     hp_hmm_directory = mbgcbuild(prot_alignment,prot_family_name,cohort_name,
           nucl_seq_directory,prot_seq_directory,seq_fmt,pair_fmt,r1_file_suffix,
           r2_file_suffix,tp_genes_nucl,blast_db_directory_map_file,blastn_search_directory,hmm_search_directory,f1_thresh,
