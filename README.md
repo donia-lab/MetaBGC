@@ -224,7 +224,7 @@ Please feel free to report bugs at our [github issue page](https://github.com/do
 If there are any questions please contact:
 
 **Mohamed Abou Donia, Ph.D.**
- <br /> Assistant Professor
+ <br /> Associate Professor
  <br /> Department of Molecular Biology
  <br /> Princeton University
  <br /> Email: <donia@princeton.edu>
