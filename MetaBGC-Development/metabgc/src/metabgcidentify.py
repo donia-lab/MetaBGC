@@ -6,7 +6,7 @@
 # (contact Francine Camacho at camachofrancine@gmail.com).
 #####################################################################################
 from metabgc.src.extractfastaseq import RunExtractDirectoryPar
-from metabgc.src.utils import *
+from metabgc.src.hmmerrunlib import *
 import os
 import pandas as pd
 from pathlib import Path
@@ -97,7 +97,7 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory, prot_seq_dire
                     if filename.endswith(".hmm"):
                         hmmInterval = fileBase.split("__")[2]
                         hmmfilename = os.path.join(sphmm_directory, filename)
-                        RunHMMDirectoryParallel(prot_seq_directory, hmmfilename, cohort_name, prot_family_name, "30_10",
+                        RunPCHMMDirectoryParallel(prot_seq_directory, hmmfilename, cohort_name, prot_family_name, "30_10",
                                                 hmmInterval,
                                                 hmm_search_output_directory, CPU_THREADS)
                 found_hit_ctr = 0

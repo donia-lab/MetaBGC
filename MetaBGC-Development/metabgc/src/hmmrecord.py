@@ -15,3 +15,15 @@ class HMMFile:
 		self.intervalStart = intervalStart
 		self.intervalEnd = intervalEnd
 		self.hmmFile = hmmFile
+
+class HMMTask:
+	def __init__(self, fastaFile, hmmFile, ouputDir, sampleType, sampleStr, protType, window, interval):
+		self.fastaFile = fastaFile
+		self.hmmFile = hmmFile
+		self.ouputDir = ouputDir
+		self.sampleType = sampleType
+		self.sampleStr = sampleStr
+		self.protType = protType
+		self.window = window
+		self.interval = interval
+		self.ncpus = 1

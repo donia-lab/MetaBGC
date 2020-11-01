@@ -2,6 +2,7 @@ import time, sys
 from Bio import AlignIO
 from Bio import SeqIO
 from metabgc.src.utils import *
+from metabgc.src.hmmerrunlib import *
 from metabgc.src.blastrunlib import *
 import metabgc.src.createsphmms as createhmm
 from rpy2.robjects.packages import STAP
@@ -153,7 +154,7 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
             os.makedirs(hmm_search_directory,0o777,True)
             for hmmSeqPosKey, hmmFileObj in hmmDict.items():
                 hmmInterval = str(hmmDict[hmmSeqPosKey].intervalStart)+"_"+str(hmmDict[hmmSeqPosKey].intervalEnd)
-                RunHMMDirectoryParallel(prot_seq_directory,hmmFileObj.hmmFile, cohort_name, prot_family_name, "30_10", hmmInterval, hmm_search_directory, CPU_THREADS)
+                RunPCHMMDirectoryParallel(prot_seq_directory,hmmFileObj.hmmFile, cohort_name, prot_family_name, "30_10", hmmInterval, hmm_search_directory, CPU_THREADS)
 
             with open(allHMMResult, 'w') as outfile:
                 for subdir, dirs, files in os.walk(hmm_search_directory):
