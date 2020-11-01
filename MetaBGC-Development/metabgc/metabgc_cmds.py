@@ -8,7 +8,7 @@ from metabgc.src.metabgcquantify import mbgcquantify
 from metabgc.src.metabgccluster import mbgccluster
 from metabgc.src.metabgcanalytics import mbgcanalytics
 
-__version__ = "1.3.6"
+__version__ = "1.3.7"
 
 @click.group()
 def cli():
