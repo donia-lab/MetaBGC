@@ -19,6 +19,7 @@ import os
 def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,readThresh,outDir):
     seq_dict = SeqIO.index(identifiedReadFile, "fasta")
     single_records = []
+    all_quantified_records = []
     fastaDirGT10 = outDir + "/bin_fasta/gt10"
     fastaDirRem = outDir + "/bin_fasta/rem"
     os.makedirs(fastaDirGT10, 0o777, True)
@@ -31,19 +32,26 @@ def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,readThresh,outDir):
             for index, row in df_bin_reads.iterrows():
                 seq_record = seq_dict[row['qseqid']]
                 records.append(seq_record)
+                all_quantified_records.append(seq_record)
             output_file = os.path.join(fastaDirGT10,str(bin)+".fasta")
             SeqIO.write(records, output_file, "fasta")
         elif count_row >= 2:
             for index, row in df_bin_reads.iterrows():
                 seq_record = seq_dict[row['qseqid']]
                 records.append(seq_record)
+                all_quantified_records.append(seq_record)
             output_file = os.path.join(fastaDirRem,str(bin)+".fasta")
             SeqIO.write(records, output_file, "fasta")
         else:
             seq_record = seq_dict[df_bin_reads['qseqid'].iloc[0]]
             single_records.append(seq_record)
+            all_quantified_records.append(seq_record)
     output_file = os.path.join(fastaDirRem, "singleton.fasta")
     SeqIO.write(single_records, output_file, "fasta")
+
+    output_file = os.path.join(outDir, "identified_quantified_reads.fasta")
+    SeqIO.write(all_quantified_records, output_file, "fasta")
+
 
 def mbgccluster(abundance_matrix, abundance_table_pivot,
                 identifiedReadFile,

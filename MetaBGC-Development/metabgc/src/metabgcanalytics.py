@@ -285,6 +285,10 @@ def HMP_BinConsistancy(sampleTableAbundance,cohortMetadataFile,output_dir):
 
     df_subject_visit_abundance = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Cohort'] == 'HMP') |
                                                                 (df_subject_visit_abundance['Cohort'] == 'HMP-1_2') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'GUT2D__AC_USD') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'GUT2D__AC_WTPD') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'QIDONG__AC_USC') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'QIDONG__AC_USC') |
                                                                 (df_subject_visit_abundance['Cohort'] == 'MetaHit')]
     df_subject_visit_abundance["Visits"] = pd.to_numeric(df_subject_visit_abundance["Visits"])
     df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject','Cohort','Bodysite','BodyAggSite','Subject_Status'])['Subject'].count().reset_index(name='Subject_Count')
@@ -382,6 +386,10 @@ def HMP_BinSampleAbund(sampleTableAbundance, cohortMetadataFile, output_dir):
     df_subject_visit_abundance = df_subject_visit_abundance.drop(columns=['Bodysite', 'Subject_Status'])
     df_subject_visit_abundance = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Cohort'] == 'HMP') |
                                                                 (df_subject_visit_abundance['Cohort'] == 'HMP-1_2') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'GUT2D__AC_USD') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'GUT2D__AC_WTPD') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'QIDONG__AC_USC') |
+                                                                (df_subject_visit_abundance['Cohort'] == 'QIDONG__AC_USC') |
                                                                 (df_subject_visit_abundance['Cohort'] == 'MetaHit')]
 
     df_subject_visit_abundance["Visits"] = pd.to_numeric(df_subject_visit_abundance["Visits"])
@@ -457,8 +465,8 @@ def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,assembly_metadata_file,out
         readTableAbundance = os.path.join(metabgc_op_dir,'ReadLevelAbundance.tsv')
         sampleTableAbundance = os.path.join(metabgc_op_dir,'SampleAbundanceMatrix.tsv')
         spHMMFile = os.path.join(metabgc_op_dir, "identify_result", 'spHMM-filtered-results.txt')
-        blastResultFile = os.path.join(metabgc_op_dir, "identify_result",'identified-biosynthetic-reads-blast.txt')
-        fastaFile = os.path.join(metabgc_op_dir, "identify_result",'identified-biosynthetic-reads.fasta')
+        blastResultFile = os.path.join(metabgc_op_dir, 'identified-quantified-biosynthetic-reads-blast.txt')
+        fastaFile = os.path.join(metabgc_op_dir, 'identified_quantified_reads.fasta')
 
         if not os.path.exists(readTableAbundance) and \
             not os.path.exists(sampleTableAbundance) and \

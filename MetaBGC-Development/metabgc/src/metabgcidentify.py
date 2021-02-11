@@ -121,7 +121,7 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory, prot_seq_dire
                 print("Metabgc-identify is using the existing HMMER search result found.")
 
             cutoff_file = os.path.join(sphmm_directory, prot_family_name + "_F1_Cutoff.tsv")
-            if not os.path.exists(allHMMResult):
+            if not os.path.exists(cutoff_file):
                 print("Metabgc-identify did not find the spHMM cutoff threshold file at the expected location.:"
                     + cutoff_file)
                 raise

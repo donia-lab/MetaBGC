@@ -16,7 +16,7 @@ def BLASTN(blastdb, searchFileList,
         blastCmdList.append(cmd)
         logging.info(cmd)
 
-    invoke_producer_consumer(blastCmdList, ncpus-1)
+    invoke_producer_consumer(blastCmdList, ncpus)
     logging.info("Done running BLAST searches.")
 
 

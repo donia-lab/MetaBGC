@@ -161,8 +161,6 @@ def quantify(identify_fasta,prot_family_name,cohort_name,nucl_seq_directory,
 @click.option('--identify_fasta', required=True,
               type=click.Path(exists=True,file_okay=True,readable=True),
               help= "Path to the file produced by MetaBGC-Identify.")
-@click.option("--table",required=True,type=click.Path(exists=True,file_okay=True,readable=True),
-              help="Path of tab-delimited abundance table.")
 @click.option("--max_dist", type=float, default=0.1,help="Maximum Pearson distance between two reads to be in the same cluster. Default is 0.1")
 @click.option("--min_samples", type=float, default=1,help="Minimum number of samples required for a cluster. " \
                                                           "If min_samples > 1, noise are labelled as -1")
