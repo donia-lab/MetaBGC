@@ -1,14 +1,8 @@
-import time, sys
 from Bio import AlignIO
-from Bio import SeqIO
-from metabgc.src.utils import *
 from metabgc.src.hmmerrunlib import *
 from metabgc.src.blastrunlib import *
 import metabgc.src.createsphmms as createhmm
-from rpy2.robjects.packages import STAP
-import rpy2.robjects.packages as rpackages
-from rpy2.robjects.vectors import StrVector
-from shutil import copyfile
+import metabgc.src.evaluate_sphmms as evaluate
 import os
 
 def ungappedseqsearch(reference_str, query_str):
@@ -190,28 +184,9 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
             print("Using existing BLAST search result file:" + allBLASTResult)
 
         # Eval spHMMs
-        rpackages.importr('base')
-        utils = rpackages.importr('utils')
-        packageNames = ('tidyverse','ggsci','ggpubr','dplyr','ggplot2')
-        packnames_to_install = [x for x in packageNames if not rpackages.isinstalled(x)]
-        if len(packnames_to_install) > 0:
-            utils.install_packages(StrVector(packnames_to_install))
-        rpackages.importr('tidyverse')
-        rpackages.importr('ggsci')
-        rpackages.importr('ggpubr')
-        rpackages.importr('dplyr')
-        rpackages.importr('ggplot2')
-
         hp_hmm_directory = os.path.join(build_op_dir, 'HiPer_spHMMs')
         os.makedirs(hp_hmm_directory,0o777,True)
-        module_dir = os.path.dirname(os.path.abspath(createhmm.__file__))
-        print("\nR-script path : " + module_dir)
-        r_script = os.path.join(module_dir,'EvaluateSpHMMs.R')
-
-        with open(r_script, 'r') as f:
-            rStr = f.read()
-        myfunc = STAP(rStr, "EvaluateSpHMM")
-        myfunc.EvaluateSpHMM(allHMMResult, allBLASTResult, gene_pos_file, prot_family_name, float(f1_thresh), hmm_directory, hp_hmm_directory)
+        evaluate.evaluate_sphmms(allHMMResult, allBLASTResult, gene_pos_file, prot_family_name, float(f1_thresh), hmm_directory, hp_hmm_directory)
         timeTaken = time.time() - startTime
         mins = int(timeTaken / 60)
         secs = int(timeTaken) % 60

@@ -84,7 +84,7 @@ MetaBGC consists of four main modules:
 
 **Cluster** - ```metabgc cluster --help``` - This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster unique biosynthetic reads with similar abundance profiles across different metagenomic samples into distinct bins, based on the abundance profile martrix obtained in MetaBGC-Quantify. 
 
-**Search** - ```metabgc search --help``` - This is a combined option to run Identify, Quantify, and Cluster together as a single command.  
+**Search** - ```metabgc search --help``` -**NEW** option to run Identify, Quantify, and Cluster together as a single command.  
 
 ### Running Build to construct the spHMMs
 

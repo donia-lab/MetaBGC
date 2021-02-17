@@ -34,12 +34,6 @@ To run MetaBGC, please make sure you have the following dependencies installed a
 * [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.7
 * [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 * [EMBOSS-6.5.7](http://emboss.sourceforge.net/)
-* [R 3.6.1](http://lib.stat.cmu.edu/R/CRAN/): MetaBGC will try to install the following R packages at runtime. They can be installed manually if the user does not have access to the default R lib path.  
-  * tidyverse
-  * ggsci
-  * ggpubr
-  * dplyr
-  * ggplot2
 
 ### Installing the Package
 
