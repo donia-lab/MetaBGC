@@ -15,9 +15,10 @@ These instructions will get you setup to run MetaBGC on your local Linux or Appl
 
 ## Important Notes
 
-* Users can test the pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
+* Users can test the search pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
 * Running your own read libraries against the test cyclase model provided may not work considering that cyclases are rare in metagenomic datasets.
 * For non-cyclase spHMMs you can de novo create your own using the build module. In addition, we are currently developing high-performance spHMMs for several other biosynthetic classes and will be releasing them in a few months (as pre-built models) in a follow-up release/publication.
+* **NEW** : Users can test the build pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
   
 ## Bioconda Distribution 
 
@@ -55,22 +56,34 @@ pip install .
 metabgc --help
 ```
 
-### Quick Start
+## Quick Start
+The quick start guide provides 2 sample datasets for building a new database and searching an existing database. The example commands are provided to run the processes and can be used as a template.  
+### Build a Database
+To run a toy build example, please download a file from [here](https://drive.google.com/file/d/198bEperQcWhbl7ubn5OHq5wwppzXozkb). 
 
+```
+OP_PATH=<set a path>
+cd ${OP_PATH}
+tar -zxvf OxyN_Build_v3.tar.gz
+mkdir output
+metabgc build --prot_alignment Cyclase_OxyN.fasta --prot_family_name OxyN --cohort_name OxyN --nucl_seq_directory toy_reads --seq_fmt FASTA --pair_fmt interleaved --tp_genes_nucl TP_Genes.fasta --f1_thresh 0.5 --output_directory output --cpu 4
+```
+This should take about 1 hour using 8 threads on a 2.5 GHz Ivybridge Intel processor. The directory also has a SLURM job script ``` runBuildTest.sh```, that can be submitted to a cluster after changing the paths.  
+
+### Perform a Search 
 To run a toy search example, please download the already constructed spHMMs and some search samples from [here](https://drive.google.com/file/d/1-6nhr7WpWFbAxj89F-Q4fmB83nBhBDI-/view?usp=sharing) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
 
 ```
 OP_PATH=<set a path>
 cd ${OP_PATH}
-tar -zxvf OxyN_Build.tar.gz
+tar -zxvf OxyN_Search_v2.tar.gz
 metabgc search --sphmm_directory ${OP_PATH}/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory ${OP_PATH}/build/nucl_seq_dir --seq_fmt FASTA --pair_fmt interleaved --output_directory ${OP_PATH}/output --cpu 4
 ```
-
 The run will take about 60GB of memory and 220 minutes to run using 4 threads on a 2.5 GHz Ivybridge Intel processor. Please reduce the number of threads if you are running out of memory, but execution will take longer.  
 
-### Program Structure
+## Modules and Commandline Options 
 
-MetaBGC consists of four main modules:
+MetaBGC consists of various modules to run the search pipeline. 
 
 **Synthesize** - ```metabgc synthesize --help``` - This module creates a synthetic read dataset for building high-performance segmented profile Hidden Markov Models (spHMMs) using the build module.  
 
@@ -86,7 +99,7 @@ MetaBGC consists of four main modules:
 
 **Analytics** - ```metabgc analytics --help``` - This is a combined option to run final analytics as produced by the Donia Lab using metadata information of the cohorts. 
 
-### Running Synthesize to construct the spHMMs
+### Running Synthesize to Create a Synthetic Dataset 
 
 1. Creating a synthetic dataset for running the build model requires a large set of background genomes, and a few genomes which are positive for the protein family of interest. To generate synthetic metagenomes for the build process, we use ART (https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm). The ```metabgc synthesize``` module uses ART to generate reads for individual genomes and concatenate the resulting reads to simulate a metagenome. To control the abundance of each genome, you need to control number of reads to generate from each genome. Users may also refer to pipelines such as CAMISIM (https://github.com/CAMI-challenge/CAMISIM) to facilitate this process.
 
@@ -108,7 +121,7 @@ MetaBGC consists of four main modules:
 	13. --seed, required=False: Random seed (Def.=915).
 	```
  
-### Running Build to construct the spHMMs
+### Running Build to Construct the spHMMs
 
 1. To build and evaluate spHMMs for the protein family of interest, the ```metabgc build``` command has to be executed with required input files. To select high performance spHMMs, a synthetic metagenomic dataset must be generated with reads from true positive genes spiked in to test the performance of each spHMM. To generate synthetic metagenomes for the build process use the ```metagbc synthesize module```.
 
@@ -133,7 +146,7 @@ MetaBGC consists of four main modules:
 2. The high-performance spHMMs will be saved in the ```HiPer_spHMMs``` folder in the output directory specified. The ```HiPer_spHMMs``` folder should have the following files:
 
 	```
-    1. F1_Plot.eps : F1 score plot of all the spHMMs and the F1 cutoff threshold. 
+    1. F1_Plot.png : F1 score plot of all the spHMMs and the F1 cutoff threshold. 
     2. *.hmm : A set of spHMMs that perform above the F1 cutoff threshold.
     3. <prot_family_name>_F1_Cutoff.tsv: HMM search cutoff scores to be used for each high-performance spHMM interval.
     4. <prot_family_name>_Scores.tsv: FP, TP and FN scores of the the HMM search for all the spHMMs.
@@ -142,7 +155,7 @@ MetaBGC consists of four main modules:
   	>**Because synthetic datasets do not fully represent real data, please be aware that some of the spHMM cutoffs may need to be further tuned after running MetaBGC on a real metagenomic dataset, as was done with the Type II polyketide cyclase cutoffs in the original MetaBGC publication.**
     	
     
-### Running Identify to detect biosynthetic reads
+### Running Identify to Detect Biosynthetic Reads
 
 1. For identifying biosynthetic reads from the protein family of interest using the spHMMs constructed in Build step, the ```metabgc identify``` command should be executed with the required input files. To use our pre-built high-performance spHMMs for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs), please find the high performance input folders [here](https://github.com/donia-lab/MetaBGC/tree/master/MetaBGC-V1/MetaBGC-Build_Outputs).
 
@@ -163,7 +176,7 @@ MetaBGC consists of four main modules:
 
 2. Identify will produce a FASTA file, **identified-biosynthetic-reads.fasta**, comprised of all biosynthetic reads identified in the metagenomic samples of the analyzed cohort, based on the specified cutoffs.
 
-### Running Quantify to de-replicate and quantify biosynthetic reads
+### Running Quantify to De-replicate and Quantify Biosynthetic Reads
 
 1. To de-replicate and quantify the biosynthetic reads found by Identify, the ```metabgc quantify``` command should be executed with the following parameters: 
 
@@ -180,12 +193,12 @@ MetaBGC consists of four main modules:
 	10. --cpu, required=False: Number of CPU threads to use (Def.=4). 
 	```
 2. The output of the quantify command is are abundance profile files:
-	 ```
-		1. unique-biosynthetic-reads-abundance-table.txt : Contains the read level abundance matrix.
-		2. unique-biosynthetic-reads-abundance-table-wide.txt : Contains the sample and read level abundance values.  
-	 ``` 
+	```
+	1. unique-biosynthetic-reads-abundance-table.txt : Contains the read level abundance matrix.
+	2. unique-biosynthetic-reads-abundance-table-wide.txt : Contains the sample and read level abundance values.  
+	```
 
-### Running Cluster to generate biosynthetic read bins
+### Running Cluster to Generate Biosynthetic Read Bins
 1. To generate BGC bins of **unique biosynthetic reads**, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by Quantify as input for ```metabgc cluster```. The input parameters to the script are:
 
 	```
@@ -201,17 +214,17 @@ MetaBGC consists of four main modules:
 
 2. The cluster command produces the following files:
 
-```
+	```
 	1. unique-biosynthetic-reads-abundance-table_DBSCAN.json: Bin labels assigned DBSCAN, comprised of all the biosynthetic reads clustered in json format.
 	2. BinSummary.txt : Summary of the bins and other statistics. 
 	3. ReadLevelAbundance.tsv: Abundance of each biosynthetic read in each assigned bin with >= min_reads_bin reads. 
 	4. SampleAbundanceMatrix.tsv : Abundance matrix of each sample against the bin ids for each bin with >= min_reads_bin reads.
 	5. bin_fasta: Directory with FASTA files containing reads belonging each bin.  
-```   
+	```
 
 3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
-### Running Search to detect biosynthetic read bins
+### Running Search to Perform Identify, Quantify and Cluster 
 
 1. For detecting biosynthetic reads from the protein family of interest using the spHMMs constructed in Build step, the ```metabgc search``` command should be executed with the required input files to run Identify, Quantify and Cluster in ine command. To use our pre-built high-performance spHMMs for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs), please find the high performance input folders [here](https://github.com/donia-lab/MetaBGC/tree/master/MetaBGC-V1/MetaBGC-Build_Outputs).
 
@@ -237,9 +250,9 @@ MetaBGC consists of four main modules:
 
 2. Search will produce the same output as the Cluster command described above and all the intermediate files from each step. 
 
-### Running Analytics to produce Donia Lab reports
+### Running Analytics to Produce Donia Lab Reports
 
-1. The Donia Lab produces useful reports from the clustered bins by merging relevant cohort metadata with the reads in the clusters. The metadata of the cohorts the Donia Lab has used are available in the ```metabgc/metadata``` folder. The paths in these files are only relevant to Princeton Research Computing clusters. The users will need to download relevant files of these publicly available metagenome datasets and prepare similar metadata files. The publications have the reference to the datasets. 
+1. The Donia Lab produces useful reports from the clustered bins by merging relevant cohort metadata with the reads in the clusters. The metadata gathered by the Donia Lab is available in the ```metabgc/metadata``` folder. The paths in these files are only relevant to Princeton Research Computing clusters. The users will need to download relevant files of these publicly available metagenome datasets and prepare similar metadata files. The publications from Donia Lab refer to the datasets. 
 
 2. The ```metabgc analytics``` command should be executed with the required parameters and input files:
 

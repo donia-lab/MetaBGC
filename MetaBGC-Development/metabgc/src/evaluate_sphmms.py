@@ -200,7 +200,7 @@ def evaluate_sphmms(HMMRunFile,
 
     f1_cutoff_median = calculate_F1(filtered_median, median_remaining_hmm, blast_intervals, hmm_df_recoded.interval.unique())
     f1_cutoff_median.loc[:,'cutoff'] = "median"
-    FP_Reads_Fname = HMM_Model_Name + "-FP_Reads.csv"
+    FP_Reads_Fname = HMM_Model_Name + "-FP_Reads.tsv"
     median_remaining_hmm.to_csv(os.path.join(HMMHighPerfOutDir,FP_Reads_Fname), sep='\t',index=False)
 
     f1_cutoff_plusfive = calculate_F1(filtered_plusfive, plusfive_remaining_hmm, blast_intervals, hmm_df_recoded.interval.unique())
