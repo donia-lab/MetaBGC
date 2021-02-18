@@ -2,7 +2,6 @@ from metabgc.src.utils import *
 import pandas as pd
 from pandas import DataFrame
 import os
-import sys
 from metabgc.src.extractfastaseq import RunExtractDirectoryPar
 from metabgc.src.extractfastaseq import RunExtractDescription
 

@@ -305,7 +305,7 @@ def synthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
                    samples, prop, output_directory, base_name, cpu, seed)
 
 @cli.command()
-@click.option('--alnFile',required=True,
+@click.option('--aln_file',required=True,
               type=click.Path(exists=True, file_okay=True,readable=True),
               help= "Input protein family sequences in a fasta format or a MUSCLE alignment. If it is a FASTA file then set --do_alignment 1.")
 @click.option('--prot_seq_directory',required=True,
@@ -316,8 +316,8 @@ def synthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
               help= "Directory to save results.")
 @click.option('--do_alignment',required=True,
               type=click.BOOL, help="Set it up to do an alignment if the --alnFile is a FASTA.")
-def findtp(alnFile, prot_seq_directory, out_dir, do_alignment):
-    mbgcfindtp(alnFile, prot_seq_directory, out_dir, do_alignment)
+def findtp(aln_file, prot_seq_directory, output_directory, do_alignment):
+    mbgcfindtp(aln_file, prot_seq_directory, output_directory, do_alignment)
 
 def main():
     cli()
