@@ -88,6 +88,8 @@ MetaBGC consists of various modules to run the search pipeline.
 
 **Synthesize** - ```metabgc synthesize --help``` - This module creates a synthetic read dataset for building high-performance segmented profile Hidden Markov Models (spHMMs) using the build module.  
 
+**FindTP** - ```metabgc findtp --help``` - This module finds the true-positive genes in the synthetic dataset genomes for the protein family of interest in multi-FASTA format to be used by the ```metabgc build module```.
+
 **Build** - ```metabgc build --help``` - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs).  If any of these protein families is to be used, this step can be skipped. The models are here: https://github.com/donia-lab/MetaBGC/tree/master/Models
 
 **Identify** - ```metabgc identify --help``` -  This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
@@ -99,6 +101,7 @@ MetaBGC consists of various modules to run the search pipeline.
 **Search** - ```metabgc search --help``` - This is a combined option to run Identify, Quantify, and Cluster together as a single command.  
 
 **Analytics** - ```metabgc analytics --help``` - This is a combined option to run final analytics as produced by the Donia Lab using metadata information of the cohorts. 
+
 
 ### Running Synthesize to Create a Synthetic Dataset 
 
@@ -121,15 +124,34 @@ MetaBGC consists of various modules to run the search pipeline.
 	12. --cpu, required=False: Number of processes to run. Should be smaller than --samples (Def.=1).
 	13. --seed, required=False: Random seed (Def.=915).
 	```
- 
+ 3. Generates sample metagenome read files in the output directory. 
+
+
+### Running FindTP to find the True Positive Genes
+
+1. The ```metabgc findtp``` finds TP genes in the protein family positive fasta files used for simulation. The command has to be executed with required input files and the following parameters:
+
+	```
+	1. --alnFile, required=True: Input protein family sequences in a fasta format or a MUSCLE alignment. If it is a FASTA file then set --do_alignment True. 
+	2. --prot_seq_directory, required=True: 
+	3. --output_directory, required=True: Directory to save results.
+	4. --do_alignment, required=True: Set it up to do an alignment if the --alnFile is a FASTA.
+	```
+
+2. The output produced are:
+	```
+	1. CombinedHMMHits.faa: It is a FASTA file with the TP sequences. 
+	2. CombinedHMMResults.txt: The HMM score summary of the TP genes and genome it matches with the match score. 
+	```
+
+
 ### Running Build to Construct the spHMMs
 
 1. To build and evaluate spHMMs for the protein family of interest, the ```metabgc build``` command has to be executed with required input files. To select high performance spHMMs, a synthetic metagenomic dataset must be generated with reads from true positive genes spiked in to test the performance of each spHMM. To generate synthetic metagenomes for the build process use the ```metagbc synthesize module```.
 
 	```
     1. --prot_alignment, required=True: Alignment of homologs from the protein family of interest in FASTA format.
-	2. --prot_family_name, required=True: Name of the protein family. 
-         This is used as prefix for spHMM files.
+	2. --prot_family_name, required=True: Name of the protein family. This is used as prefix for spHMM files.
 	3. --cohort_name, required=True: Name of the cohort of synthetic metagenomic samples used for evaluation.
 	4. --nucl_seq_directory, required=True: Directory of reads for the synthetic metagenomic samples. The filenames are used as sample names.
 	5. --prot_seq_directory, required=False: Directory with translated synthetic read files of the cohort. Computed if not provided.
@@ -177,6 +199,7 @@ MetaBGC consists of various modules to run the search pipeline.
 
 2. Identify will produce a FASTA file, **identified-biosynthetic-reads.fasta**, comprised of all biosynthetic reads identified in the metagenomic samples of the analyzed cohort, based on the specified cutoffs.
 
+
 ### Running Quantify to De-replicate and Quantify Biosynthetic Reads
 
 1. To de-replicate and quantify the biosynthetic reads found by Identify, the ```metabgc quantify``` command should be executed with the following parameters: 
@@ -198,6 +221,7 @@ MetaBGC consists of various modules to run the search pipeline.
 	1. unique-biosynthetic-reads-abundance-table.txt : Contains the read level abundance matrix.
 	2. unique-biosynthetic-reads-abundance-table-wide.txt : Contains the sample and read level abundance values.  
 	```
+
 
 ### Running Cluster to Generate Biosynthetic Read Bins
 1. To generate BGC bins of **unique biosynthetic reads**, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by Quantify as input for ```metabgc cluster```. The input parameters to the script are:
@@ -225,6 +249,7 @@ MetaBGC consists of various modules to run the search pipeline.
 
 3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
+
 ### Running Search to Perform Identify, Quantify and Cluster 
 
 1. For detecting biosynthetic reads from the protein family of interest using the spHMMs constructed in Build step, the ```metabgc search``` command should be executed with the required input files to run Identify, Quantify and Cluster in ine command. To use our pre-built high-performance spHMMs for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs), please find the high performance input folders [here](https://github.com/donia-lab/MetaBGC/tree/master/MetaBGC-V1/MetaBGC-Build_Outputs).
@@ -250,6 +275,7 @@ MetaBGC consists of various modules to run the search pipeline.
 	```
 
 2. Search will produce the same output as the Cluster command described above and all the intermediate files from each step. 
+
 
 ### Running Analytics to Produce Donia Lab Reports
 

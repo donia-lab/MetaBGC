@@ -6,20 +6,15 @@ import sys
 from metabgc.src.extractfastaseq import RunExtractDirectoryPar
 from metabgc.src.extractfastaseq import RunExtractDescription
 
-if __name__ == '__main__':
+def mbgcfindtp(alnFile, prot_seq_directory, out_dir, do_alignment):
     # setup paths
-    alnFile = sys.argv[1]
-    hmm_search_directory = sys.argv[2]
-    prot_seq_directory = sys.argv[3]
-    out_dir = sys.argv[4]
-    do_alignment = int(sys.argv[5])
     identifyReadIds = os.path.join(out_dir,'CombinedReadIds.txt')
     allHMMResult = os.path.join(out_dir,'CombinedHMMResults.txt')
     fasta_seq_dir = os.path.join(out_dir,'extract_seq')
     multiFastaFile = os.path.join(out_dir,'CombinedHMMHits.faa')
 
     alnOutput=alnFile.split('.fasta')[0] +".faa"
-    if do_alignment == 1:
+    if do_alignment:
         runMUSCLE(alnFile, alnOutput)
     else:
         alnOutput = alnFile
@@ -27,6 +22,7 @@ if __name__ == '__main__':
     hmmFile=alnFile.split('.fasta')[0] +".hmm"
     modelName=alnFile.split('.fasta')[0]
     runHMMBuild(alnOutput, hmmFile, modelName)
+    hmm_search_directory = os.path.join(out_dir, "hmm_search")
     os.makedirs(hmm_search_directory, 0o777, True)
     RunHMMDirectoryParallelReduced(prot_seq_directory, hmmFile, hmm_search_directory, 4)
 

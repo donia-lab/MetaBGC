@@ -8,6 +8,7 @@ from metabgc.src.metabgcquantify import mbgcquantify
 from metabgc.src.metabgccluster import mbgccluster
 from metabgc.src.metabgcanalytics import mbgcanalytics
 from metabgc.src.metabgcsynthesize import mbgcsynthesize
+from metabgc.src.metabgcfindTP import mbgcfindtp
 
 __version__ = "2.0.0"
 
@@ -302,6 +303,21 @@ def synthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
                samples, prop, output_directory, base_name, cpu, seed):
     mbgcsynthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
                    samples, prop, output_directory, base_name, cpu, seed)
+
+@cli.command()
+@click.option('--alnFile',required=True,
+              type=click.Path(exists=True, file_okay=True,readable=True),
+              help= "Input protein family sequences in a fasta format or a MUSCLE alignment. If it is a FASTA file then set --do_alignment 1.")
+@click.option('--prot_seq_directory',required=True,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help= "Input directory with the protein family positive fasta files used for simulation.")
+@click.option('--output_directory', '-o',required=True,
+              type=click.Path(exists=True,dir_okay=True,writable=True),
+              help= "Directory to save results.")
+@click.option('--do_alignment',required=True,
+              type=click.BOOL, help="Set it up to do an alignment if the --alnFile is a FASTA.")
+def findtp(alnFile, prot_seq_directory, out_dir, do_alignment):
+    mbgcfindtp(alnFile, prot_seq_directory, out_dir, do_alignment)
 
 def main():
     cli()
