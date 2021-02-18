@@ -1,3 +1,0 @@
-pandas==0.24.2
-Bio==0.1.0
-scikit_learn==0.21.3
