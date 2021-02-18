@@ -1,6 +1,7 @@
 # MetaBGC: Metagenomic identifier of Biosynthetic Gene Clusters 
 
 [![DOI](https://zenodo.org/badge/187888803.svg)](https://zenodo.org/badge/latestdoi/187888803)
+[![PyPI download](https://img.shields.io/pypi/dm/metabgc?label=pypi%20downloads)](https://pypistats.org/packages/metabgc)
 
 MetaBGC is a read-based algorithm for the detection of biosynthetic gene clusters (BGCs) directly in metagenomic sequencing data.
 
@@ -83,9 +84,11 @@ MetaBGC consists of four main modules:
 
 **Search** - ```metabgc search --help``` - This is a combined option to run Identify, Quantify, and Cluster together as a single command.  
 
+**Analytics** - ```metabgc analytics --help``` - This is a combined option to run final analytics as produced by the Donia Lab using metadata information of the cohorts. 
+
 ### Running Synthesize to construct the spHMMs
 
-1. Creating a synthetic dataset for running the build model requires a large set of background genomes, and a few genomes which are positive for the protein family of interest. To generate synthetic metagenomes for the build process, we use ART (https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm). With are ART we generated reads for individual genomes and concatenate the resulting reads to simulate a metagenome. To control the abundance of each genome, you need to control number of reads to generate from each genome. Users may also refer to pipelines such as CAMISIM (https://github.com/CAMI-challenge/CAMISIM) to facilitate this process.
+1. Creating a synthetic dataset for running the build model requires a large set of background genomes, and a few genomes which are positive for the protein family of interest. To generate synthetic metagenomes for the build process, we use ART (https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm). The ```metabgc synthesize``` module uses ART to generate reads for individual genomes and concatenate the resulting reads to simulate a metagenome. To control the abundance of each genome, you need to control number of reads to generate from each genome. Users may also refer to pipelines such as CAMISIM (https://github.com/CAMI-challenge/CAMISIM) to facilitate this process.
 
 2. The ```metabgc synthesize``` command has to be executed with required input files and the following parameters:
 
@@ -101,7 +104,7 @@ MetaBGC consists of four main modules:
 	9. --prop, required=True: Proportion of organisms to draw for each metagenomic sample. Should be between 0 and 1.
 	10. --output_directory, required=True: Directory to save results. 
 	11. --base_name, required=False: Prefix of sample name (Def.='S'). 
-	12. --processes, required=False: Number of processes to run. Should be smaller than --samples (Def.=1).
+	12. --cpu, required=False: Number of processes to run. Should be smaller than --samples (Def.=1).
 	13. --seed, required=False: Random seed (Def.=915).
 	```
  
@@ -177,10 +180,10 @@ MetaBGC consists of four main modules:
 	10. --cpu, required=False: Number of CPU threads to use (Def.=4). 
 	```
 2. The output of the quantify command is are abundance profile files:
- ```
-    1. unique-biosynthetic-reads-abundance-table.txt : Contains the read level abundance matrix.
-    2. unique-biosynthetic-reads-abundance-table-wide.txt : Contains the sample and read level abundance values.  
- ``` 
+	 ```
+		1. unique-biosynthetic-reads-abundance-table.txt : Contains the read level abundance matrix.
+		2. unique-biosynthetic-reads-abundance-table-wide.txt : Contains the sample and read level abundance values.  
+	 ``` 
 
 ### Running Cluster to generate biosynthetic read bins
 1. To generate BGC bins of **unique biosynthetic reads**, users should use the abundance profile file, **unique-biosynthetic-reads-abundance-table.txt**, produced by Quantify as input for ```metabgc cluster```. The input parameters to the script are:
@@ -197,13 +200,13 @@ MetaBGC consists of four main modules:
 	```
 
 2. The cluster command produces the following files:
-```
-    1. unique-biosynthetic-reads-abundance-table_DBSCAN.json: Bin labels assigned DBSCAN, comprised of all the biosynthetic reads clustered in json format.
-    2. BinSummary.txt : Summary of the bins and other statistics. 
-    3. ReadLevelAbundance.tsv: Abundance of each biosynthetic read in each assigned bin with >= min_reads_bin reads. 
-    4. SampleAbundanceMatrix.tsv : Abundance matrix of each sample against the bin ids for each bin with >= min_reads_bin reads.
-    5. bin_fasta: Directory with FASTA files containing reads belonging each bin.  
-```   
+	```
+		1. unique-biosynthetic-reads-abundance-table_DBSCAN.json: Bin labels assigned DBSCAN, comprised of all the biosynthetic reads clustered in json format.
+		2. BinSummary.txt : Summary of the bins and other statistics. 
+		3. ReadLevelAbundance.tsv: Abundance of each biosynthetic read in each assigned bin with >= min_reads_bin reads. 
+		4. SampleAbundanceMatrix.tsv : Abundance matrix of each sample against the bin ids for each bin with >= min_reads_bin reads.
+		5. bin_fasta: Directory with FASTA files containing reads belonging each bin.  
+	```   
 
 3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
@@ -232,6 +235,32 @@ MetaBGC consists of four main modules:
 	```
 
 2. Search will produce the same output as the Cluster command described above and all the intermediate files from each step. 
+
+### Running Analytics to produce Donia Lab reports
+
+1. The Donia Lab produces useful reports from the clustered bins by merging relevant cohort metadata with the reads in the clusters. The metadata of the cohorts the Donia Lab has used are available in the ```metabgc/metadata``` folder. The paths in these files are only relevant to Princeton Research Computing clusters. The users will need to download relevant files of these publicly available metagenome datasets and prepare similar metadata files. The publications have the reference to the datasets. 
+
+2. The ```metabgc analytics``` command should be executed with the required parameters and input files:
+
+	```
+	1. --metabgc_output_dir, required=True: Output directory of a successful metabgc search run.
+	2. --cohort_metadata_file, required=True: Cohort metadata file such as metabgc/metadata/combined_cohort_v2.csv. 
+	3. --assembly_metadata_file, required=True: CSV file with sample assembly paths such as metabgc/metadata/DoniaSampleAssemblyFileList.csv.
+	4. --output_directory, required=True: Directory to save results.
+	5. --cpu, required=False: Number of CPU threads to use (Def.=4). 
+	```
+3. The reports produced by analytics modules are:
+
+	```
+	1. ReadLevelBinStats.tsv : The metadata information of each identified and clustered read. Information includes bin_id, sample_id, sunject_id, and BLAST based annotation etc.
+	2. MaxBinSample.tsv: The maximum contributing sample of each bin. 
+	3. BinSubjectCounts_Bodysite.tsv: The subject counts in each bin grouped by the sample collection sites.
+	4. BinSubjectCounts_BodysiteAgg.tsv: The subject counts in each bin grouped by the major sample collection sites.
+	5. BinSampleCounts_Bodysite.tsv: The sample counts in each bin grouped by the sample collection sites.
+	6. BinSampleCounts_BodysiteAgg.tsv: The sample counts in each bin grouped by the major sample collection sites. 
+	7. BodysiteBinVisitsAbundances.tsv: The abundance of each subject in each bin across all visits. 
+	8. SampleAbundanceBodysite_Stacked.tsv: The read abundance of each subject in each bin. 
+	```
 
 ## License
 

@@ -7,6 +7,7 @@ from metabgc.src.metabgcidentify import mbgcidentify
 from metabgc.src.metabgcquantify import mbgcquantify
 from metabgc.src.metabgccluster import mbgccluster
 from metabgc.src.metabgcanalytics import mbgcanalytics
+from metabgc.src.metabgcsynthesize import mbgcsynthesize
 
 __version__ = "2.0.0"
 
@@ -264,6 +265,43 @@ def search(sphmm_directory,prot_family_name,cohort_name,
               help="Number of threads. Def.: 4")
 def analytics(metabgc_output_dir,cohort_metadata_file,assembly_metadata_file,output_directory,cpu):
     mbgcanalytics(metabgc_output_dir,cohort_metadata_file,assembly_metadata_file,output_directory,cpu)
+
+@cli.command()
+@click.option('--indir1','-i1',required=True,
+              type=click.Path(exists=True, dir_okay=True,readable=True),
+              help= "Input directory of background fasta files for simulation.")
+@click.option('--indir2','-i2',required=True,
+              type=click.Path(exists=True,dir_okay=True,readable=True),
+              help= "Input directory protein family positive fasta files for simulation.")
+@click.option('--system', '-ss',required=True,
+              help= "Illumina sequencing system (HS10, HS25, MSv3, etc.). Same options as -ss in art_illumina.")
+@click.option('--length', '-l', required=True,
+              type=click.INT, help="Read length in bp.")
+@click.option('--mflen', '-fl', required=True,
+              type=click.INT, help="Mean fragment size in bp.")
+@click.option('--mflensd', '-sd', required=True,
+              type=click.INT, help="Standard dev of fragment size in bp.")
+@click.option('--num_reads', '-nr',required=True,
+              type=click.INT, help="Total number of read pairs.")
+@click.option('--samples', '-ns', required=True,
+              type=click.INT, help=" Number of samples to generate.")
+@click.option('--prop', '-p', required=True,
+              type=click.FloatRange(0,1), help="Proportion of organisms to draw for each metagenomic sample. Should be between 0 and 1.")
+@click.option('--output_directory', '-o',required=True,
+              type=click.Path(exists=True,dir_okay=True,writable=True),
+              help= "Directory to save results.")
+@click.option('--base_name', '-b', required=False,
+              default='S', help="Prefix of sample name (Def.='S')")
+@click.option('--cpu', '-t',required=False,
+              type=click.INT, default=1,
+              help="Number of threads. Def.: 1")
+@click.option('--seed','-rs', required=False,
+              type=click.INT, default=915,
+              help="Random seed. Def.: 915")
+def synthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
+               samples, prop, output_directory, base_name, cpu, seed):
+    mbgcsynthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
+                   samples, prop, output_directory, base_name, cpu, seed)
 
 def main():
     cli()
