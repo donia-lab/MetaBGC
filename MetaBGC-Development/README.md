@@ -200,13 +200,14 @@ MetaBGC consists of four main modules:
 	```
 
 2. The cluster command produces the following files:
-	```
-		1. unique-biosynthetic-reads-abundance-table_DBSCAN.json: Bin labels assigned DBSCAN, comprised of all the biosynthetic reads clustered in json format.
-		2. BinSummary.txt : Summary of the bins and other statistics. 
-		3. ReadLevelAbundance.tsv: Abundance of each biosynthetic read in each assigned bin with >= min_reads_bin reads. 
-		4. SampleAbundanceMatrix.tsv : Abundance matrix of each sample against the bin ids for each bin with >= min_reads_bin reads.
-		5. bin_fasta: Directory with FASTA files containing reads belonging each bin.  
-	```   
+
+```
+	1. unique-biosynthetic-reads-abundance-table_DBSCAN.json: Bin labels assigned DBSCAN, comprised of all the biosynthetic reads clustered in json format.
+	2. BinSummary.txt : Summary of the bins and other statistics. 
+	3. ReadLevelAbundance.tsv: Abundance of each biosynthetic read in each assigned bin with >= min_reads_bin reads. 
+	4. SampleAbundanceMatrix.tsv : Abundance matrix of each sample against the bin ids for each bin with >= min_reads_bin reads.
+	5. bin_fasta: Directory with FASTA files containing reads belonging each bin.  
+```   
 
 3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
 
