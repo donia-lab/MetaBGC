@@ -18,7 +18,7 @@ def test_parseHMM():
 def test_identify():
     cohortStr = "MetaHit"
     allHMMResult = "AbcK/data/CombinedHmmSearch.txt"
-    cutoff_file = "AbcK/output/build/HiPer_spHMMs/AbcK_F1_Cutoff.tsv"
+    cutoff_file = "AbcK/output/build/HiPerf/AbcK_F1_Cutoff.tsv"
     filteredTableFile="AbcK/output/"+cohortStr+"/identify/spHMM-filtered-results.txt"
     identifyReadIdFile="AbcK/output/"+cohortStr+"/identify/CombinedReadIds.txt"
     runidentify(allHMMResult, cutoff_file, filteredTableFile,identifyReadIdFile)

@@ -11,11 +11,12 @@ def test_ungappedseqsearch():
 def test_gengeneposlist():
     prot_aln_file ="AbcK/data/AcbK-homologs-for-HMM.fasta"
     hmm_directory ="AbcK/output/build/spHMMs"
+    tp_prot_file="AbcK/data/TPGenes.faa"
     prot_family_name ="AbcK"
     alnOutput ="AbcK/data/AcbK-homologs-plus-three-synthetic-TPs.fasta"
-    gene_pos_file ="AbcK/output/build/Gene_Interval_Pos.txt"
-    module_dir = os.path.dirname(pytest.__file__)
-    hmmDict = build.gensphmmfiles("AbcK", prot_aln_file, hmm_directory)
+    gene_pos_file="AbcK/output/build/Gene_Interval_Pos.txt"
+    gene_pos_file_aa = "AbcK/output/build/Gene_Interval_Pos_AA.txt"
+    hmmDict = build.gensphmmfiles(prot_family_name, prot_aln_file, tp_prot_file, hmm_directory, gene_pos_file, gene_pos_file_aa)
     protAlnSeqs = list(SeqIO.parse(prot_aln_file, "fasta"))
     build.gengeneposlist(prot_family_name, protAlnSeqs, hmmDict, alnOutput, gene_pos_file)
 
