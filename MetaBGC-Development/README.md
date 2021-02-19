@@ -16,6 +16,7 @@ These instructions will get you setup to run MetaBGC on your local Linux or Appl
 
 ## Important Notes
 
+* **NEW** : All R dependency has been removed.
 * Users can test the search pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
 * Running your own read libraries against the test cyclase model provided may not work considering that cyclases are rare in metagenomic datasets.
 * For non-cyclase spHMMs you can de novo create your own using the build module. In addition, we are currently developing high-performance spHMMs for several other biosynthetic classes and will be releasing them in a few months (as pre-built models) in a follow-up release/publication.
