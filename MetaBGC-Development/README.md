@@ -1,5 +1,6 @@
 # MetaBGC: Metagenomic identifier of Biosynthetic Gene Clusters 
 
+[![PyPI](https://img.shields.io/pypi/v/metabgc.svg)](https://pypi.python.org/pypi/metabgc)
 [![DOI](https://zenodo.org/badge/187888803.svg)](https://zenodo.org/badge/latestdoi/187888803)
 [![PyPI download](https://img.shields.io/pypi/dm/metabgc?label=pypi%20downloads)](https://pypistats.org/packages/metabgc)
 
@@ -71,7 +72,7 @@ metabgc build --prot_alignment Cyclase_OxyN.fasta --prot_family_name OxyN --coho
 This should take about 1 hour using 8 threads on a 2.5 GHz Ivybridge Intel processor. The directory also has a SLURM job script ``` runBuildTest.sh```, that can be submitted to a cluster after changing the paths.  
 
 ### Perform a Search 
-To run a toy search example, please download the already constructed spHMMs and some search samples from [here](https://drive.google.com/file/d/1-6nhr7WpWFbAxj89F-Q4fmB83nBhBDI-/view?usp=sharing) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
+To run a toy search example, please download the already constructed spHMMs and some search samples from [here](https://drive.google.com/file/d/1-UG7aW72pDXUlvGeZWHEE49dtx2HSVzN) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
 
 ```
 OP_PATH=<set a path>
