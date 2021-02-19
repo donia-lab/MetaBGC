@@ -11,7 +11,8 @@ def test_combine():
     abundWideFile = "AbcK/output/"+cohortStr+"/unique-biosynthetic-reads-abundance-table-wide.txt"
     combinedBLASTPath = "AbcK/output/"+cohortStr+"/CombinedQuantifyBLAST.txt"
     combine_blast_results(blastn_search_directory, combinedBLASTPath, cohortStr)
-def test_combine():
+
+def test_clustering():
     cohortStr = "MetaHit"
     abundFile = "AbcK/output/"+cohortStr+"/unique-biosynthetic-reads-abundance-table.txt"
     abundWideFile = "AbcK/output/"+cohortStr+"/unique-biosynthetic-reads-abundance-table-wide.txt"

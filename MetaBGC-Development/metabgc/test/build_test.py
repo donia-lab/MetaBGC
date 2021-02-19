@@ -22,7 +22,7 @@ def test_gengeneposlist():
 def test_GenerateSpHMM():
     prot_family_name="AbcK"
     prot_aln_file="AbcK/data/TP_Homolog_Alignment.afa"
-    hmm_directory="AbcK/output/build/HiPerf"
+    hmm_directory="AbcK/output/build/spHMMs"
     tp_prot_file="AbcK/data/TPGenes.faa"
     gene_pos_file="AbcK/output/build/Gene_Interval_Pos.txt"
     gene_pos_file_aa = "AbcK/output/build/Gene_Interval_Pos_AA.txt"

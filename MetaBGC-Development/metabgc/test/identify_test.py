@@ -11,7 +11,6 @@ def test_parseHMM():
     ouputDir = "AbcK/output/"+cohortStr
     parsedOuputDir = "AbcK/output/"+cohortStr+"/parsed_tables"
     os.makedirs(parsedOuputDir, 0o777, True)
-    window = "30_10"
     protType="AbcK"
     hmm_rec_dict = parseHMM(hmmPathFile, "hmmer3-tab", "ALL", "G30365-merged", protType, "30", "10")
     assert len(hmm_rec_dict) == 7
