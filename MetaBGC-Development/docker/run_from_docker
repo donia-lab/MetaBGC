@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+# ADJUST THIS FOR YOUR SYSTEM
+readonly METADATA_DIR="/tigress/DONIA/DATAFILES/search/ALL"
+
+# handle input file
+readonly INPUT_DIR=$(readlink -f $1)
+shift
+
+# handle output file
+readonly OUTPUT_DIR=$(readlink -f $1)
+shift
+
+# Links within the container
+readonly CONTAINER_SRC_DIR=/input
+readonly CONTAINER_DST_DIR=/output
+readonly CONTAINER_MD_DIR=/metadata
+
+if [ ! -d ${OUTPUT_DIR} ]; then
+    mkdir -p ${OUTPUT_DIR}
+fi
+
+docker run \
+    --volume ${INPUT_DIR}:${CONTAINER_SRC_DIR}:ro \
+    --volume ${OUTPUT_DIR}:${CONTAINER_DST_DIR}:rw \
+    --volume ${METADATA_DIR}:${CONTAINER_MD_DIR}:ro \
+    --detach=false \
+    --rm \
+    --user=$(id -u):$(id -g) \
+    metabgc:latest $@

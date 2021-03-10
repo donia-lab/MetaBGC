@@ -17,11 +17,12 @@ install_requires = [
     'biopython >= 1.72, < 1.78',
     'scikit-learn >= 0.20.1',
     'pandas >= 0.19.2',
+    'pytest'
 ]
 
 def read_version():
     """Read the version from the appropriate place in the library."""
-    for line in open(os.path.join("MetaBGC-Development","metabgc",'metabgc_cmds.py'), 'r'):
+    for line in open(os.path.join("metabgc",'metabgc_cmds.py'), 'r'):
         if line.startswith('__version__'):
             return line.split('=')[-1].strip().strip('"')
 

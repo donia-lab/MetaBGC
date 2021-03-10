@@ -1,7 +1,3 @@
-import pytest
-import os
-import re
-from metabgc.src.utils import *
 from metabgc.src.metabgcidentify import *
 from metabgc.src.extractfastaseq import *
 

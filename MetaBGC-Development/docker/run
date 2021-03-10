@@ -1,0 +1,10 @@
+#!/bin/bash
+set -o nounset
+
+metabgc $@
+exitcode=$?
+
+if [ $exitcode -ne 0 ]; then
+    echo "Running metabgc FAILED"
+fi
+exit $exitcode

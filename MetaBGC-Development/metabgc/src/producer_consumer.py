@@ -2,6 +2,7 @@ import time
 import os
 import random
 import subprocess
+import logging
 from multiprocessing import Process, JoinableQueue, Lock
 
 # The consumer function takes data off of the Queue and runs the command line
@@ -16,8 +17,12 @@ def consumer(queue, lock):
         query_cmd = queue.get()
         # Synchronize access to the console
         with lock:
-            print('{} got {}'.format(os.getpid(), query_cmd))
-        subprocess.call(query_cmd, shell=True)
+            logging.info('{} got {}'.format(os.getpid(), query_cmd))
+        try:
+            subprocess.call(query_cmd, shell=True)
+        except Exception as e:
+            with lock:
+                logging.info("Failed to execute " + query_cmd)
         queue.task_done()
 
 def invoke_producer_consumer(cmd_list, consumer_ctr):

@@ -3,6 +3,11 @@
 [![PyPI](https://img.shields.io/pypi/v/metabgc.svg)](https://pypi.python.org/pypi/metabgc)
 [![DOI](https://zenodo.org/badge/187888803.svg)](https://zenodo.org/badge/latestdoi/187888803)
 [![PyPI download](https://img.shields.io/pypi/dm/metabgc?label=pypi%20downloads)](https://pypistats.org/packages/metabgc)
+![PyPI Format](https://img.shields.io/pypi/format/metabgc)
+![PyPI Python Version](https://img.shields.io/pypi/pyversions/metabgc)
+![Programming languages](https://img.shields.io/github/languages/top/donia-lab/metabgc)
+![License](https://img.shields.io/github/license/donia-lab/metabgc)
+
 
 MetaBGC is a read-based algorithm for the detection of biosynthetic gene clusters (BGCs) directly in metagenomic sequencing data.
 

@@ -1,8 +1,6 @@
-import pytest
 import metabgc.src.metabgcbuild as build
 import metabgc.src.evaluate_sphmms as evaluate
 from Bio import SeqIO
-import os
 
 def test_ungappedseqsearch():
     assert build.ungappedseqsearch("--MSE-HDTDV---LVGGSM","TDV-LV") == [8,16]

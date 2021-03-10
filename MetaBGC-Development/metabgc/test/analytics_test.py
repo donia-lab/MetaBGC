@@ -1,7 +1,4 @@
-import pytest
 from metabgc.src.metabgcanalytics import mbgcanalytics
-import os
-import pandas as pd
 
 def test1():
     data_dir = "AbcK/output/analytics_test"
