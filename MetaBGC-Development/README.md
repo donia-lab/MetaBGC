@@ -22,16 +22,35 @@ These instructions will get you setup to run MetaBGC on your local Linux or Appl
 ## Important Notes
 
 * **NEW** : All R dependency has been removed.
+* **NEW** : Users can test the build pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
+* **NEW** : Docker container and Bioconda distribution is here!
 * Users can test the search pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
 * Running your own read libraries against the test cyclase model provided may not work considering that cyclases are rare in metagenomic datasets.
 * For non-cyclase spHMMs you can de novo create your own using the build module. In addition, we are currently developing high-performance spHMMs for several other biosynthetic classes and will be releasing them in a few months (as pre-built models) in a follow-up release/publication.
-* **NEW** : Users can test the build pipeline with the toy dataset provided in [https://github.com/donia-lab/MetaBGC#quick-start](https://github.com/donia-lab/MetaBGC#quick-start).
+
+## Docker Containers
+To install metabgc using Docker, please install Docker for your operating system. Once Docker is up follow the steps below:
+
+### Download Source Code
+Docker container files are provided for releases > 2.0.0. Go to the latest release on GitHub and download the source code tar ball and uncompress it.
+```
+wget https://github.com/donia-lab/MetaBGC/archive/2.0.0.tar.gz
+tar -zxvf 2.0.0.tar.gz
+```
+
+### Build the Docker Image
+Change to the source code directory and bild the container. Then you can run the container from commandline to view metabgc help. 
+```
+cd 2.0.0/MetaBGC-Development
+docker build --tag metabgc .
+```
+
   
 ## Bioconda Distribution 
 
 Coming soon...
 
-## Manual Installation
+## Manual Installation 
 
 ### Prerequisites
 
@@ -45,7 +64,7 @@ To run MetaBGC, please make sure you have the following dependencies installed a
 * [EMBOSS-6.5.7](http://emboss.sourceforge.net/)
 * [ART](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm)
 
-### Installing the Package
+### Installing the Package using pip3
 
 All general purpose users should obtain the package from PyPI:
 ```
@@ -53,13 +72,6 @@ pip install metabgc
 ```
 All the internal python dependencies are specified in the setup will be installed. Help on the commandline parameters is provided. 
 ```
-metabgc --help
-```
-The latest development build is available for other developers and may often contain bugs and is not stable. To install the latest development build from GitHub:
-```
-git clone https://github.com/donia-lab/MetaBGC.git
-cd MetaBGC/MetaBGC-Development
-pip install .
 metabgc --help
 ```
 
@@ -78,7 +90,7 @@ metabgc build --prot_alignment Cyclase_OxyN.fasta --prot_family_name OxyN --coho
 This should take about 1 hour using 8 threads on a 2.5 GHz Ivybridge Intel processor. The directory also has a SLURM job script ``` runBuildTest.sh```, that can be submitted to a cluster after changing the paths.  
 
 ### Perform a Search 
-To run a toy search example, please download the already constructed spHMMs and some search samples from [here](https://drive.google.com/file/d/1-UG7aW72pDXUlvGeZWHEE49dtx2HSVzN) . To build your own spHMM database you will need to construct simulated read libraries as described in the publication [here](https://doi.org/10.1126/science.aax9176).  
+To run a toy search example, please download the already constructed spHMMs and some search samples from [here](https://drive.google.com/file/d/1-UG7aW72pDXUlvGeZWHEE49dtx2HSVzN) . To build your own spHMMs you will need to construct simulated read libraries using the ```metabgc synthesize``` command.  
 
 ```
 OP_PATH=<set a path>
@@ -97,7 +109,7 @@ MetaBGC consists of various modules to run the search pipeline.
 
 **FindTP** - ```metabgc findtp --help``` - This module finds the true-positive genes in the synthetic dataset genomes for the protein family of interest in multi-FASTA format to be used by the ```metabgc build module```.
 
-**Build** - ```metabgc build --help``` - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs).  If any of these protein families is to be used, this step can be skipped. The models are here: https://github.com/donia-lab/MetaBGC/tree/master/Models
+**Build** - ```metabgc build --help``` - This module builds, evaluates, and selects high-performance segmented profile Hidden Markov Models (spHMMs) for a new protein family that is commonly found in the BGC of interest. Pre-built high-performance spHMMs exist for cyclases/aromatases commonly found in TII-PKS BGCs (OxyN, TcmN, TcmJ, and TcmI types), LanC_like proteins (found in lantibiotic BGCs), and IucA/IucC proteins (found in siderophore BGCs).  If any of these protein families is to be used, this step can be skipped. The models are here: https://github.com/donia-lab/MetaBGC/tree/master/Models. In addition, we are currently developing high-performance spHMMs for several other biosynthetic classes and will be releasing them in a few months (as pre-built models) in a follow-up release/publication. 
 
 **Identify** - ```metabgc identify --help``` -  This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
 
@@ -117,15 +129,15 @@ MetaBGC consists of various modules to run the search pipeline.
 2. The ```metabgc synthesize``` command has to be executed with required input files and the following parameters:
 
 	```
-	1. --indir1, required=True: Input directory of background fasta files for simulation.
-	2. --indir2, required=True: Input directory protein family positive fasta files for simulation.
-	3. --system, required=True: Illumina sequencing system (HS10, HS25, MSv3, etc.). Same options as -ss in art_illumina. 
-	4. --length, required=True: Read length in bp. 
-	5. --mflen, required=True: Mean fragment size in bp.
-	6. --mflensd, required=True: Standard dev of fragment size in bp.
-	7. --num_reads, required=True: Total number of read pairs.
-	8. --samples, required=True: Number of samples to generate.
-	9. --prop, required=True: Proportion of organisms to draw for each metagenomic sample. Should be between 0 and 1.
+	1. --indir1, required=True: Input directory of background genomes in FASTA for simulation.
+	2. --indir2, required=True: Input directory protein-family-positive genomes in FASTA for simulation.
+	3. --system, required=True: Illumina sequencing system (HS10, HS25, MSv3, etc.). Same options as -ss in art_illumina (Def.=HS20). 
+	4. --length, required=True: Read length in bp (Def.=100). 
+	5. --mflen, required=True: Mean fragment size in bp (Def.=400).
+	6. --mflensd, required=True: Standard dev of fragment size in bp (Def.=20).
+	7. --num_reads, required=True: Total number of read pairs (Def.=51100000).
+	8. --samples, required=True: Number of samples to generate (Def.=70).
+	9. --prop, required=True: Proportion of background genomes to draw from the input directory of background genomes prodided by --indir1. Should be between 0 and 1 (Def.=0.9).
 	10. --output_directory, required=True: Directory to save results. 
 	11. --base_name, required=False: Prefix of sample name (Def.='S'). 
 	12. --cpu, required=False: Number of processes to run. Should be smaller than --samples (Def.=1).
@@ -139,7 +151,7 @@ MetaBGC consists of various modules to run the search pipeline.
 1. The ```metabgc findtp``` finds TP genes in the protein family positive fasta files used for simulation. The command has to be executed with required input files and the following parameters:
 
 	```
-	1. --alnFile, required=True: Input protein family sequences in a fasta format or a MUSCLE alignment. If it is a FASTA file then set --do_alignment True. 
+	1. --alnFile, required=True: Input protein family genomes in a FASTA format or a MUSCLE alignment. If it is a FASTA file then set --do_alignment True. 
 	2. --prot_seq_directory, required=True: 
 	3. --output_directory, required=True: Directory to save results.
 	4. --do_alignment, required=True: Set it up to do an alignment if the --alnFile is a FASTA.
@@ -166,7 +178,7 @@ MetaBGC consists of various modules to run the search pipeline.
     7. --pair_fmt, required=True: {single, split, interleaved} Paired-end information.
     8. --R1_file_suffix, required=False: Suffix including extension of the file name specifying the forward reads. Not specified for single or interleaved reads. Example: .R1.fastq
     9. --R2_file_suffix, required=False: Suffix including extension of the file name specifying the reverse reads. Not specified for single or interleaved reads. Example: .R2.fastq 
-	10. --tp_genes_nucl, required=True: Nucleotide sequence of the full-length true-positive genes in the synthetic dataset in multi-FASTA format.
+	10. --tp_genes_nucl, required=True: Nucleotide sequence of the full-length true-positive genes in the synthetic dataset in multi-FASTA format. This can be generated using the "metabgc findtp" module.
     11. --F1_Thresh, required=False: Threshold of the F1 score for selection of high performance spHMMs (Def.=0.5).
     12. --blastn_search_directory, required=False: Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see job_scripts in development.
     13. --hmm_search_directory, required=False: Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.
@@ -180,7 +192,7 @@ MetaBGC consists of various modules to run the search pipeline.
     2. *.hmm : A set of spHMMs that perform above the F1 cutoff threshold.
     3. <prot_family_name>_F1_Cutoff.tsv: HMM search cutoff scores to be used for each high-performance spHMM interval.
     4. <prot_family_name>_Scores.tsv: FP, TP and FN scores of the the HMM search for all the spHMMs.
-    5. <prot_family_name>_FP_Reads.tsv: False positive reads in the HMM search but not in the BLAST search. 
+    5. <prot_family_name>_FP_Reads.tsv: The false positive reads. These are reads identified in the spHMM search but are derived from the TP genes in the BLAST search. 
     ```
   	>**Because synthetic datasets do not fully represent real data, please be aware that some of the spHMM cutoffs may need to be further tuned after running MetaBGC on a real metagenomic dataset, as was done with the Type II polyketide cyclase cutoffs in the original MetaBGC publication.**
     	

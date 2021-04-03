@@ -277,19 +277,19 @@ def analytics(metabgc_output_dir,cohort_metadata_file,assembly_metadata_file,out
 @click.option('--indir2','-i2',required=True,
               type=click.Path(exists=True,dir_okay=True,readable=True),
               help= "Input directory protein family positive fasta files for simulation.")
-@click.option('--system', '-ss',required=True,
+@click.option('--system', '-ss',required=True, default='HS20',
               help= "Illumina sequencing system (HS10, HS25, MSv3, etc.). Same options as -ss in art_illumina.")
-@click.option('--length', '-l', required=True,
+@click.option('--length', '-l', required=True, default=100,
               type=click.INT, help="Read length in bp.")
-@click.option('--mflen', '-fl', required=True,
+@click.option('--mflen', '-fl', required=True, default=400,
               type=click.INT, help="Mean fragment size in bp.")
-@click.option('--mflensd', '-sd', required=True,
+@click.option('--mflensd', '-sd', required=True, default=20,
               type=click.INT, help="Standard dev of fragment size in bp.")
-@click.option('--num_reads', '-nr',required=True,
+@click.option('--num_reads', '-nr',required=True, default=51100000,
               type=click.INT, help="Total number of read pairs.")
-@click.option('--samples', '-ns', required=True,
+@click.option('--samples', '-ns', required=True, default=70,
               type=click.INT, help=" Number of samples to generate.")
-@click.option('--prop', '-p', required=True,
+@click.option('--prop', '-p', required=True, default=0.9,
               type=click.FloatRange(0,1), help="Proportion of organisms to draw for each metagenomic sample. Should be between 0 and 1.")
 @click.option('--output_directory', '-o',required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
@@ -297,8 +297,8 @@ def analytics(metabgc_output_dir,cohort_metadata_file,assembly_metadata_file,out
 @click.option('--base_name', '-b', required=False,
               default='S', help="Prefix of sample name (Def.='S')")
 @click.option('--cpu', '-t',required=False,
-              type=click.INT, default=1,
-              help="Number of threads. Def.: 1")
+              type=click.INT, default=4,
+              help="Number of threads. Def.: 4")
 @click.option('--seed','-rs', required=False,
               type=click.INT, default=915,
               help="Random seed. Def.: 915")

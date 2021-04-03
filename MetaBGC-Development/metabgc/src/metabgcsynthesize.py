@@ -43,14 +43,11 @@ def assign_reads(seq_records_background, seq_records_PKS, sample_no, seed, prop,
              [0.7] * int(len(seq_records_background) * 0.2) + \
              [0.5] * int(len(seq_records_background) * 0.2) + \
              [0.3] * int(len(seq_records_background) * 0.2) + \
-             [0.1] * (len(seq_records_background) - \
-                      int(len(seq_records_background) * 0.4) \
-             - 3 * int(len(seq_records_background) * 0.2))
+             [0.1] * (len(seq_records_background) - int(len(seq_records_background) * 0.4) - 3 * int(len(seq_records_background) * 0.2))
     selected_idx = np.random.choice(range(len(seq_records_background)),
-                                    int(prop * \
-                                        len(seq_records_background)),
+                                    int(prop * len(seq_records_background)),
                                     replace=False,
-                                    p=np.divide(weight, sum(weight)))
+                                    p =np.divide(weight, sum(weight)))
     selected_records = [seq_records_background[i] for i in selected_idx]
 
     # select PKS-containing genomes
@@ -79,17 +76,13 @@ def assign_reads(seq_records_background, seq_records_PKS, sample_no, seed, prop,
             num_dict[record_name] = int(arr[idx2] / totlen * num_read)
 
     # save simulation profile
-    sample_dir = "{}/{}{}".format(outdir,
-                                  base_name,
-                                  sample_no)
+    sample_dir = "{}/{}{}".format(outdir, base_name, sample_no)
     try:
         os.mkdir(sample_dir)
     except:
         pass
+    return num_dict
 
-    return num_dict 
-
-   
 def call_ART(num_dict, sample_no, system, length, mflen, mflensd, base_name, outdir):
     """
     Call ART program
@@ -154,16 +147,15 @@ def generate_metagenomic_sample(sample_no,seq_records_background,
     """
     num_dict = assign_reads(seq_records_background, seq_records_PKS, sample_no, seed, prop, num_reads, outdir, base_name)
 
-    sample_dir = "{}/{}{}".format(outdir, base_name,
-                                  sample_no)
+    sample_dir = "{}/{}{}".format(outdir, base_name, sample_no)
 
-    with open("{}/{}{}_abundance.json".format(sample_dir, 
-                                              base_name,
-                                              sample_no), "w") as h:
+    with open("{}/{}{}_abundance.json".format(sample_dir, base_name, sample_no), "w") as h:
         json.dump(num_dict, h, indent=4)
 
+    with open("{}/{}{}_abundance.csv".format(sample_dir, base_name, sample_no), "w") as h:
+        for key in num_dict:
+            h.write('{},{},{},{}\n'.format(sample_no, os.path.basename(key), str(num_dict[key]), str(num_dict[key]/num_reads)))
     call_ART(num_dict, sample_no, system, length, mflen, mflensd, base_name, outdir)
-
 
 def mbgcsynthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
                samples, prop, output_directory, base_name, cpu, seed):
@@ -207,4 +199,13 @@ def mbgcsynthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
                                      system=system, length=length, mflen=mflen,
                                      mflensd=mflensd, base_name=base_name, outdir=output_directory),
                              range(samples), chunksize=1)
+
+    f_agg = open(output_directory + os.sep +'sample_abund.csv', 'w')
+    f_agg.write('Sample,genome,num_reads,abund_ratio\n')
+    for sample_no in range(0, samples):
+        sample_dir = "{}/{}{}".format(output_directory, base_name, sample_no)
+        with open("{}/{}{}_abundance.csv".format(sample_dir, base_name, sample_no)) as infile:
+            for line in infile:
+                f_agg.write(line)
+    f_agg.close()
     print("Synthesis complete!")
