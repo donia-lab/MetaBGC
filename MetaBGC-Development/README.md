@@ -44,11 +44,16 @@ Change to the source code directory and bild the container. Then you can run the
 cd 2.0.0/MetaBGC-Development
 docker build --tag metabgc .
 ```
-
-  
+ 
 ## Bioconda Distribution 
 
-Coming soon...
+MetaBGC can be installed using Bioconda too. The following commands install the dependencies and then install PyPI metabgc from PyPI:
+```
+conda create --name metabgc_env python=3.7
+conda install muscle=3.8.31
+conda install -c bioconda hmmer=3.1b2 cd-hit blast emboss=6.5.7
+pip install metabgc
+```
 
 ## Manual Installation 
 
@@ -191,7 +196,7 @@ MetaBGC consists of various modules to run the search pipeline.
     1. F1_Plot.png : F1 score plot of all the spHMMs and the F1 cutoff threshold. 
     2. *.hmm : A set of spHMMs that perform above the F1 cutoff threshold.
     3. <prot_family_name>_F1_Cutoff.tsv: HMM search cutoff scores to be used for each high-performance spHMM interval.
-    4. <prot_family_name>_Scores.tsv: FP, TP and FN scores of the the HMM search for all the spHMMs.
+    4. <prot_family_name>_Scores.tsv: FP, TP and FN read counts of the the HMM search for all the spHMMs.
     5. <prot_family_name>_FP_Reads.tsv: The false positive reads. These are reads identified in the spHMM search but are derived from the TP genes in the BLAST search. 
     ```
   	>**Because synthetic datasets do not fully represent real data, please be aware that some of the spHMM cutoffs may need to be further tuned after running MetaBGC on a real metagenomic dataset, as was done with the Type II polyketide cyclase cutoffs in the original MetaBGC publication.**
@@ -263,10 +268,10 @@ MetaBGC consists of various modules to run the search pipeline.
 	2. BinSummary.txt : Summary of the bins and other statistics. 
 	3. ReadLevelAbundance.tsv: Abundance of each biosynthetic read in each assigned bin with >= min_reads_bin reads. 
 	4. SampleAbundanceMatrix.tsv : Abundance matrix of each sample against the bin ids for each bin with >= min_reads_bin reads.
-	5. bin_fasta: Directory with FASTA files containing reads belonging each bin.  
+	5. bin_fasta: Directory with FASTA files containing reads belonging to each bin.  
 	```
 
-3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin abundance calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyses. 
+3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin prevalence calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyzes. 
 
 
 ### Running Search to Perform Identify, Quantify and Cluster 
@@ -296,9 +301,11 @@ MetaBGC consists of various modules to run the search pipeline.
 2. Search will produce the same output as the Cluster command described above and all the intermediate files from each step. 
 
 
-### Running Analytics to Produce Donia Lab Reports
+### Running Analytics to Produce Reports
 
-1. The Donia Lab produces useful reports from the clustered bins by merging relevant cohort metadata with the reads in the clusters. The metadata gathered by the Donia Lab is available in the ```metabgc/metadata``` folder. The paths in these files are only relevant to Princeton Research Computing clusters. The users will need to download relevant files of these publicly available metagenome datasets and prepare similar metadata files. The publications from Donia Lab refer to the datasets. 
+1. The analytics module produces useful reports from the clustered bins by merging relevant cohort metadata with the reads in the clusters. The metadata gathered for an example cohort is available in the ```metabgc/metadata``` folder. The paths in these files are only relevant to Princeton Research Computing clusters. The users will need to download relevant files of these publicly available metagenome datasets and prepare similar metadata files. The publications from Donia Lab refer to the datasets.
+
+
 
 2. The ```metabgc analytics``` command should be executed with the required parameters and input files:
 
