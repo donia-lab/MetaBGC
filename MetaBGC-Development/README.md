@@ -28,6 +28,16 @@ These instructions will get you setup to run MetaBGC on your local Linux or Appl
 * Running your own read libraries against the test cyclase model provided may not work considering that cyclases are rare in metagenomic datasets.
 * For non-cyclase spHMMs you can de novo create your own using the build module. In addition, we are currently developing high-performance spHMMs for several other biosynthetic classes and will be releasing them in a few months (as pre-built models) in a follow-up release/publication.
 
+## Bioconda Distribution Install
+
+MetaBGC can be installed using Bioconda too. The following commands install the dependencies and then install PyPI metabgc from PyPI:
+```
+conda create --name metabgc_env python=3.7
+conda install -c bioconda muscle=3.8.31
+conda install -c bioconda hmmer=3.1b2 cd-hit=4.8.1-0 blast=2.10.1-0 emboss=6.5.7
+pip install metabgc
+```
+
 ## Docker Containers
 To install metabgc using Docker, please install Docker for your operating system. Once Docker is up follow the steps below:
 
@@ -39,20 +49,23 @@ tar -zxvf 2.0.0.tar.gz
 ```
 
 ### Build the Docker Image
-Change to the source code directory and bild the container. Then you can run the container from commandline to view metabgc help. 
+Change to the source code directory and build the container. Then you can run the container from commandline to view metabgc help. 
 ```
 cd 2.0.0/MetaBGC-Development
 docker build --tag metabgc .
 ```
- 
-## Bioconda Distribution 
 
-MetaBGC can be installed using Bioconda too. The following commands install the dependencies and then install PyPI metabgc from PyPI:
+### Run from the Docker Image
+A script ```docker/metabgc_docker_run``` can be used to run metabgc using the container from commandline with bash shell. The first 2 parameters to the script are the input and output directories for the container to use. The remaining parameters are standard metabgc inputs.  
 ```
-conda create --name metabgc_env python=3.7
-conda install muscle=3.8.31
-conda install -c bioconda hmmer=3.1b2 cd-hit blast emboss=6.5.7
-pip install metabgc
+cd docker
+metabgc_docker_run /metabgc-test/input /metabgc-test/output search --sphmm_directory /input/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory /input/nucl --seq_fmt FASTA --pair_fmt interleaved --output_directory /output --cpu 1
+```
+
+The docker run can be directly on Windows by running docker run:
+
+```
+docker run --volume C:\metabgc-input:/input:ro --volume C:\metabgc-output:/output:rw --detach=false --rm metabgc:latest search --sphmm_directory /input/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory /input/nucl --seq_fmt FASTA --pair_fmt interleaved --output_directory /output --cpu 1
 ```
 
 ## Manual Installation 
@@ -64,8 +77,8 @@ To run MetaBGC, please make sure you have the following dependencies installed a
 * [Python](https://www.python.org/downloads/) (version >= 3.6)
 * [MUSCLE 3.8.31](https://www.drive5.com/muscle/downloads.htm)
 * [HMMER](http://hmmer.org/download.html) version 3.1b2
-* [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.7
-* [ncbi-blast-2.7.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
+* [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.8.1-0
+* [ncbi-blast-2.10.1+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/)
 * [EMBOSS-6.5.7](http://emboss.sourceforge.net/)
 * [ART](https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm)
 
@@ -118,9 +131,9 @@ MetaBGC consists of various modules to run the search pipeline.
 
 **Identify** - ```metabgc identify --help``` -  This module runs on translated metagenomic reads from a cohort of samples using a selected set of high-performance spHMMs and their pre-set score cutoffs, as determined in MetaBGC-Build. The results are parsed into a list of identified biosynthetic reads in fasta format.
 
-**Quantify** - ```metabgc quantify --help``` - This module de-replicates all biosynthetic reads discovered by MetaBGC-Identify from all metagenomic samples in the cohort into a unified set of **unique biosynthetic reads**. An abundance profile martrix is then generated for all unique biosynthetic reads by quantifying them in all samples of the metagenomic cohort.
+**Quantify** - ```metabgc quantify --help``` - This module de-replicates all biosynthetic reads discovered by MetaBGC-Identify from all metagenomic samples in the cohort into a unified set of **unique biosynthetic reads**. An abundance profile matrix is then generated for all unique biosynthetic reads by quantifying them in all samples of the metagenomic cohort.
 
-**Cluster** - ```metabgc cluster --help``` - This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster unique biosynthetic reads with similar abundance profiles across different metagenomic samples into distinct bins, based on the abundance profile martrix obtained in MetaBGC-Quantify. 
+**Cluster** - ```metabgc cluster --help``` - This module uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) to cluster unique biosynthetic reads with similar abundance profiles across different metagenomic samples into distinct bins, based on the abundance profile matrix obtained in MetaBGC-Quantify. 
 
 **Search** - ```metabgc search --help``` - This is a combined option to run Identify, Quantify, and Cluster together as a single command.  
 
@@ -131,7 +144,7 @@ MetaBGC consists of various modules to run the search pipeline.
 
 1. Creating a synthetic dataset for running the build model requires a large set of background genomes, and a few genomes which are positive for the protein family of interest. To generate synthetic metagenomes for the build process, we use ART (https://www.niehs.nih.gov/research/resources/software/biostatistics/art/index.cfm). The ```metabgc synthesize``` module uses ART to generate reads for individual genomes and concatenate the resulting reads to simulate a metagenome. To control the abundance of each genome, you need to control number of reads to generate from each genome. Users may also refer to pipelines such as CAMISIM (https://github.com/CAMI-challenge/CAMISIM) to facilitate this process.
 
-2. The ```metabgc synthesize``` command has to be executed with required input files and the following parameters:
+2. The ```metabgc synthesize``` command has to be executed with input files and the following parameters:
 
 	```
 	1. --indir1, required=True: Input directory of background genomes in FASTA for simulation.
@@ -153,7 +166,7 @@ MetaBGC consists of various modules to run the search pipeline.
 
 ### Running FindTP to find the True Positive Genes
 
-1. The ```metabgc findtp``` finds TP genes in the protein family positive fasta files used for simulation. The command has to be executed with required input files and the following parameters:
+1. The ```metabgc findtp``` finds TP genes in the protein family positive fasta files used for simulation. The command has to be executed with input files and the following parameters:
 
 	```
 	1. --alnFile, required=True: Input protein family genomes in a FASTA format or a MUSCLE alignment. If it is a FASTA file then set --do_alignment True. 
@@ -199,7 +212,7 @@ MetaBGC consists of various modules to run the search pipeline.
     4. <prot_family_name>_Scores.tsv: FP, TP and FN read counts of the the HMM search for all the spHMMs.
     5. <prot_family_name>_FP_Reads.tsv: The false positive reads. These are reads identified in the spHMM search but are derived from the TP genes in the BLAST search. 
     ```
-  	>**Because synthetic datasets do not fully represent real data, please be aware that some of the spHMM cutoffs may need to be further tuned after running MetaBGC on a real metagenomic dataset, as was done with the Type II polyketide cyclase cutoffs in the original MetaBGC publication.**
+  	>**Because synthetic datasets do not fully represent real data, please be aware that some spHMM cutoffs may need to be further tuned after running MetaBGC on a real metagenomic dataset, as was done with the Type II polyketide cyclase cutoffs in the original MetaBGC publication.**
     	
     
 ### Running Identify to Detect Biosynthetic Reads
@@ -271,7 +284,7 @@ MetaBGC consists of various modules to run the search pipeline.
 	5. bin_fasta: Directory with FASTA files containing reads belonging to each bin.  
 	```
 
-3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyses, such as targeted or untargeted assemblies to obtain the complete BGC, bin prevalence calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyzes. 
+3. For synthetic datasets, we suggest examining bins that contain at least 50 reads, and for real datasets, we suggest examining bins that contain at least 10 reads (these are suggested parameters and may have to be tuned depending on the specific dataset and protein family analyzed). The resulting bins can be utilized in downstream analyzes, such as targeted or un-targeted assemblies to obtain the complete BGC, bin prevalence calculations to determine the distribution of a given BGC in the entire cohort, etc. Please see the original MetaBGC publication for example analyzes. 
 
 
 ### Running Search to Perform Identify, Quantify and Cluster 
@@ -305,14 +318,21 @@ MetaBGC consists of various modules to run the search pipeline.
 
 1. The analytics module produces useful reports from the clustered bins by merging relevant cohort metadata with the reads in the clusters. The metadata gathered for an example cohort is available in the ```metabgc/metadata``` folder. The paths in these files are only relevant to Princeton Research Computing clusters. The users will need to download relevant files of these publicly available metagenome datasets and prepare similar metadata files. The publications from Donia Lab refer to the datasets.
 
-
-
 2. The ```metabgc analytics``` command should be executed with the required parameters and input files:
 
 	```
 	1. --metabgc_output_dir, required=True: Output directory of a successful metabgc search run.
-	2. --cohort_metadata_file, required=True: Cohort metadata file such as metabgc/metadata/combined_cohort_v2.csv. 
-	3. --assembly_metadata_file, required=True: CSV file with sample assembly paths such as metabgc/metadata/DoniaSampleAssemblyFileList.csv.
+	2. --cohort_metadata_file, required=True: CSV cohort metadata file such as metabgc/metadata/metahit_cohort.csv. The file has  7 columns: 
+		a. Sample : The name of the sample. 
+		b. Subject : The subject ID of the sample provider. 
+		c. Cohort : The cohort of the sample. 
+		d. Bodysite : The site of the sample from the subject such as "stool".
+		e. BodyAggSite : The larger granularity site of the sample from the subject such as "gut".
+		f. Subject_Status : The disease or healthy classification of the subject. 
+		g. Visits : The visit count of the sample. 
+	3. --assembly_metadata_file, required=True: CSV file with sample assembly paths such as metabgc/metadata/metahit_assembly_file.csv.
+ 		a. Sample : The name of the sample.
+ 		b. Assembly Path : Path to the assembly of the sample's reads. 
 	4. --output_directory, required=True: Directory to save results.
 	5. --cpu, required=False: Number of CPU threads to use (Def.=4). 
 	```
@@ -343,3 +363,9 @@ If there are any questions please contact:
  <br /> Department of Molecular Biology
  <br /> Princeton University
  <br /> Email: <donia@princeton.edu>
+
+**Abhishek Biswas, Ph.D.**
+<br /> Research Software Engineer
+<br /> Department of Molecular Biology
+<br /> Princeton University
+<br /> Email: <ab50@princeton.edu>

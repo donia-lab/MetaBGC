@@ -12,7 +12,7 @@ RUN pip3 install /metabgc
 
 ADD docker/run /usr/local/bin/run
 
-VOLUME ["/input", "/output", "/metadata"]
+VOLUME ["/input", "/output"]
 WORKDIR /output
 
 ENTRYPOINT ["/usr/local/bin/run"]
