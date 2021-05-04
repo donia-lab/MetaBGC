@@ -169,10 +169,10 @@ MetaBGC consists of various modules to run the search pipeline.
 1. The ```metabgc findtp``` finds TP genes in the protein family positive fasta files used for simulation. The command has to be executed with input files and the following parameters:
 
    ```
-   1. --alnFile, required=True: Input protein family genomes in a FASTA format or a MUSCLE alignment. If it is a FASTA file then set --do_alignment True. 
+   1. --aln_file, required=True: Input protein family genomes in a FASTA format or a MUSCLE alignment. If it is a FASTA file then set --do_alignment True. 
    2. --prot_seq_directory, required=True: 
    3. --output_directory, required=True: Directory to save results.
-   4. --do_alignment, required=True: Set it up to do an alignment if the --alnFile is a FASTA.
+   4. --do_alignment, required=True: Set it up to do an alignment if the --aln_file is a FASTA.
    ```
 
 2. The output produced are:
