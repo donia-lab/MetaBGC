@@ -21,6 +21,8 @@ Furthermore, the script builds a HMM profile with parsed portion of the new alig
 """
 Function builds HMM profile with the parsed portion of the alignment file. 
 """
+
+
 def runHMMBuild(alnFile, modelName):
     print("Running HMM Build on:", alnFile)
     hmmFile = alnFile.split('.fas')[0] +".hmm"
@@ -53,7 +55,7 @@ def getKmers(k, interval, outdir, msaFile, tp_prot_file, modelName, start, end, 
         if '-' in alnCol:
             j=j+1
         else:
-            break;
+            break
 
     seqCtr = alignment.get_alignment_length()
     for i in range(alignment.get_alignment_length()-1, -1, -1):
@@ -61,7 +63,7 @@ def getKmers(k, interval, outdir, msaFile, tp_prot_file, modelName, start, end, 
         if '-' in alnCol:
             seqCtr=seqCtr-1
         else:
-            break;
+            break
     gene_pos_out_aa = open(gene_pos_file_aa, 'w')
     gene_pos_out_aa.write("gene_name\tstart\tend\tinterval\tprot_type\n")
     gene_pos_out = open(gene_pos_file, 'w')

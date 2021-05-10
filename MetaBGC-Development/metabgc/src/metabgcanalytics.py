@@ -1,7 +1,4 @@
-import os
-import pandas as pd
 import numpy as np
-from Bio import SeqIO
 import math
 from metabgc.src.utils import *
 from metabgc.src.blastrunlib import *
