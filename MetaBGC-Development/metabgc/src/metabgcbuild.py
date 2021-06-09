@@ -171,7 +171,8 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
                                    blastn_search_directory, CPU_THREADS)
 
             with open(allBLASTResult, 'w') as outfile:
-                outfile.write("sseqid\tslen\tsstart\tsend\tqseqid\tqlen\tqstart\tqend\tpident\tevalue\tSample\tsampleType\n")
+#                outfile.write("sseqid\tslen\tsstart\tsend\tqseqid\tqlen\tqstart\tqend\tpident\tevalue\tSample\tsampleType\n") # original line
+                outfile.write("sseqid\tslen\tsstart\tsend\tqseqid\tqlen\tqstart\tqend\tpident\tevalue\tSample\tsampleType\tprotType\n")
                 for subdir, dirs, files in os.walk(blastn_search_directory):
                     for file in files:
                         filePath = os.path.join(subdir, file)
@@ -179,7 +180,8 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
                             with open(filePath) as infile:
                                 for line in infile:
                                     sampleName = os.path.basename(filePath).split(".txt")[0]
-                                    outfile.write(line.strip() + "\t" + sampleName + "\t" + cohort_name + "\n")
+#                                    outfile.write(line.strip() + "\t" + sampleName + "\t" + cohort_name + "\n") #og line
+                                    outfile.write(line.strip() + "\t" + sampleName + "\t" + cohort_name + "\t" + prot_family_name + "\n")
         else:
             print("Using existing BLAST search result file:" + allBLASTResult)
 
