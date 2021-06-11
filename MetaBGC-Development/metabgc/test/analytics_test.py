@@ -3,8 +3,16 @@ from metabgc.src.metabgcanalytics import mbgcanalytics
 def test1():
     data_dir = "AbcK/output/analytics_test"
     op_dir = "AbcK/output/analytics_test/output"
-    cohort_metadata_file = "../metadata/combined_cohort_v2.csv"
-    assembly_metadata_file = "../metadata/DoniaSampleAssemblyFileList.csv"
+    cohort_metadata_file = "../metadata_donia/combined_cohort_v2.csv"
+    assembly_metadata_file = "../metadata_donia/DoniaSampleAssemblyFileList.csv"
+    BLASTDB = "nr"
+    mbgcanalytics(data_dir, cohort_metadata_file, assembly_metadata_file, op_dir, 1)
+
+def test2():
+    data_dir = r"C:\Users\ab50\Documents\git\MetaBGC\MetaBGC-Development\metabgc\test\FosX"
+    op_dir = r"C:\Users\ab50\Documents\git\MetaBGC\MetaBGC-Development\metabgc\test\FosX"
+    cohort_metadata_file = "../metadata_donia/combined/ALL_CohortMetadata.csv"
+    assembly_metadata_file = "../metadata_donia/combined/ALL_AssemblyFileList.csv"
     BLASTDB = "nr"
     mbgcanalytics(data_dir, cohort_metadata_file, assembly_metadata_file, op_dir, 1)
 

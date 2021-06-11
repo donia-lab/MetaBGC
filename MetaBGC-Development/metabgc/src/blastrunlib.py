@@ -54,7 +54,7 @@ def MakeDB_BLASTN(dbFileList, existing_map_dict, dbOpPath, searchFileList, blast
         dbOut = dbOutDict[dbInputFile]
         outFile = outFileList[i]
         if os.path.exists(outFile):
-            print("Metabgc-quantify is using the existing BLASTN hits : " + fastaFile)
+            print("Metabgc-quantify is using the existing BLASTN hits : " + outFile)
         else:
             cmd = blastCmdString + " -num_threads 1 " + \
                   " -query " + fastaFile + " -db " + dbOut + " " + blastParamStr + " -out " + outFile

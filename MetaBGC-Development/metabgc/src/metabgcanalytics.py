@@ -17,7 +17,7 @@ def ReadLevelBinAnalytics(readTableAbundance,
 
     df_metadata = pd.read_csv(cohortMetadataFile, delimiter=",", keep_default_na=False)
     df_metadata = df_metadata.drop(columns=['Subject','BodyAggSite','Subject_Status','Visits'])
-    df_metadata.rename(columns={'Sample': 'derived_sample', 'Cohort': 'derived_cohort','Bodysite': 'derived_bodysite'}, inplace=True)
+    df_metadata.rename(columns={'Sample': 'derived_sample', 'Cohort': 'derived_cohort','Bodysite': 'derived_bodysite', 'Country': 'derived_sample_country'}, inplace=True)
 
     df_BLAST = pd.read_csv(blastResultFile, delimiter="\t",header=None,names=['qseqid','sseqid','identity','e-value','staxids','genome','scomnames','sskingdoms','stitle'])
     df_BLAST = df_BLAST.drop(columns=['sseqid','staxids','scomnames','sskingdoms'])
@@ -46,7 +46,7 @@ def ReadLevelBinAnalytics(readTableAbundance,
 
     # Bin stats
     sampleList = []
-    df_sample = pd.DataFrame(columns=['bin', 'total_abundance_bin','n_sample_bin', 'max_sample_id_bin', 'median_sample_abundance_bin', 'max_sample_abundance_bin'])
+    df_sample = pd.DataFrame(columns=['bin', 'total_abundance_bin','n_sample_bin', 'max_sample_bin', 'median_sample_abundance_bin', 'max_sample_abundance_bin'])
     for (columnName, columnData) in df_sample_abundance.iteritems():
         if columnName == 'Sample':
             sampleList = columnData.values
@@ -82,6 +82,7 @@ def ReadLevelBinAnalytics(readTableAbundance,
                             'derived_sample',
                             'derived_cohort',
                             'derived_bodysite',
+                            'derived_sample_country',
                             'total_abundance_read',
                             'n_sample_read',
                             'max_sample_read',
@@ -107,15 +108,20 @@ def ReadLevelBinAnalytics(readTableAbundance,
     out_bin_max_sample_file = os.path.join(output_dir, 'MaxBinSample.tsv')
     df_sample.to_csv(out_bin_max_sample_file, index=False, sep='\t')
 
-
     ## For implementation of scaffold extraction
+    df_bin_abundance_top10 = df_read_abundance.drop(columns = ['qseqid','ReadAbundance','log10BinAdbundance']).drop_duplicates()
+    df_bin_abundance_top10 = df_bin_abundance_top10.groupby(['bin']).apply(lambda x: x.sort_values(["BinAbundance"], ascending = False)).reset_index(drop=True)
+    df_bin_abundance_top10 = df_bin_abundance_top10.groupby("bin").head(10)
+    out_bin_top10_sample_file = os.path.join(output_dir, 'Top10BinSample.tsv')
+    df_bin_abundance_top10.to_csv(out_bin_top10_sample_file, index=False, sep='\t')
+
     df_assembly_metadata = pd.read_csv(assembly_metadata_file, delimiter=",", header=None, names=['Sample','Sample_Path'])
     df_assembly_metadata.set_index('Sample',inplace=True)
     f_asm = open(os.path.join(output_dir,"max_sample_assemblies.txt"), "w")
     f_bin = open(os.path.join(output_dir,"bin_paths.txt"), "w")
-    for index, row in df_sample.iterrows():
-        bin_id = row[0]
-        max_sample_id = row[6]
+    for index, row in df_bin_abundance_top10.iterrows():
+        bin_id = row['bin']
+        max_sample_id = row['Sample']
         if max_sample_id in df_assembly_metadata.index:
             bin_path = os.path.join(output_dir,'bin_fasta/gt10',str(bin_id)+'.fasta')
             f_bin.write(bin_path + '\n')
@@ -133,35 +139,38 @@ def BinSubjectCount(subjectTableAbundance, cohortMetadataFile, output_dir):
     #Print bodysite counts
     df_subject_bodysite = df_cohort.drop(columns=['Sample'])
     df_subject_bodysite.drop_duplicates(keep='first', inplace=True)
-    df_subject_count_bodysite = df_subject_bodysite.groupby(['Cohort','Bodysite','BodyAggSite','Subject_Status'])['Subject'].count().reset_index(name='Subject_Count')
+    df_subject_count_bodysite = df_subject_bodysite.groupby(['Cohort','Bodysite','BodyAggSite','Subject_Status','Country'])['Subject'].count().reset_index(name='Subject_Count')
 
     df_subject_bin_counts = df_subject_abundance.drop(columns=['Sample'])
     df_subject_bin_counts.rename(columns={'Subject': 'Subject_Count'}, inplace=True)
     df_subject_bin_counts = df_subject_bin_counts[0:0]
     bin_cols = df_subject_bin_counts.columns
-    bin_cols = bin_cols[5:]
+    bin_cols = bin_cols[6:]
     for row_index, row in df_subject_count_bodysite.iterrows():
-        df_subject_bin_counts = df_subject_bin_counts.append({'Cohort': row[0],
-                                                              'Bodysite': row[1],
-                                                              'BodyAggSite': row[2],
-                                                              'Subject_Status':row[3],
-                                                              'Subject_Count':row[4]}, ignore_index=True)
+        df_subject_bin_counts = df_subject_bin_counts.append({'Cohort': row['Cohort'],
+                                                              'Country': row['Country'],
+                                                              'Bodysite': row['Bodysite'],
+                                                              'BodyAggSite': row['BodyAggSite'],
+                                                              'Subject_Status':row['Subject_Status'],
+                                                              'Subject_Count':row['Subject_Count']}, ignore_index=True)
         for bin in bin_cols:
-            bin_ctr = df_subject_abundance.loc[(df_subject_abundance['Cohort'] == row[0]) &
-                                                 (df_subject_abundance['Bodysite'] == row[1]) &
-                                                 (df_subject_abundance['BodyAggSite'] == row[2]) &
-                                                 (df_subject_abundance['Subject_Status'] == row[3]) &
-                                                 (df_subject_abundance[bin] > 0)]
-            bin_ctr.drop_duplicates(subset=['Subject','Cohort','Bodysite','BodyAggSite','Subject_Status'], keep='first',
+            bin_ctr = df_subject_abundance.loc[(df_subject_abundance['Cohort'] == row['Cohort']) &
+                                               (df_subject_abundance['Country'] == row['Country']) &
+                                               (df_subject_abundance['Bodysite'] == row['Bodysite']) &
+                                               (df_subject_abundance['BodyAggSite'] == row['BodyAggSite']) &
+                                               (df_subject_abundance['Subject_Status'] == row['Subject_Status']) &
+                                               (df_subject_abundance[bin] > 0)]
+            bin_ctr.drop_duplicates(subset=['Subject','Cohort','Country','Bodysite','BodyAggSite','Subject_Status'], keep='first',
                                     inplace=True)
-            df_subject_bin_counts.loc[(df_subject_bin_counts['Cohort'] == row[0]) &
-                                                 (df_subject_bin_counts['Bodysite'] == row[1]) &
-                                                 (df_subject_bin_counts['BodyAggSite'] == row[2]) &
-                                                 (df_subject_bin_counts['Subject_Status'] == row[3]),bin] = len(bin_ctr)
+            df_subject_bin_counts.loc[(df_subject_bin_counts['Cohort'] == row['Cohort']) &
+                                      (df_subject_bin_counts['Country'] == row['Country']) &
+                                      (df_subject_bin_counts['Bodysite'] == row['Bodysite']) &
+                                      (df_subject_bin_counts['BodyAggSite'] == row['BodyAggSite']) &
+                                      (df_subject_bin_counts['Subject_Status'] == row['Subject_Status']),bin] = len(bin_ctr)
 
     cols = list(df_subject_bin_counts.columns)
     cols.remove('Subject_Count')
-    cols.insert(4,'Subject_Count')
+    cols.insert(5,'Subject_Count')
     df_subject_bin_counts = df_subject_bin_counts[cols]
     out_subject_bin_count = os.path.join(output_dir, 'BinSubjectCounts_Bodysite.tsv')
     df_subject_bin_counts.to_csv(out_subject_bin_count, index=False, sep='\t')
@@ -170,7 +179,7 @@ def BinSubjectCount(subjectTableAbundance, cohortMetadataFile, output_dir):
     # Print bodysite aggregate counts
     df_subject_bodysite_agg = df_cohort.drop(columns=['Sample','Bodysite'])
     df_subject_bodysite_agg.drop_duplicates(keep='first', inplace=True)
-    df_subject_count_bodysite_agg = df_subject_bodysite_agg.groupby(['Cohort','BodyAggSite','Subject_Status'])['Subject'].count().reset_index(name='Subject_Count')
+    df_subject_count_bodysite_agg = df_subject_bodysite_agg.groupby(['Cohort','BodyAggSite','Subject_Status','Country'])['Subject'].count().reset_index(name='Subject_Count')
     #out_subject_bodysite_agg_count = "C:/Users/ab50/Documents/data/MetaBGCRuns/AcbK-homologs/output/quantify/combined_2/SubjectTotals_Bodysite_Agg.tsv"
     #df_subject_count_bodysite_agg.to_csv(out_subject_bodysite_agg_count, index=False, sep='\t')
 
@@ -178,21 +187,24 @@ def BinSubjectCount(subjectTableAbundance, cohortMetadataFile, output_dir):
     df_agg_subject_bin_counts.rename(columns={'Subject': 'Subject_Count'}, inplace=True)
     df_agg_subject_bin_counts = df_agg_subject_bin_counts[0:0]
     bin_cols = df_agg_subject_bin_counts.columns
-    bin_cols = bin_cols[4:]
+    bin_cols = bin_cols[5:]
     for row_index, row in df_subject_count_bodysite_agg.iterrows():
-        df_agg_subject_bin_counts = df_agg_subject_bin_counts.append({'Cohort': row[0],
-                                                              'BodyAggSite': row[1],
-                                                              'Subject_Status':row[2],
-                                                              'Subject_Count':row[3]}, ignore_index=True)
+        df_agg_subject_bin_counts = df_agg_subject_bin_counts.append({'Cohort': row['Cohort'],
+                                                                      'Country': row['Country'],
+                                                                      'BodyAggSite': row['BodyAggSite'],
+                                                                      'Subject_Status':row['Subject_Status'],
+                                                                      'Subject_Count':row['Subject_Count']}, ignore_index=True)
         for bin in bin_cols:
-            bin_ctr = df_subject_abundance.loc[(df_subject_abundance['Cohort'] == row[0]) &
-                                                 (df_subject_abundance['BodyAggSite'] == row[1]) &
-                                                 (df_subject_abundance['Subject_Status'] == row[2]) &
+            bin_ctr = df_subject_abundance.loc[(df_subject_abundance['Cohort'] == row['Cohort']) &
+                                               (df_subject_abundance['Country'] == row['Country']) &
+                                               (df_subject_abundance['BodyAggSite'] == row['BodyAggSite']) &
+                                                 (df_subject_abundance['Subject_Status'] == row['Subject_Status']) &
                                                  (df_subject_abundance[bin] > 0)]
             bin_ctr.drop_duplicates(subset=['Subject','Cohort','BodyAggSite','Subject_Status'],keep='first', inplace=True)
-            df_agg_subject_bin_counts.loc[(df_agg_subject_bin_counts['Cohort'] == row[0]) &
-                                                 (df_agg_subject_bin_counts['BodyAggSite'] == row[1]) &
-                                                 (df_agg_subject_bin_counts['Subject_Status'] == row[2]),bin] = len(bin_ctr)
+            df_agg_subject_bin_counts.loc[(df_agg_subject_bin_counts['Cohort'] == row['Cohort']) &
+                                          (df_agg_subject_bin_counts['Country'] == row['Country']) &
+                                                 (df_agg_subject_bin_counts['BodyAggSite'] == row['BodyAggSite']) &
+                                                 (df_agg_subject_bin_counts['Subject_Status'] == row['Subject_Status']), bin] = len(bin_ctr)
 
     cols = list(df_agg_subject_bin_counts.columns)
     cols.remove('Subject_Count')
@@ -211,29 +223,32 @@ def BinSampleCount(subjectTableAbundance, cohortMetadataFile, output_dir):
 
     #Print bodysite counts
     df_subject_bodysite = df_cohort.drop(columns=['Subject'])
-    df_subject_count_bodysite = df_subject_bodysite.groupby(['Cohort','Bodysite','BodyAggSite','Subject_Status'])['Sample'].count().reset_index(name='Sample_Count')
+    df_subject_count_bodysite = df_subject_bodysite.groupby(['Cohort','Bodysite','BodyAggSite','Subject_Status', 'Country'])['Sample'].count().reset_index(name='Sample_Count')
 
     df_subject_bin_counts = df_subject_abundance.drop(columns=['Subject'])
     df_subject_bin_counts.rename(columns={'Sample': 'Sample_Count'}, inplace=True)
     df_subject_bin_counts = df_subject_bin_counts[0:0]
     bin_cols = df_subject_bin_counts.columns
-    bin_cols = bin_cols[5:]
+    bin_cols = bin_cols[6:]
     for row_index, row in df_subject_count_bodysite.iterrows():
-        df_subject_bin_counts = df_subject_bin_counts.append({'Cohort': row[0],
-                                                              'Bodysite': row[1],
-                                                              'BodyAggSite': row[2],
-                                                              'Subject_Status':row[3],
-                                                              'Sample_Count':row[4]}, ignore_index=True)
+        df_subject_bin_counts = df_subject_bin_counts.append({'Cohort': row['Cohort'],
+                                                              'Country': row['Country'],
+                                                              'Bodysite': row['Bodysite'],
+                                                              'BodyAggSite': row['BodyAggSite'],
+                                                              'Subject_Status':row['Subject_Status'],
+                                                              'Sample_Count':row['Sample_Count']}, ignore_index=True)
         for bin in bin_cols:
-            bin_ctr = df_subject_abundance.loc[(df_subject_abundance['Cohort'] == row[0]) &
-                                                 (df_subject_abundance['Bodysite'] == row[1]) &
-                                                 (df_subject_abundance['BodyAggSite'] == row[2]) &
-                                                 (df_subject_abundance['Subject_Status'] == row[3]) &
+            bin_ctr = df_subject_abundance.loc[(df_subject_abundance['Cohort'] == row['Cohort']) &
+                                               (df_subject_abundance['Country'] == row['Country']) &
+                                                 (df_subject_abundance['Bodysite'] == row['Bodysite']) &
+                                                 (df_subject_abundance['BodyAggSite'] == row['BodyAggSite']) &
+                                                 (df_subject_abundance['Subject_Status'] == row['Subject_Status']) &
                                                  (df_subject_abundance[bin] > 0)]
-            df_subject_bin_counts.loc[(df_subject_bin_counts['Cohort'] == row[0]) &
-                                                 (df_subject_bin_counts['Bodysite'] == row[1]) &
-                                                 (df_subject_bin_counts['BodyAggSite'] == row[2]) &
-                                                 (df_subject_bin_counts['Subject_Status'] == row[3]),bin] = len(bin_ctr)
+            df_subject_bin_counts.loc[(df_subject_bin_counts['Cohort'] == row['Cohort']) &
+                                      (df_subject_bin_counts['Country'] == row['Country']) &
+                                                 (df_subject_bin_counts['Bodysite'] == row['Bodysite']) &
+                                                 (df_subject_bin_counts['BodyAggSite'] == row['BodyAggSite']) &
+                                                 (df_subject_bin_counts['Subject_Status'] == row['Subject_Status']),bin] = len(bin_ctr)
 
     cols = list(df_subject_bin_counts.columns)
     cols.remove('Sample_Count')
@@ -246,26 +261,29 @@ def BinSampleCount(subjectTableAbundance, cohortMetadataFile, output_dir):
 
     # Print bodysite aggregate counts
     df_subject_bodysite_agg = df_cohort.drop(columns=['Subject','Bodysite'])
-    df_subject_count_bodysite_agg = df_subject_bodysite_agg.groupby(['Cohort','BodyAggSite','Subject_Status'])['Sample'].count().reset_index(name='Sample_Count')
+    df_subject_count_bodysite_agg = df_subject_bodysite_agg.groupby(['Cohort','BodyAggSite','Subject_Status','Country'])['Sample'].count().reset_index(name='Sample_Count')
 
     df_agg_subject_bin_counts = df_subject_abundance.drop(columns=['Subject','Bodysite'])
     df_agg_subject_bin_counts.rename(columns={'Sample': 'Sample_Count'}, inplace=True)
     df_agg_subject_bin_counts = df_agg_subject_bin_counts[0:0]
     bin_cols = df_agg_subject_bin_counts.columns
-    bin_cols = bin_cols[4:]
+    bin_cols = bin_cols[5:]
     for row_index, row in df_subject_count_bodysite_agg.iterrows():
-        df_agg_subject_bin_counts = df_agg_subject_bin_counts.append({'Cohort': row[0],
-                                                              'BodyAggSite': row[1],
-                                                              'Subject_Status':row[2],
-                                                              'Sample_Count':row[3]}, ignore_index=True)
+        df_agg_subject_bin_counts = df_agg_subject_bin_counts.append({'Cohort': row['Cohort'],
+                                                                      'Country': row['Country'],
+                                                                      'BodyAggSite': row['BodyAggSite'],
+                                                                      'Subject_Status':row['Subject_Status'],
+                                                                      'Sample_Count':row['Sample_Count']}, ignore_index=True)
         for bin in bin_cols:
-            bin_ctr = df_subject_abundance.loc[(df_subject_abundance['Cohort'] == row[0]) &
-                                                 (df_subject_abundance['BodyAggSite'] == row[1]) &
-                                                 (df_subject_abundance['Subject_Status'] == row[2]) &
+            bin_ctr = df_subject_abundance.loc[(df_subject_abundance['Cohort'] == row['Cohort']) &
+                                               (df_subject_abundance['Country'] == row['Country']) &
+                                                 (df_subject_abundance['BodyAggSite'] == row['BodyAggSite']) &
+                                                 (df_subject_abundance['Subject_Status'] == row['Subject_Status']) &
                                                  (df_subject_abundance[bin] > 0)]
-            df_agg_subject_bin_counts.loc[(df_agg_subject_bin_counts['Cohort'] == row[0]) &
-                                                 (df_agg_subject_bin_counts['BodyAggSite'] == row[1]) &
-                                                 (df_agg_subject_bin_counts['Subject_Status'] == row[2]),bin] = len(bin_ctr)
+            df_agg_subject_bin_counts.loc[(df_agg_subject_bin_counts['Cohort'] == row['Cohort']) &
+                                          (df_agg_subject_bin_counts['Country'] == row['Country']) &
+                                                 (df_agg_subject_bin_counts['BodyAggSite'] == row['BodyAggSite']) &
+                                                 (df_agg_subject_bin_counts['Subject_Status'] == row['Subject_Status']),bin] = len(bin_ctr)
 
     cols = list(df_agg_subject_bin_counts.columns)
     cols.remove('Sample_Count')
@@ -288,86 +306,96 @@ def HMP_BinConsistancy(sampleTableAbundance,cohortMetadataFile,output_dir):
                                                                 (df_subject_visit_abundance['Cohort'] == 'QIDONG__AC_USC') |
                                                                 (df_subject_visit_abundance['Cohort'] == 'MetaHit')]
     df_subject_visit_abundance["Visits"] = pd.to_numeric(df_subject_visit_abundance["Visits"])
-    df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject','Cohort','Bodysite','BodyAggSite','Subject_Status'])['Subject'].count().reset_index(name='Subject_Count')
-    df_bodysite_sample = pd.DataFrame(columns=['Subject', 'Cohort', 'Bodysite', 'BodyAggSite', 'Bin', 'Visit 1 Sample', 'Visit 1 Bin Abundance',
+    df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject','Cohort','Bodysite','BodyAggSite','Subject_Status','Country'])['Subject'].count().reset_index(name='Subject_Count')
+    df_bodysite_sample = pd.DataFrame(columns=['Subject', 'Cohort', 'Country', 'Bodysite', 'BodyAggSite', 'Bin', 'Visit 1 Sample', 'Visit 1 Bin Abundance',
                  'Visit 2 Sample', 'Visit 2 Bin Abundance',
                  'Visit 3 Sample', 'Visit 3 Bin Abundance'])
     bin_cols = df_subject_visit_abundance.columns
-    bin_cols = bin_cols[7:]
+    bin_cols = bin_cols[8:]
     for row_index, row in df_hmp_multivisit.iterrows():
         for bin in bin_cols:
-            min_visit_ctr = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Subject'] == row[0]) &
-                                                       (df_subject_visit_abundance['Cohort'] == row[1]) &
-                                                       (df_subject_visit_abundance['Bodysite'] == row[2]) &
-                                                       (df_subject_visit_abundance['BodyAggSite'] == row[3]) &
-                                                       (df_subject_visit_abundance['Subject_Status'] == row[4]) &
+            min_visit_ctr = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Subject'] == row['Subject']) &
+                                                       (df_subject_visit_abundance['Cohort'] == row['Cohort']) &
+                                                        (df_subject_visit_abundance['Country'] == row['Country']) &
+                                                       (df_subject_visit_abundance['Bodysite'] == row['Bodysite']) &
+                                                       (df_subject_visit_abundance['BodyAggSite'] == row['BodyAggSite']) &
+                                                       (df_subject_visit_abundance['Subject_Status'] == row['Subject_Status']) &
                                                         (df_subject_visit_abundance[bin] > 0)]
             if len(min_visit_ctr) == 0:
                 continue
-            visit_ctr = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Subject'] == row[0]) &
-                                                       (df_subject_visit_abundance['Cohort'] == row[1]) &
-                                                       (df_subject_visit_abundance['Bodysite'] == row[2]) &
-                                                       (df_subject_visit_abundance['BodyAggSite'] == row[3]) &
-                                                       (df_subject_visit_abundance['Subject_Status'] == row[4])]
+            visit_ctr = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Subject'] == row['Subject']) &
+                                                       (df_subject_visit_abundance['Cohort'] == row['Cohort']) &
+                                                       (df_subject_visit_abundance['Country'] == row['Country']) &
+                                                       (df_subject_visit_abundance['Bodysite'] == row['Bodysite']) &
+                                                       (df_subject_visit_abundance['BodyAggSite'] == row['BodyAggSite']) &
+                                                       (df_subject_visit_abundance['Subject_Status'] == row['Subject_Status'])]
 
             if len(visit_ctr.loc[visit_ctr['Visits'] == 1]) == 1 and len(visit_ctr.loc[visit_ctr['Visits'] == 2]) == 1 and len(visit_ctr.loc[visit_ctr['Visits'] == 3]) == 1:
 
                 # Update visit 1
                 visit_1 = visit_ctr.loc[visit_ctr['Visits'] == 1]
-                df_bodysite_sample = df_bodysite_sample.append({'Subject': row[0],
-                                                                'Cohort': row[1],
-                                                                'Bodysite': row[2],
-                                                                'BodyAggSite': row[3],
+                df_bodysite_sample = df_bodysite_sample.append({'Subject': row['Subject'],
+                                                                'Cohort': row['Cohort'],
+                                                                'Country': row['Country'],
+                                                                'Bodysite': row['Bodysite'],
+                                                                'BodyAggSite': row['BodyAggSite'],
                                                                 'Bin': bin,
                                                                 'Visit 1 Sample': visit_1['Sample'].item(),
                                                                 'Visit 1 Bin Abundance': visit_1[bin].item()}, ignore_index=True)
                 # Update visit 2
                 visit_2 = visit_ctr.loc[visit_ctr['Visits'] == 2]
-                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row[0]) &
-                                               (df_bodysite_sample['Cohort'] == row[1]) &
-                                               (df_bodysite_sample['Bodysite'] == row[2]) &
-                                               (df_bodysite_sample['BodyAggSite'] == row[3]) &
+                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row['Subject']) &
+                                               (df_bodysite_sample['Cohort'] == row['Cohort']) &
+                                               (df_bodysite_sample['Country'] == row['Country']) &
+                                               (df_bodysite_sample['Bodysite'] == row['Bodysite']) &
+                                               (df_bodysite_sample['BodyAggSite'] == row['BodyAggSite']) &
                                                (df_bodysite_sample['Bin'] == bin),'Visit 2 Sample'] = visit_2['Sample'].item()
-                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row[0]) &
-                                               (df_bodysite_sample['Cohort'] == row[1]) &
-                                               (df_bodysite_sample['Bodysite'] == row[2]) &
-                                               (df_bodysite_sample['BodyAggSite'] == row[3]) &
+                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row['Subject']) &
+                                               (df_bodysite_sample['Cohort'] == row['Cohort']) &
+                                               (df_bodysite_sample['Country'] == row['Country']) &
+                                               (df_bodysite_sample['Bodysite'] == row['Bodysite']) &
+                                               (df_bodysite_sample['BodyAggSite'] == row['BodyAggSite']) &
                                                (df_bodysite_sample['Bin'] == bin),'Visit 2 Bin Abundance'] = visit_2[bin].item()
 
                 # Update visit 3
                 visit_3 = visit_ctr.loc[visit_ctr['Visits'] == 3]
-                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row[0]) &
-                                               (df_bodysite_sample['Cohort'] == row[1]) &
-                                               (df_bodysite_sample['Bodysite'] == row[2]) &
-                                               (df_bodysite_sample['BodyAggSite'] == row[3]) &
+                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row['Subject']) &
+                                               (df_bodysite_sample['Cohort'] == row['Cohort']) &
+                                                (df_bodysite_sample['Country'] == row['Country']) &
+                                               (df_bodysite_sample['Bodysite'] == row['Bodysite']) &
+                                               (df_bodysite_sample['BodyAggSite'] == row['BodyAggSite']) &
                                                (df_bodysite_sample['Bin'] == bin),'Visit 3 Sample'] = visit_3['Sample'].item()
-                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row[0]) &
-                                               (df_bodysite_sample['Cohort'] == row[1]) &
-                                               (df_bodysite_sample['Bodysite'] == row[2]) &
-                                               (df_bodysite_sample['BodyAggSite'] == row[3]) &
+                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row['Subject']) &
+                                               (df_bodysite_sample['Cohort'] == row['Cohort']) &
+                                                (df_bodysite_sample['Country'] == row['Country']) &
+                                               (df_bodysite_sample['Bodysite'] == row['Bodysite']) &
+                                               (df_bodysite_sample['BodyAggSite'] == row['BodyAggSite']) &
                                                (df_bodysite_sample['Bin'] == bin),'Visit 3 Bin Abundance'] = visit_3[bin].item()
 
             elif len(visit_ctr.loc[visit_ctr['Visits'] == 1]) == 1 and len(visit_ctr.loc[visit_ctr['Visits'] == 2]) == 1:
                 # Update visit 1
                 visit_1 = visit_ctr.loc[visit_ctr['Visits'] == 1]
-                df_bodysite_sample = df_bodysite_sample.append({'Subject': row[0],
-                                                                'Cohort': row[1],
-                                                                'Bodysite': row[2],
-                                                                'BodyAggSite': row[3],
+                df_bodysite_sample = df_bodysite_sample.append({'Subject': row['Subject'],
+                                                                'Cohort': row['Cohort'],
+                                                                'Country': row['Country'],
+                                                                'Bodysite': row['Bodysite'],
+                                                                'BodyAggSite': row['BodyAggSite'],
                                                                 'Bin': bin,
                                                                 'Visit 1 Sample': visit_1['Sample'].item(),
                                                                 'Visit 1 Bin Abundance': visit_1[bin].item()}, ignore_index=True)
                 # Update visit 2
                 visit_2 = visit_ctr.loc[visit_ctr['Visits'] == 2]
-                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row[0]) &
-                                               (df_bodysite_sample['Cohort'] == row[1]) &
-                                               (df_bodysite_sample['Bodysite'] == row[2]) &
-                                               (df_bodysite_sample['BodyAggSite'] == row[3]) &
+                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row['Subject']) &
+                                               (df_bodysite_sample['Cohort'] == row['Cohort']) &
+                                                (df_bodysite_sample['Country'] == row['Country']) &
+                                               (df_bodysite_sample['Bodysite'] == row['Bodysite']) &
+                                               (df_bodysite_sample['BodyAggSite'] == row['BodyAggSite']) &
                                                (df_bodysite_sample['Bin'] == bin),'Visit 2 Sample'] = visit_2['Sample'].item()
-                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row[0]) &
-                                               (df_bodysite_sample['Cohort'] == row[1]) &
-                                               (df_bodysite_sample['Bodysite'] == row[2]) &
-                                               (df_bodysite_sample['BodyAggSite'] == row[3]) &
+                df_bodysite_sample.loc[(df_bodysite_sample['Subject'] == row['Subject']) &
+                                               (df_bodysite_sample['Cohort'] == row['Cohort']) &
+                                                (df_bodysite_sample['Country'] == row['Country']) &
+                                               (df_bodysite_sample['Bodysite'] == row['Bodysite']) &
+                                               (df_bodysite_sample['BodyAggSite'] == row['BodyAggSite']) &
                                                (df_bodysite_sample['Bin'] == bin),'Visit 2 Bin Abundance'] = visit_2[bin].item()
     df_bodysite_sample = df_bodysite_sample.sort_values(by=['Visit 3 Bin Abundance', 'Visit 2 Bin Abundance', 'Visit 1 Bin Abundance'],
                                                       ascending=[False, False, False])
@@ -390,12 +418,12 @@ def HMP_BinSampleAbund(sampleTableAbundance, cohortMetadataFile, output_dir):
                                                                 (df_subject_visit_abundance['Cohort'] == 'MetaHit')]
 
     df_subject_visit_abundance["Visits"] = pd.to_numeric(df_subject_visit_abundance["Visits"])
-    df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject','Cohort','BodyAggSite'])['Subject'].count().reset_index(name='Subject_Count')
-    df_bodysite_sample = pd.DataFrame(columns=['Subject', 'Cohort', 'BodyAggSite', 'Bin', 'Total Visit 1 Samples', 'Visit 1 Samples',
+    df_hmp_multivisit = df_subject_visit_abundance.groupby(['Subject', 'Cohort', 'BodyAggSite', 'Country'])['Subject'].count().reset_index(name='Subject_Count')
+    df_bodysite_sample = pd.DataFrame(columns=['Subject', 'Cohort', 'Country', 'BodyAggSite', 'Bin', 'Total Visit 1 Samples', 'Visit 1 Samples',
                                                'Total Visit 2 Samples', 'Visit 2 Samples',
                                                'Total Visit 3 Samples', 'Visit 3 Samples'])
     bin_cols = df_subject_visit_abundance.columns
-    bin_cols = bin_cols[5:]
+    bin_cols = bin_cols[6:]
     for row_index, row in df_hmp_multivisit.iterrows():
         visit_ctr = df_subject_visit_abundance.loc[(df_subject_visit_abundance['Subject'] == row[0]) &
                                                    (df_subject_visit_abundance['Cohort'] == row[1]) &
@@ -416,9 +444,10 @@ def HMP_BinSampleAbund(sampleTableAbundance, cohortMetadataFile, output_dir):
             visit_1 = min_visit_ctr.loc[min_visit_ctr['Visits'] == 1]
             visit_2 = min_visit_ctr.loc[min_visit_ctr['Visits'] == 2]
             visit_3 = min_visit_ctr.loc[min_visit_ctr['Visits'] == 3]
-            df_bodysite_sample = df_bodysite_sample.append({'Subject': row[0],
-                                                            'Cohort': row[1],
-                                                            'BodyAggSite': row[2],
+            df_bodysite_sample = df_bodysite_sample.append({'Subject': row['Subject'],
+                                                            'Cohort': row['Cohort'],
+                                                            'Country': row['Country'],
+                                                            'BodyAggSite': row['BodyAggSite'],
                                                             'Bin': bin,
                                                             'Total Visit 1 Samples': len(all_visit_1),
                                                             'Visit 1 Samples': len(visit_1),
@@ -439,7 +468,7 @@ def SampleStacked(sampleTableAbundance, cohortMetadataFile, output_dir):
     df_subject_abundance = pd.merge(df_bodysite, df_sample_abundance, on=['Sample'], how='inner')
     df_subject_abundance = df_subject_abundance.drop(columns=['Visits'])
 
-    col_list = ['Sample','Subject','Cohort','Bodysite','BodyAggSite','Subject_Status']
+    col_list = ['Sample','Subject','Cohort','Country','Bodysite','BodyAggSite','Subject_Status']
     for col_name in reversed(col_list):
         temp_col = df_subject_abundance.pop(col_name)
         df_subject_abundance.insert(0,col_name,temp_col)
