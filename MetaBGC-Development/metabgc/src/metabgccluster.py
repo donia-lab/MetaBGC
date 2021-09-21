@@ -20,7 +20,7 @@ def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,readThresh,outDir):
     seq_dict = SeqIO.index(identifiedReadFile, "fasta")
     single_records = []
     all_quantified_records = []
-    fastaDirGT10 = outDir + "/bin_fasta/gt10"
+    fastaDirGT10 = outDir + "/bin_fasta/gt" + str(readThresh)
     fastaDirRem = outDir + "/bin_fasta/rem"
     os.makedirs(fastaDirGT10, 0o777, True)
     os.makedirs(fastaDirRem, 0o777, True)
@@ -116,7 +116,7 @@ def mbgccluster(abundance_matrix, abundance_table_pivot,
             df_abundance_sample = df_abundance_sample[df_abundance_sample['BinAbundance']>=abundThresh]
             df_abundance_sample_pivot = df_abundance_sample.pivot_table(index='Sample', columns='bin',values='BinAbundance', fill_value=0)
             df_abundance_sample_pivot.to_csv(out_file_abund_sample,sep='\t')
-            outF.write("Number of Bins with >= {0} Reads and Bin Abundance >= {1}: {2}\n".format(readThresh,abundThresh,len(df_abundance_sample_pivot.columns)))
+            outF.write("Number of Bins with >= {0} Reads and Bin Abundance >= {1}: {2}\n".format(readThresh, abundThresh, len(df_abundance_sample_pivot.columns)))
 
 
             df_abundance = pd.merge(df_abundance, df_abundance_sample, how='inner')
@@ -125,7 +125,7 @@ def mbgccluster(abundance_matrix, abundance_table_pivot,
 
             outF.write("Average Number of Reads in Bins with >= {0} Reads: {1}\n".format(readThresh,round(mean(clusterFreqGTThresh),2)))
             outF.write("Average Abundance of Bins with >= {0} Reads: {1}\n".format(readThresh,round(mean(clusterFreqGTThresh),2)))
-            outF.write("Number of Samples containing Bins with >= {0} Reads and Bin Abundance: {1}\n".format(readThresh, len(Counter(df_abundance_sample['Sample'].tolist()).keys())))
+            outF.write("Number of Samples containing Bins with >= {0} Reads and Bin Abundance >= {1}: {2}\n".format(readThresh, abundThresh, len(Counter(df_abundance_sample['Sample'].tolist()).keys())))
         else:
             print("Metabgc-cluster detected only bins with very low abundance. No further analytics will be performed. Please adjust --min_reads_bin and --min_abund_bin.")
         outF.close()
