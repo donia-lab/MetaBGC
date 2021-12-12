@@ -47,13 +47,13 @@ def cli():
               help="Suffix including extension of the file name specifying R2 reads. Not specified for single or interleaved reads.")
 @click.option('--blastn_search_directory', required=False,
               type=click.Path(exists=False,dir_okay=True,readable=True),
-              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--blast_db_directory_map_file', required=False,
               type=click.Path(exists=True,dir_okay=False,readable=True),
-              help="Path to 2 column comma seperated mapping file with (sample_name,blast_database_path). The BLAST databases are computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Path to 2 column comma seperated mapping file with (sample_name,blast_database_path). The BLAST databases are computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--hmm_search_directory', required=False,
               type=click.Path(exists=True,dir_okay=True,readable=True),
-              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
@@ -99,7 +99,7 @@ def build(prot_alignment,prot_family_name,cohort_name,
               help="Suffix including extension of the file name specifying R2 reads. Not specified for single or interleaved reads.")
 @click.option('--hmm_search_directory', required=False,
               type=click.Path(exists=True,dir_okay=True,readable=True),
-              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
@@ -138,10 +138,10 @@ def identify(sphmm_directory,cohort_name,nucl_seq_directory,prot_seq_directory,
               help="Suffix including extension of the file name specifying R2 reads. Not specified for single or interleaved reads.")
 @click.option('--blastn_search_directory', required=False,
               type=click.Path(exists=False,dir_okay=True,readable=True),
-              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--blast_db_directory_map_file', required=False,
               type=click.Path(exists=True,dir_okay=False,readable=True),
-              help="Path to 2 column comma seperated mapping file with (sample_name,blast_database_path). The BLAST databases are computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Path to 2 column comma seperated mapping file with (sample_name,blast_database_path). The BLAST databases are computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
@@ -208,13 +208,13 @@ def cluster(table,table_wide,identify_fasta,max_dist,min_samples,min_reads_bin,m
 @click.option("--min_abund_bin", type=float, default=10,help="Minimum total read abundance required in a bin to be considered in analytics output files.")
 @click.option('--hmm_search_directory', required=False,
               type=click.Path(exists=True,dir_okay=True,readable=True),
-              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Directory with HMM searches of the synthetic read files against all the spHMMs. Computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--blastn_search_directory', required=False,
               type=click.Path(exists=False,dir_okay=True,readable=True),
-              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Directory with BLAST search of the synthetic read files against the TP genes. Computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--blast_db_directory_map_file', required=False,
               type=click.Path(exists=True,dir_okay=False,readable=True),
-              help="Path to 2 column comma seperated mapping file with (sample_name,blast_database_path). The BLAST databases are computed if not provided. To compute seperately, please see job_scripts in development.")
+              help="Path to 2 column comma seperated mapping file with (sample_name,blast_database_path). The BLAST databases are computed if not provided. To compute seperately, please see partial_scripts in development.")
 @click.option('--output_directory', required=True,
               type=click.Path(exists=True,dir_okay=True,writable=True),
               help="Directory to save results.")
