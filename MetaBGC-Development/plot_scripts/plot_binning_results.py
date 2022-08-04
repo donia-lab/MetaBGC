@@ -13,6 +13,24 @@ if __name__ == '__main__':
     read_breath_melt = pd.melt(read_breath, id_vars=["reference_genome"], var_name="sample_name", value_name="read_breath")
     read_depth_melt = pd.melt(read_depth, id_vars=["reference_genome"], var_name="sample_name", value_name="read_depth")
 
+    #Plot read breath v depth matrix
+    # read_breath_depth_melt = pd.merge(read_breath_melt, read_depth_melt, on=['reference_genome','sample_name'])
+    # #read_breath_depth_melt['read_breath'].values[read_breath_depth_melt['read_breath'].values < 0.9] = 0.9
+    # #read_breath_depth_melt['read_depth'].values[read_breath_depth_melt['read_depth'].values > 5] = 5
+    # #read_breath_depth_melt['read_depth'].values[read_breath_depth_melt['read_depth'].values < 10] = 10
+    #
+    # read_breath_depth_weird = read_breath_depth_melt[(read_breath_depth_melt['read_depth'] < 1) &
+    #                                                  (read_breath_depth_melt['read_breath'] > 0.9)]
+    #
+    # read_breath_depth_melt.plot.scatter("read_breath", "read_depth", s=1)
+    # plt.xlabel('Breath Covered by Aligned Reads')
+    # plt.ylabel('Read Coverage ')
+    # plt.savefig('C:\\Users\\ab50\\Documents\\data\\binning\\plotting\\read_breath_depth.png',dpi=600,format='png')
+    # plt.close()
+
+
+
+
     # sample_read_breath = read_breath[['reference_genome','synthetic_1_algae_S0']]
     # sample_read_breath.rename(columns={"synthetic_1_algae_S0": "S0_read_breath"},inplace=True)
     # sample_read_depth = read_depth[['reference_genome','synthetic_1_algae_S0']]
@@ -46,6 +64,49 @@ if __name__ == '__main__':
     plt.yscale('log')
     plt.savefig('C:\\Users\\ab50\\Documents\\data\\binning\\plotting\\read_depth_histo_50.png',dpi=600,format='png')
     plt.close()
+
+    # Total number of times the assembly produced over 50% of the genome
+    df_total_pos = df_plot[(df_plot['contig_breath'] >= 0.5)]
+
+    # Total number of times the assembly produced over 50% of the genome but read depth < 2x
+    df_false_positives = df_plot[(df_plot['read_depth'] < 2) &
+                                 (df_plot['contig_breath'] >= 0.5)]
+
+    # Total number of times the assembly produced below 50% of the genome but read depth < 2x
+    df_total_neg = df_plot[(df_plot['contig_breath'] < 0.5)]
+
+    # Total number of times the assembly produced below 50% of the genome but read depth < 2x
+    df_true_neg = df_plot[(df_plot['read_depth'] < 2) &
+                          (df_plot['contig_breath'] < 0.5)]
+
+    # df_good_cover = df_plot[(df_plot['read_depth'] > 10) &
+    #                        (df_plot['read_breath'] > 0.8)]
+    #
+    # df_good_bins = df_plot[(df_plot['read_depth'] > 10) &
+    #                        (df_plot['read_breath'] > 0.8) &
+    #                        (df_plot['contig_breath'] > 0.5)]
+
+    print('Total good bins:' + str(len(df_total_pos)))
+    print('Total FP bins:' + str(len(df_false_positives)))
+
+    df_false_positives = df_false_positives.groupby(['reference_genome', 'binning']).size().reset_index(name='fp_counts (read_depth<2, contig_breath >= 0.5)')
+    df_total_pos = df_total_pos.groupby(['reference_genome', 'binning']).size().reset_index(name='total_pos_counts (contig_breath >= 0.5)')
+
+    df_true_neg = df_true_neg.groupby(['reference_genome', 'binning']).size().reset_index(name='tn_counts (read_depth<2, contig_breath < 0.5)')
+    df_total_neg = df_total_neg.groupby(['reference_genome', 'binning']).size().reset_index(name='total_neg_counts (contig_breath < 0.5)')
+
+    df_summary = pd.merge(df_total_pos, df_false_positives, on=['reference_genome', 'binning'], how="left")
+    df_summary = df_summary.fillna(0)
+    df_summary['tp_counts'] = df_summary['total_pos_counts (contig_breath >= 0.5)'] - df_summary['fp_counts (read_depth<2, contig_breath >= 0.5)']
+
+    df_summary = pd.merge(df_summary, df_total_neg, on=['reference_genome', 'binning'], how="right")
+    df_summary = df_summary.fillna(0)
+    df_summary = pd.merge(df_summary, df_true_neg, on=['reference_genome', 'binning'])
+    df_summary = df_summary.fillna(0)
+    df_summary['fn_counts'] = df_summary['total_neg_counts (contig_breath < 0.5)'] - df_summary['tn_counts (read_depth<2, contig_breath < 0.5)']
+
+    df_summary['F1 Score'] = (2*df_summary['tp_counts'])/((2*df_summary['tp_counts'])+df_summary['fp_counts (read_depth<2, contig_breath >= 0.5)']+df_summary['fn_counts'])
+    df_summary.to_csv('C:\\Users\\ab50\\Documents\\data\\binning\\plotting\\summary_assemblies.csv', index=False)
 
     df_tmp = df_plot.copy()
     df_tmp['read_depth'].values[df_tmp['read_depth'].values > 10] = 10
@@ -85,6 +146,8 @@ if __name__ == '__main__':
         df_tmp_plot[['read_breath','contig_breath','reference_genome']].apply(lambda row: ax.text(*row, size=3),axis=1)
         plt.savefig('C:\\Users\\ab50\\Documents\\data\\binning\\plotting\\metabat2\\'+ name +'_depth.png',dpi=600,format='png')
         plt.close()
+
+
 
 
 

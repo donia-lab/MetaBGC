@@ -5,12 +5,13 @@ import os
 from metabgc.src.extractfastaseq import RunExtractDirectoryPar
 from metabgc.src.extractfastaseq import RunExtractDescription
 
-def mbgcfindtp(alnFile, prot_seq_directory, out_dir, do_alignment):
+def mbgcfindtp(alnFile, prot_seq_directory, nucl_seq_directory, out_dir, do_alignment):
     # setup paths
     identifyReadIds = os.path.join(out_dir,'CombinedReadIds.txt')
     allHMMResult = os.path.join(out_dir,'CombinedHMMResults.txt')
     fasta_seq_dir = os.path.join(out_dir,'extract_seq')
-    multiFastaFile = os.path.join(out_dir,'CombinedHMMHits.faa')
+    aa_multiFastaFile = os.path.join(out_dir,'CombinedHMMHits.faa')
+    nc_multiFastaFile = os.path.join(out_dir,'CombinedHMMHits.fna')
 
     alnOutput=alnFile.split('.fasta')[0] +".faa"
     if do_alignment:
@@ -42,8 +43,11 @@ def mbgcfindtp(alnFile, prot_seq_directory, out_dir, do_alignment):
     df_HMMMatch.to_csv(identifyReadIds, index=False, sep='\t')
 
     os.makedirs(fasta_seq_dir, 0o777, True)
-    RunExtractDirectoryPar(prot_seq_directory, identifyReadIds, fasta_seq_dir, multiFastaFile, "faa", 1)
-    record_desc_dict = RunExtractDescription(multiFastaFile,"fasta")
+    RunExtractDirectoryPar(prot_seq_directory, identifyReadIds, fasta_seq_dir, aa_multiFastaFile, "faa", True, 1)
+    record_desc_dict = RunExtractDescription(aa_multiFastaFile,"fasta")
+
+    RunExtractDirectoryPar(nucl_seq_directory, identifyReadIds, fasta_seq_dir, nc_multiFastaFile, "fna", False, 1)
+
     df_record_desc = DataFrame(list(record_desc_dict.items()), columns=['readID', 'Description'])
     df_HMMMatch = pd.merge(df_HMMMatch,df_record_desc,on=['readID'],how='inner')
     df_HMMMatch.to_csv(allHMMResult, index=False, sep='\t')

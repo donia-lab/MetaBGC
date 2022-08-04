@@ -50,13 +50,14 @@ def getKmers(k, interval, outdir, msaFile, tp_prot_file, modelName, start, end, 
     counter = int(((alignment.get_alignment_length()- k) /interval)+1)
     j = 0
 
+    # Get start position after ignoring gaped positions
     for i in range(alignment.get_alignment_length()):
         alnCol = alignment[:,i]
         if '-' in alnCol:
             j=j+1
         else:
             break
-
+    # Get end position after ignoring gaped positions
     seqCtr = alignment.get_alignment_length()
     for i in range(alignment.get_alignment_length()-1, -1, -1):
         alnCol = alignment[:, i]

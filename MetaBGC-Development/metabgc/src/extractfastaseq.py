@@ -14,9 +14,10 @@ import logging
 from metabgc.src.producer_consumer import *
 
 class ExtractTask:
-    def __init__(self, fastaFile, id_list, output_file):
+    def __init__(self, fastaFile, id_list, output_file, exact_match=True):
         self.fastaFile = fastaFile
         self.id_list = id_list
+        self.exact_match = exact_match
         self.output_file = output_file
 
 """
@@ -37,10 +38,14 @@ def ExtractFASTAConsumer(queue, lock):
             record_dict = SeqIO.index(extract_task.fastaFile, "fasta")
             records = []
             for readid in extract_task.id_list:
-                if readid in record_dict:
+                if readid in record_dict and extract_task.exact_match:
+                    seq_record = record_dict[readid]
+                    records.append(seq_record)
+                elif any(s.find(readid) == 0 for s in record_dict.keys()):
                     seq_record = record_dict[readid]
                     records.append(seq_record)
             count = SeqIO.write(records, extract_task.output_file, "fasta")
+            record_dict.close()
             with lock:
                 logging.info("Saved " + str(count) + " records from " + extract_task.fastaFile + " to " + extract_task.output_file)
         except Exception as e:
@@ -60,7 +65,7 @@ def sampleHasMatch(sample_list, sampleStr):
 """
 Function to extract identified sequences from the sample FASTA files. 
 """
-def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_file_ext, ncpus):
+def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_file_ext, match_exact = True, ncpus=1):
     try:
         df_reads = pd.read_csv(readIDFile, sep='\t')
         id_list = list(set(df_reads.readID.values.tolist()))
@@ -85,7 +90,7 @@ def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_fi
             if sampleHasMatch(sample_list, sampleStr):
                 outputFileName = sampleStr + "." + fasta_file_ext
                 outputFilePath = os.path.join(ouputDir, outputFileName)
-                extract_task = ExtractTask(filePath, id_list, outputFilePath)
+                extract_task = ExtractTask(filePath, id_list, outputFilePath, match_exact)
                 extract_task_list.append(extract_task)
 
         logging.info('Number of pool processes:{0}.'.format(ncpus))

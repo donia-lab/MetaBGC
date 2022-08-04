@@ -1,4 +1,4 @@
-from metabgc.metabgc_cmds import main
+from metabgc.__main__ import main
 
 if __name__ == '__main__':
     main()

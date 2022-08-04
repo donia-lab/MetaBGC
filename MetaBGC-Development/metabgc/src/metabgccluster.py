@@ -20,7 +20,7 @@ def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,readThresh,outDir):
     seq_dict = SeqIO.index(identifiedReadFile, "fasta")
     single_records = []
     all_quantified_records = []
-    fastaDirGT10 = outDir + "/bin_fasta/gt" + str(readThresh)
+    fastaDirGT10 = outDir + "/bin_fasta/gt_thresh"
     fastaDirRem = outDir + "/bin_fasta/rem"
     os.makedirs(fastaDirGT10, 0o777, True)
     os.makedirs(fastaDirRem, 0o777, True)

@@ -22,7 +22,7 @@ install_requires = [
 
 def read_version():
     """Read the version from the appropriate place in the library."""
-    for line in open(os.path.join("metabgc",'metabgc_cmds.py'), 'r'):
+    for line in open(os.path.join("metabgc",'__main__.py'), 'r'):
         if line.startswith('__version__'):
             return line.split('=')[-1].strip().strip('"')
 
@@ -38,7 +38,7 @@ setup(
     long_description_content_type='text/markdown',
     install_requires=install_requires,
     entry_points={
-        'console_scripts': ['metabgc=metabgc.metabgc_cmds:main'],
+        'console_scripts': ['metabgc=metabgc.__main__:main'],
     },
     url='https://github.com/donia-lab/MetaBGC',
     license='GNU General Public License v3',
