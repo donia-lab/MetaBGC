@@ -26,5 +26,5 @@ def test_extract():
     outputDir = "AbcK/output/"+cohortStr+"/identify/reads"
     identifyOutFile = "AbcK/output/"+cohortStr+"/identify/identified-biosynthetic-reads.fasta"
     os.makedirs(outputDir, 0o777, True)
-    RunExtractDirectoryPar(readsDir, filteredTableFile, outputDir, identifyOutFile, "fasta", True, ncpus=4)
+    RunExtractDirectoryPar(readsDir, filteredTableFile, outputDir, identifyOutFile, "fasta", True, True, ncpus=4)
 

@@ -41,7 +41,7 @@ def ExtractFASTAConsumer(queue, lock):
                 if readid in record_dict and extract_task.exact_match:
                     seq_record = record_dict[readid]
                     records.append(seq_record)
-                elif any(s.find(readid) == 0 for s in record_dict.keys()):
+                elif any(s.find(readid) >= 0 for s in record_dict.keys()):
                     seq_record = record_dict[readid]
                     records.append(seq_record)
             count = SeqIO.write(records, extract_task.output_file, "fasta")
