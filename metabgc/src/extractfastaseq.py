@@ -65,7 +65,14 @@ def sampleHasMatch(sample_list, sampleStr):
 """
 Function to extract identified sequences from the sample FASTA files. 
 """
-def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_file_ext, match_exact = True, ncpus=1):
+def RunExtractDirectoryPar(readsDir,
+                           readIDFile,
+                           ouputDir,
+                           outputFasta,
+                           fasta_file_ext,
+                           match_exact=True,
+                           check_sample_match=True,
+                           ncpus=1):
     try:
         df_reads = pd.read_csv(readIDFile, sep='\t')
         id_list = list(set(df_reads.readID.values.tolist()))
@@ -83,11 +90,17 @@ def RunExtractDirectoryPar(readsDir, readIDFile, ouputDir, outputFasta, fasta_fi
 
         logging.info("Found " + str(len(filePathDict)) + " read files from which to extract.")
 
+        # Check and remove files that do not contribute a read to reduce the number of tasks
         extract_task_list = []
         for filePath in sorted(filePathDict, key=filePathDict.get):
             file = os.path.basename(filePath)
             sampleStr = os.path.splitext(file)[0]
-            if sampleHasMatch(sample_list, sampleStr):
+            if sampleHasMatch(sample_list, sampleStr) and check_sample_match:
+                outputFileName = sampleStr + "." + fasta_file_ext
+                outputFilePath = os.path.join(ouputDir, outputFileName)
+                extract_task = ExtractTask(filePath, id_list, outputFilePath, match_exact)
+                extract_task_list.append(extract_task)
+            else:
                 outputFileName = sampleStr + "." + fasta_file_ext
                 outputFilePath = os.path.join(ouputDir, outputFileName)
                 extract_task = ExtractTask(filePath, id_list, outputFilePath, match_exact)

@@ -129,7 +129,8 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory, prot_seq_dire
             runidentify(allHMMResult, cutoff_file, filteredHMMResult, identifyReadIds)
 
             os.makedirs(fasta_seq_dir, 0o777, True)
-            RunExtractDirectoryPar(nucl_seq_directory, filteredHMMResult, fasta_seq_dir, multiFastaFile, "fasta", True,
+            RunExtractDirectoryPar(nucl_seq_directory, filteredHMMResult,
+                                   fasta_seq_dir, multiFastaFile, "fasta", True, True,
                                    CPU_THREADS)
         else:
             print("Metabgc-identify is returning the existing identified reads found.")

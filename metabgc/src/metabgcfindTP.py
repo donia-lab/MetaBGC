@@ -43,10 +43,12 @@ def mbgcfindtp(alnFile, prot_seq_directory, nucl_seq_directory, out_dir, do_alig
     df_HMMMatch.to_csv(identifyReadIds, index=False, sep='\t')
 
     os.makedirs(fasta_seq_dir, 0o777, True)
-    RunExtractDirectoryPar(prot_seq_directory, identifyReadIds, fasta_seq_dir, aa_multiFastaFile, "faa", True, 1)
+    RunExtractDirectoryPar(prot_seq_directory, identifyReadIds, fasta_seq_dir,
+                           aa_multiFastaFile, "faa", True, True, 1)
     record_desc_dict = RunExtractDescription(aa_multiFastaFile,"fasta")
 
-    RunExtractDirectoryPar(nucl_seq_directory, identifyReadIds, fasta_seq_dir, nc_multiFastaFile, "fna", False, 1)
+    RunExtractDirectoryPar(nucl_seq_directory, identifyReadIds, fasta_seq_dir,
+                           nc_multiFastaFile, "fna", False, False, 1)
 
     df_record_desc = DataFrame(list(record_desc_dict.items()), columns=['readID', 'Description'])
     df_HMMMatch = pd.merge(df_HMMMatch,df_record_desc,on=['readID'],how='inner')

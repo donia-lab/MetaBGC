@@ -323,7 +323,15 @@ def synthesize(indir1, indir2, system, length, mflen, mflensd, num_reads,
 @click.option('--do_alignment',required=True,
               type=click.BOOL, help="Set it up to do an alignment if the --alnFile is a FASTA.")
 def findtp(aln_file, prot_seq_directory, nucl_seq_directory, output_directory, do_alignment):
+    logging.basicConfig(filename=os.path.join(output_directory,'metabgc.log'), level=logging.INFO)
+    logging.info('Invoking TP search...')
+    click.echo('Invoking TP search...')
+    t0 = time()
     mbgcfindtp(aln_file, prot_seq_directory, nucl_seq_directory, output_directory, do_alignment)
+    t1 = time() - t0
+    logging.info("Time elapsed: " + str(t1))
+    logging.info("TP search complete...")
+    click.echo("TP search complete...")
 
 def main():
     cli()
