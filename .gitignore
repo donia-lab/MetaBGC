@@ -7,3 +7,5 @@ metabgc/test/OxyN_Toy_Build/
 metabgc/test/OxyN_Toy_Build.zip
 metabgc/test/.Rhistory
 metabgc/metadata_donia
+metabgc/**/__pycache__
+metabgc/__pycache__
