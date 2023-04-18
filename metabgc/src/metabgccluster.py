@@ -15,6 +15,7 @@ import numpy as np
 import json
 import re
 import os
+import logging
 
 def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,readThresh,outDir):
     seq_dict = SeqIO.index(identifiedReadFile, "fasta")
@@ -30,19 +31,21 @@ def PrintBinSeqs(binIds,df_read_labels,identifiedReadFile,readThresh,outDir):
         count_row = df_bin_reads.shape[0]
         if count_row >= readThresh:
             for index, row in df_bin_reads.iterrows():
-                seq_record = seq_dict[row['qseqid']]
-                records.append(seq_record)
-                all_quantified_records.append(seq_record)
+                if row['qseqid'] in seq_dict:
+                    seq_record = seq_dict[row['qseqid']]
+                    records.append(seq_record)
+                    all_quantified_records.append(seq_record)
             output_file = os.path.join(fastaDirGT10,str(bin)+".fasta")
             SeqIO.write(records, output_file, "fasta")
         elif count_row >= 2:
             for index, row in df_bin_reads.iterrows():
-                seq_record = seq_dict[row['qseqid']]
-                records.append(seq_record)
-                all_quantified_records.append(seq_record)
+                if row['qseqid'] in seq_dict:
+                    seq_record = seq_dict[row['qseqid']]
+                    records.append(seq_record)
+                    all_quantified_records.append(seq_record)
             output_file = os.path.join(fastaDirRem,str(bin)+".fasta")
             SeqIO.write(records, output_file, "fasta")
-        else:
+        elif df_bin_reads['qseqid'].iloc[0] in seq_dict:
             seq_record = seq_dict[df_bin_reads['qseqid'].iloc[0]]
             single_records.append(seq_record)
             all_quantified_records.append(seq_record)
@@ -130,6 +133,7 @@ def mbgccluster(abundance_matrix, abundance_table_pivot,
             print("Metabgc-cluster detected only bins with very low abundance. No further analytics will be performed. Please adjust --min_reads_bin and --min_abund_bin.")
         outF.close()
         return out_file_summary,out_file_abund
-    except:
-        print("Metabgc-cluster has failed. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
+    except Exception as e:
+        logging.exception(e)
+        print("Metabgc-cluster has failed. Please check your inputs, log and contact support on : https://github.com/donia-lab/MetaBGC")
         exit()

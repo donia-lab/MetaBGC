@@ -41,7 +41,7 @@ def MakeDB_BLASTN(dbFileList, existing_map_dict, dbOpPath, searchFileList, blast
             os.makedirs(makeDBOpPath, 0o777, True)
             dbName = os.path.splitext(sample_basename)[0]
             dbOut = makeDBOpPath + os.sep + dbName
-            cmd = "makeblastdb -in " + dbInputFile + " -title " + dbName + " -dbtype nucl -out " + dbOut
+            cmd = "makeblastdb -in " + dbInputFile + " -title " + dbName + " -dbtype nucl -out " + dbOut + " 2> /dev/null"
             dbOutDict[dbInputFile] = dbOut
             makeDBCmdList.append(cmd)
             logging.info(cmd)
@@ -94,7 +94,7 @@ def RunPCMakeDBandBlastN(dbDir, existingDbDirMapFile, queryFile, blastCmdString,
                 outFileList.append(outputFilePath)
 
     logging.info("Created search list. # of BLAST searches:" + str(len(outFileList)))
-    MakeDB_BLASTN(dbFileList,existing_map_dict,
+    MakeDB_BLASTN(dbFileList, existing_map_dict,
                   ouputDir, searchFileList, blastCmdString, blastParamStr, outFileList,ncpus)
 
 """

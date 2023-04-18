@@ -7,7 +7,7 @@
 #####################################################################################
 from metabgc.src.utils import *
 from metabgc.src.blastrunlib import *
-
+import logging
 
 
 def combine_blast_results(blast_dir_path, combinedBLASTFile, cohort_name):
@@ -52,32 +52,33 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 		abundFile = os.path.join(output_directory, "unique-biosynthetic-reads-abundance-table.txt")
 		abundWideFile = os.path.join(output_directory, "unique-biosynthetic-reads-abundance-table-wide.txt")
 
+		if not os.path.exists(abundFile) and not os.path.exists(abundWideFile):
+			nucl_seq_directory = PreProcessReadsPar(nucl_seq_directory, seq_fmt, pair_fmt,
+												 r1_file_suffix.strip(), r2_file_suffix.strip(),
+												 output_directory, CPU_THREADS)
 
-		nucl_seq_directory = PreProcessReadsPar(nucl_seq_directory, seq_fmt, pair_fmt,
-											 r1_file_suffix.strip(), r2_file_suffix.strip(),
-											 output_directory, CPU_THREADS)
+			cdHitFile = os.path.join(output_directory,"CombinedIDFASTASeqs_Drep.fasta")
+			try:
+				runCDHit(identify_fasta,cdHitFile,CPU_THREADS)
+			except:
+				print("Metabgc-quantify has failed during clustering of identified reads.")
+				raise
 
-		cdHitFile = os.path.join(output_directory,"CombinedIDFASTASeqs_Drep.fasta")
-		try:
-			runCDHit(identify_fasta,cdHitFile,CPU_THREADS)
-		except:
-			print("Metabgc-quantify has failed during clustering of identified reads.")
-			raise
+			if not os.path.exists(blastn_search_directory):
+				os.makedirs(blastn_search_directory, 0o777, True)
 
-		if not os.path.exists(blastn_search_directory):
-			os.makedirs(blastn_search_directory, 0o777, True)
+			RunPCMakeDBandBlastN(nucl_seq_directory, blast_db_directory_map_file,
+								 cdHitFile, "blastn", "-dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" ",
+								 blastn_search_directory, CPU_THREADS)
 
-		RunPCMakeDBandBlastN(nucl_seq_directory, blast_db_directory_map_file,
-							 cdHitFile, "blastn", "-dust no -max_target_seqs 1000000 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt \"6 sseqid slen sstart send qseqid qlen qstart qend pident evalue\" ",
-							 blastn_search_directory, CPU_THREADS)
-
-		blastCount = combine_blast_results(blastn_search_directory, combinedBLASTFile, cohort_name)
-		if blastCount == 0:
-			print("Metabgc-quantify could not find any reads during quanify BLAST search.")
-		else:
-			print("Metabgc-quantify found " + str(blastCount) + " BLAST hits.")
-		create_clustering_file(combinedBLASTFile, abundFile, abundWideFile)
+			blastCount = combine_blast_results(blastn_search_directory, combinedBLASTFile, cohort_name)
+			if blastCount == 0:
+				print("Metabgc-quantify could not find any reads during quantify BLAST search.")
+			else:
+				print("Metabgc-quantify found " + str(blastCount) + " BLAST hits.")
+			create_clustering_file(combinedBLASTFile, abundFile, abundWideFile)
 		return abundFile, abundWideFile
-	except:
-		print("Metabgc-quantify has failed because no reads could be quantified. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
+	except Exception as e:
+		logging.exception(e)
+		print("Metabgc-quantify has failed because no reads could be quantified. Please check your inputs, log and contact support on : https://github.com/donia-lab/MetaBGC")
 		exit()

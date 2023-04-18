@@ -97,9 +97,14 @@ def return_hmm_unique(hmm_df, blast_df):
     temp_hmm_df = hmm_df.drop(columns=['window'])
     temp_hmm_df.loc[:,'interval'] = temp_hmm_df['interval'].apply(str)
     blast_df_temp = blast_df.rename(columns={"sseqid": "readID"})
-    temp_hmm_unique = temp_hmm_df.merge(blast_df_temp, how='outer', on=["readID", "Sample", "sampleType", "interval"], indicator=True)
+    temp_hmm_unique = temp_hmm_df.merge(blast_df_temp, how='outer', on=["readID", "Sample", "sampleType",
+                                                                        "interval", "protType"], indicator=True)
     temp_hmm_unique = temp_hmm_unique[temp_hmm_unique['_merge'] == 'left_only']
-    temp_hmm_unique = temp_hmm_unique[temp_hmm_df.columns] # This line is where things originally fell apart. When merging the dataframes, the protType column comes in from both dfs and as a results, the names changed to protType_x and protType_y respectively, i.e. a key error occured because 'protType' was no longer a header. Merging on protType as well as the other columns solved this problem.
+    # This line is where things originally fell apart.
+    # When merging the dataframes, the protType column comes in from both dfs and as a results,
+    # the names changed to protType_x and protType_y respectively, i.e. a key error occured because 'protType'
+    # was no longer a header. Merging on protType as well as the other columns solved this problem.
+    temp_hmm_unique = temp_hmm_unique[temp_hmm_df.columns]
     return temp_hmm_unique
 
 
