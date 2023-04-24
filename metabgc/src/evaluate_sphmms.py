@@ -100,10 +100,6 @@ def return_hmm_unique(hmm_df, blast_df):
     temp_hmm_unique = temp_hmm_df.merge(blast_df_temp, how='outer', on=["readID", "Sample", "sampleType",
                                                                         "interval", "protType"], indicator=True)
     temp_hmm_unique = temp_hmm_unique[temp_hmm_unique['_merge'] == 'left_only']
-    # This line is where things originally fell apart.
-    # When merging the dataframes, the protType column comes in from both dfs and as a results,
-    # the names changed to protType_x and protType_y respectively, i.e. a key error occured because 'protType'
-    # was no longer a header. Merging on protType as well as the other columns solved this problem.
     temp_hmm_unique = temp_hmm_unique[temp_hmm_df.columns]
     return temp_hmm_unique
 
@@ -181,6 +177,10 @@ def evaluate_sphmms(HMMRunFile,
     df_hmm_cutoff_scores.drop_duplicates(inplace=True)
     df_hmm_cutoff_scores.rename(columns={"readCheck": "read_check", "medianScore": "cutoff"}, inplace=True)
 
+
+
+###### filtered #####
+
     #Filter data with cutoffs to compare to BLAST interval reads
     filtered_median = pd.DataFrame(columns=hmm_df_recoded.columns)
     for index, row in df_hmm_cutoff_scores.iterrows():
@@ -209,6 +209,9 @@ def evaluate_sphmms(HMMRunFile,
     gene_positions.loc[:,'protType']  = HMM_Model_Name #HMM_Model_Name is prot_family_name which was originally not passed down to this script
     all_blast_df.loc[:,'protType'] = HMM_Model_Name
 
+
+
+###### hmmunique and remaining #####
     median_hmmunique = return_hmm_unique(filtered_median, blast_intervals)
     median_hmmunique_less_model_cov = compare_hmm_unique(median_hmmunique, all_blast_df, gene_positions)
     median_remaining_hmm = median_hmmunique.merge(median_hmmunique_less_model_cov, how='outer', indicator=True)
@@ -230,6 +233,7 @@ def evaluate_sphmms(HMMRunFile,
     plusfive_remaining_hmm = plusfive_remaining_hmm[plusfive_hmmunique.columns]
 
     FN_Reads_Fname = os.path.join(HMMHighPerfOutDir,HMM_Model_Name + "-FN_Hits.tsv") # Name of the FN file that's exported
+###### f1 calculations and file export #####
     f1_cutoff_median = calculate_F1(filtered_median, median_remaining_hmm, blast_intervals, hmm_df_recoded.interval.unique(),FN_Reads_Fname)
     f1_cutoff_median.loc[:,'cutoff'] = "median"
     
