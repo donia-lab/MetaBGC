@@ -41,7 +41,7 @@ def MakeDB_BLASTN(dbFileList, existing_map_dict, dbOpPath, searchFileList, blast
             os.makedirs(makeDBOpPath, 0o777, True)
             dbName = os.path.splitext(sample_basename)[0]
             dbOut = os.path.join(makeDBOpPath, dbName)
-            if os.path.exists(dbOut+'.nal'):
+            if not os.path.exists(dbOut+'.nal'):
                 cmd = "makeblastdb -in " + dbInputFile + " -title " + dbName + " -dbtype nucl -out " + dbOut + " &> /dev/null"
                 dbOutDict[dbInputFile] = dbOut
                 makeDBCmdList.append(cmd)
