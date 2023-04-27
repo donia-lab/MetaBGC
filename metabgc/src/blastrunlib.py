@@ -35,7 +35,7 @@ def MakeDB_BLASTN(dbFileList, existing_map_dict, dbOpPath, searchFileList, blast
             dbOutDict[dbInputFile] = dbOut
             logging.info("Found existing database path:" + dbOut)
 
-        if not os.path.isdir(os.path.basename(dbOut)):
+        if not os.path.isdir(os.path.dirname(dbOut)):
             logging.info("Constructing BLAST DB for:" + dbInputFile)
             makeDBOpPath = os.path.join(dbOpPath, sample_basename)
             os.makedirs(makeDBOpPath, 0o777, True)
