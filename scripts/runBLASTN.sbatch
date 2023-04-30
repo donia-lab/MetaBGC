@@ -35,13 +35,11 @@ mkdir $OP_PATH/scf_match
 makeblastdb -in ${FILENAME} -title ${dbf} -dbtype nucl -parse_seqids -out ${FILENAME}
 
 #IFS='_' read -r -a array <<< "$f"
-
-blastn -num_threads 1 -query ${BINNAME} -db $FILENAME -dust no -max_target_seqs 1 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt "6 sseqid slen sstart send qseqid qlen qstart qend pident evalue" -out ${OP_PATH}/${f}.txt
-
-cut -f1 ${OP_PATH}/${f}.txt > ${OP_PATH}/${f}.IDs.txt
-
 dbf=${dbf%.fasta}
-filterbyname.sh in=$FILENAME out=${OP_PATH}/scf_match/${dbf}_${f} names=${OP_PATH}/${f}.IDs.txt include=t
+
+blastn -num_threads 1 -query ${BINNAME} -db $FILENAME -dust no -max_target_seqs 1 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt "6 sseqid slen sstart send qseqid qlen qstart qend pident evalue" -out ${OP_PATH}/${dbf}_${f}.txt
+cut -f1 ${OP_PATH}/${dbf}_${f}.txt > ${OP_PATH}/${dbf}_${f}.IDs.txt
+filterbyname.sh in=$FILENAME out=${OP_PATH}/scf_match/${dbf}_${f} names=${OP_PATH}/${dbf}_${f}.IDs.txt include=t
 
 #rm -rf ${OP_PATH}/${f}
 
