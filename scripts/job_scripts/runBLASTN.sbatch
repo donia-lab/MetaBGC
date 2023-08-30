@@ -1,20 +1,19 @@
 #!/bin/bash
 
+#SBATCH -o BIN_SCF_BLAST
+#SBATCH -a molbio
+###SBATCH -p donia
+###SBATCH --nodelist della-h13n1
 #SBATCH -N 1 # node count
-#SBATCH -A molbio
-#SBATCH -n 1
-#SBATCH -t 10:00:00
-#SBATCH --mem=10G
-#SBATCH --qos=short
+#SBATCH -c 1
+#SBATCH -t 2:00:00
+#SBATCH --mem=5G
 #SBATCH --mail-type=end
 #SBATCH --mail-user=ab50@princeton.edu
 
 ulimit -s unlimited
-export PATH="/tigress/DONIA/data/donia/abiswas/tools/ncbi-blast-2.9.0+/bin:$PATH"
-Q_FILE=/projects/DONIA/abiswas/MetaBGCRuns/AcbK-homologs/TP_Genes.fasta 
-OP_PATH=/projects/DONIA/abiswas/MetaBGCRuns/AcbK-homologs/search/results
-cd ${OP_PATH}
-
+module load blast/2.10.0
+export PATH="/tigress/DONIA/data/donia/abiswas/tools/bbmap:$PATH"
 echo Running on host `hostname`
 echo Starting Time is `date`
 echo Directory is `pwd`
@@ -22,18 +21,29 @@ starttime=$(date +"%s")
 echo Number of cores assigned is "$SLURM_CPUS_ON_NODE"
 IFS=':' read -r -a FILE_NAMES <<< "$FILES"
 FILENAME=${FILE_NAMES[$SLURM_ARRAY_TASK_ID]}
-# make & move into new directory, and run!
+echo "Searching DB: ${FILENAME}";
+dbf="$(basename -- $FILENAME)";
+dbf=${dbf%.fasta}
 
-f="$(basename -- $FILENAME)";
+IFS=':' read -r -a BIN_NAMES <<< "$BINS"
+BINNAME=${BIN_NAMES[$SLURM_ARRAY_TASK_ID]}
+echo "Searching Query: ${BINNAME}";
+f="$(basename -- $BINNAME)";
 f=${f%.fasta};
-echo "Processing: ${FILENAME}";
 
-#mkdir ${OP_PATH}/${f}
-#makeblastdb -in ${FILENAME} -title ${f} -dbtype nucl -parse_seqids -out ${OP_PATH}/${f}/${f}
+OP_PATH=scf_blast_results
+mkdir $OP_PATH
+mkdir $OP_PATH/scf_match
 
-IFS='_' read -r -a array <<< "$f"
+makeblastdb -in ${FILENAME} -title ${dbf} -dbtype nucl -parse_seqids -out ${FILENAME}
 
-blastn -num_threads 1 -query ${Q_FILE} -db /projects/DONIA/data/synthetic_new/${array[2]}/${f}/${f}-raw-reads-fasta/${f}.fasta -perc_identity 90.0 -max_target_seqs 10000 -outfmt "6 sseqid slen sstart send qseqid qlen qstart qend pident evalue" -out ${OP_PATH}/${f}.txt
+#IFS='_' read -r -a array <<< "$f"
+
+blastn -num_threads 1 -query ${BINNAME} -db $FILENAME -dust no -max_target_seqs 1 -perc_identity 95.0 -qcov_hsp_perc 50 -window_size 11 -outfmt "6 sseqid slen sstart send qseqid qlen qstart qend pident evalue" -out ${OP_PATH}/${f}_${dbf}.txt
+
+cut -f1 ${OP_PATH}/${f}_${dbf}.txt > ${OP_PATH}/${f}_${dbf}.IDs.txt
+
+filterbyname.sh in=$FILENAME out=${OP_PATH}/scf_match/${f}_${dbf}.fasta names=${OP_PATH}/${f}_${dbf}.IDs.txt include=t
 
 #rm -rf ${OP_PATH}/${f}
 

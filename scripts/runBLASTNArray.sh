@@ -36,4 +36,4 @@ if [ $ZBNUMFASTQ -ge 0 ]; then
    sbatch --array=0-$ZBNUMFASTQ runBLASTN.sbatch 
 fi
 
-
+###split max_sample_assemblies.txt max_sample_assemblies.txt_ -d -l 500
