@@ -21,6 +21,7 @@ if __name__ == '__main__':
     for file in rpkm_files:
         if os.path.getsize(file) == 0:
             continue
+        print('Processing:' + file)
         df_file = pd.read_csv(file, sep='\t', header=None)
         sample_name = df_file.iloc[0, 3]
         # Read breath and make dataframe

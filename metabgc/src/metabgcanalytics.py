@@ -166,7 +166,7 @@ def BinSubjectCount(subjectTableAbundance, cohortMetadataFile, output_dir):
                                       (df_subject_bin_counts['Country'] == row['Country']) &
                                       (df_subject_bin_counts['Bodysite'] == row['Bodysite']) &
                                       (df_subject_bin_counts['BodyAggSite'] == row['BodyAggSite']) &
-                                      (df_subject_bin_counts['Subject_Status'] == row['Subject_Status']),bin] = len(bin_ctr)
+                                      (df_subject_bin_counts['Subject_Status'] == row['Subject_Status']), bin] = len(bin_ctr)
 
     cols = list(df_subject_bin_counts.columns)
     cols.remove('Subject_Count')

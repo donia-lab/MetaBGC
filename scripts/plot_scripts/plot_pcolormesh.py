@@ -9,9 +9,24 @@ import pandas as pd
 from matplotlib.colors import ListedColormap
 import seaborn as sns
 from scipy.cluster import hierarchy
+from scipy.cluster.hierarchy import to_tree
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+
+# Function to convert a dendrogram tree to Newick format
+def to_newick(node, parent_dist, leaf_names, newick=''):
+    if node.is_leaf():
+        return f"{leaf_names[node.id]}:{parent_dist - node.dist}{newick}"
+    else:
+        if len(newick) > 0:
+            newick = f"):{parent_dist - node.dist}{newick}"
+        else:
+            newick = ");"
+        newick = to_newick(node.get_left(), node.dist, leaf_names, newick)
+        newick = to_newick(node.get_right(), node.dist, leaf_names, f",{newick}")
+        newick = f"({newick}"
+        return newick
 
 def plot_pca(df_breath, sample_breath_matrix, version):
     pca = PCA()
@@ -63,7 +78,7 @@ def plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, ve
     y = []
     for idx, sample_col in enumerate(df_breath.columns[1:]):
         for cat in df_categories["COG Category"]:
-            cat_genes = df_detailed_gene_annot[df_detailed_gene_annot["COG Category"] == cat]["Logus_tag"].tolist()
+            cat_genes = df_detailed_gene_annot[df_detailed_gene_annot["COG Category"] == cat]["Locus_tag"].tolist()
             cat_sum = 0
             for g_idx, gene in enumerate(df_breath["locus_tag"]):
                 if gene in cat_genes and sample_breath_matrix[idx][g_idx] == 1.0:
@@ -282,29 +297,63 @@ def plot_scatter(df_breath, df_gene_annot, sample_breath_matrix, version):
 
 if __name__ == '__main__':
 
-    working_dir = r'C:\Users\ab50\Documents\data\binning\cEK_Search\pcolormesh'
-    seq_file = os.path.join(working_dir, '2716884990_genes.fasta')
-    version = "15"
-    df_breath_file = os.path.join(working_dir, 'Ga0173608_11_quantified_breath_filtered_LI.csv')
-    gene_annot_file = os.path.join(working_dir, 'broad_gene_annotation_LI_230417.csv')
-    detailed_gene_annot_file = os.path.join(working_dir, 'aaw6732_data_s1.csv')
-    heatmap_plot_file_png = os.path.join(working_dir, 'Ga0173608_11_quantified_breath_filtered_LI_v' + version + '.png')
-    heatmap_plot_file_svg = os.path.join(working_dir, 'Ga0173608_11_quantified_breath_filtered_LI_v' + version + '.svg')
-    heatmap_plot_file_pdf = os.path.join(working_dir, 'Ga0173608_11_quantified_breath_filtered_LI_v' + version + '.pdf')
-    heatmap_plot_file_eps = os.path.join(working_dir, 'Ga0173608_11_quantified_breath_filtered_LI_v' + version + '.eps')
-    dendrogram_plot_file_png = os.path.join(working_dir, 'Ga0173608_11_quantified_breath_filtered_LI_dendrogram_v' + version + '.png')
-    dendrogram_plot_file_eps = os.path.join(working_dir, 'Ga0173608_11_quantified_breath_filtered_LI_dendrogram_v' + version + '.eps')
+    working_dir = r'C:\Users\ab50\Documents\data\DoniaLab\cEK_quantify'
+    seq_file = os.path.join(working_dir, 'Ga0609724_genes.fna')
+    version = "19.1"
+    df_breath_file = os.path.join(working_dir, 'final_data\Ga0609724_quantified_breath_104-samples.txt')
+    #gene_annot_file = os.path.join(working_dir, 'broad_gene_annotation_LI_230417.csv')
+    detailed_gene_annot_file = os.path.join(working_dir, 'Ga0609724_01_Annotations.tsv')
+    sample_ordering_file = os.path.join(working_dir, 'final_data\samples_104_new_names_phyloorder.txt')
+    sample_ordering = True
+    file_prefix = 'Ga0609724_01_quantified_breath_v'
+    file_prefix_dendo = 'Ga0609724_01_quantified_breath_dendrogram_v'
+    file_prefix_tree = 'Ga0609724_01_quantified_breath_tree_v'
+    my_dpi = 300
+    my_linewidth=my_dpi/(1024*32)
+    heatmap_plot_file_png = os.path.join(working_dir, file_prefix + version + '.png')
+    heatmap_plot_file_svg = os.path.join(working_dir, file_prefix + version + '.svg')
+    heatmap_plot_file_pdf = os.path.join(working_dir, file_prefix + version + '.pdf')
+    heatmap_plot_file_eps = os.path.join(working_dir, file_prefix + version + '.eps')
+    dendrogram_plot_file_png = os.path.join(working_dir, file_prefix_dendo + version + '.png')
+    dendrogram_plot_file_eps = os.path.join(working_dir, file_prefix_dendo + version + '.eps')
+    newick_file = os.path.join(working_dir, file_prefix_tree + version + '.newick')
 
     gene_len_dict = {}
+    short_gene_list = []
     for record in SeqIO.parse(seq_file, "fasta"):
         desc_str = record.description
-        gene_name = desc_str.split(' ')[1]
-        gene_len_dict[gene_name] = len(record)
+        gene_name = record.id
+        if len(record) >= 200:
+            gene_len_dict[gene_name] = len(record)
+        else:
+            # print('Short gene: {0}'.format(record.id))
+            short_gene_list.append(gene_name)
 
-    df_breath = pd.read_csv(df_breath_file)
-    df_gene_annot = pd.read_csv(gene_annot_file)
-    df_detailed_gene_annot = pd.read_csv(detailed_gene_annot_file)
+    # Load breath data file
+    df_breath = pd.read_csv(df_breath_file, sep='\t')
 
+    # Load sample ordering and short names file
+    df_sample_order = pd.read_csv(sample_ordering_file, sep='\t')
+    df_sample_order = df_sample_order.sort_values(by="phylo_order")
+    short_sample_name_dict = df_sample_order.set_index("name_path")["new_name"].to_dict()
+
+    # Remove any short genes
+    df_breath = df_breath[~df_breath["locus_tag"].isin(short_gene_list)]
+    # Replace long sample column names with short names
+    # Replace '-' with '_' in column names
+    df_breath.columns = df_breath.columns.str.replace("-", "_")
+    df_breath.columns = df_breath.columns.str.replace(".", "_")
+    df_breath.columns = df_breath.columns.str.replace("+", "_")
+    df_breath = df_breath.rename(columns=short_sample_name_dict)
+
+    # Sort the DataFrame by the start coordinate in the locus_tag (3rd token)
+    df_breath['sort_key'] = df_breath['locus_tag'].apply(lambda x: int(x.split('_')[2]))
+    df_breath = df_breath.sort_values(by='sort_key').drop(columns=['sort_key'])
+
+    # Pivot the table to get sample names as columns
+    # df_breath = df_breath.pivot(index='locus_tag', columns='code', values='breath').reset_index()
+    #df_gene_annot = pd.read_csv(gene_annot_file)
+    df_detailed_gene_annot = pd.read_csv(detailed_gene_annot_file, sep='\t')
 
     # Setup the non-uniform columns based on the length of the genes
     bounds_col = [0]
@@ -341,19 +390,49 @@ if __name__ == '__main__':
     #plot_pca(df_breath, sample_breath_matrix, version)
 
     # Generate scatter plots
-    plot_scatter(df_breath, df_gene_annot, sample_breath_matrix, version)
+    #plot_scatter(df_breath, df_gene_annot, sample_breath_matrix, version)
 
-    plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, version)
+    #plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, version)
 
     # Generate percentile plot
-    plot_percentile(df_breath, sample_breath_matrix, version)
-
+    #plot_percentile(df_breath, sample_breath_matrix, version)
 
     sns_grid = sns.clustermap(sample_breath_matrix, col_cluster=False, cbar=False, method='weighted')
-    # Reordered based on clustered rows
+
+    # Reordered based on clustered rows or reorder based on provided ordering
     clustered_breath_matrix = []
-    for row_idx in sns_grid.dendrogram_row.reordered_ind:
-        clustered_breath_matrix.append(sample_breath_matrix[row_idx])
+    reordered_sample_names = []
+    # If sample_ordering flag is set and sample ordering file is present, load it and apply the ordering
+    if sample_ordering:
+        for index, row in df_sample_order.iterrows():
+            sample_name = row['new_name']
+            row_idx = df_breath.columns.tolist()[1:].index(sample_name)
+            clustered_breath_matrix.append(sample_breath_matrix[row_idx])
+            reordered_sample_names.append(df_breath.columns.tolist()[1:][row_idx])
+    else:
+        for row_idx in sns_grid.dendrogram_row.reordered_ind:
+            clustered_breath_matrix.append(sample_breath_matrix[row_idx])
+            reordered_sample_names.append(df_breath.columns.tolist()[1:][row_idx])
+        # Extract the linkage matrix and print in linkage matrix
+        linkage_matrix = sns_grid.dendrogram_row.linkage
+        # Convert to tree and then to Newick format
+        tree = to_tree(linkage_matrix, rd=False)
+        #leaf_names = [f"Sample{i + 1}" for i in range(len(data))]
+        newick_format = to_newick(tree, tree.dist, reordered_sample_names)
+
+        # Save the Newick string to a file
+        with open(newick_file, "w") as f:
+            f.write(newick_format)
+
+        # Plot the dendrogram separately
+        plt.figure()
+        hierarchy.set_link_color_palette(['m', 'c', 'y', 'k'])
+        fig, axes = plt.subplots(1, 1, figsize=(30, 10), dpi=my_dpi)
+        dn2 = hierarchy.dendrogram(linkage_matrix, labels = df_breath.columns.tolist()[1:], orientation='right')
+        fig.tight_layout()
+        plt.savefig(dendrogram_plot_file_png)
+        plt.savefig(dendrogram_plot_file_eps)
+        plt.close()
 
     # Setup the alternating pattern for the gene map
     gene_map_matrix = []
@@ -371,14 +450,11 @@ if __name__ == '__main__':
     # define the bins and normalize
     bounds = np.linspace(0, 1, N + 1)
     norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
-    my_dpi = 300
-    my_linewidth=my_dpi/(1024*32)
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex='row', figsize=(60, 40), dpi=my_dpi, gridspec_kw={'height_ratios': [60, 1, 1]})
-    fig.tight_layout()
     # Sample heatmap
     colormesh1 = ax1.pcolormesh(bounds_col, bounds_row, clustered_breath_matrix, cmap=cmap, norm=norm, linewidths=0.1)
     ax1.set_yticks(np.arange(len(sns_grid.dendrogram_row.reordered_ind)) + 0.5)
-    ax1.set_yticklabels(sns_grid.dendrogram_row.reordered_ind)
+    ax1.set_yticklabels(reordered_sample_names)
     #colormesh = ax.pcolormesh(bounds2, bounds1, matrix, cmap=cmap, norm=norm, linewidths=my_linewidth, edgecolor='k', antialiased=False)
     #colormesh.set_edgecolor('black')
     # ax.invert_yaxis()
@@ -399,6 +475,7 @@ if __name__ == '__main__':
     colormesh3 = ax3.pcolormesh(bounds_col, [0, 2], [gene_cum_abund_matrix], cmap=cmap3, linewidths=0.1)
     ax3.tick_params(left=False, right=False, labelleft=False,
                     labelbottom=True, bottom=True)
+    fig.tight_layout()
     #ax.set_xticks(bounds2)
     #ax.set_yticks(bounds1)
     #cbar = fig.colorbar(colormesh, ax=ax)
@@ -411,20 +488,23 @@ if __name__ == '__main__':
     plt.close()
 
     # Plot the dendrogram separately
-    Z = hierarchy.linkage(sample_breath_matrix, method='weighted', metric='euclidean')
-    plt.figure()
-    dn = hierarchy.dendrogram(Z)
-    hierarchy.set_link_color_palette(['m', 'c', 'y', 'k'])
-    fig, axes = plt.subplots(1, 1, figsize=(30, 10), dpi=my_dpi)
-    #dn1 = hierarchy.dendrogram(Z, ax=axes[0], above_threshold_color='y',
-    #                           orientation='top')
-    dn2 = hierarchy.dendrogram(Z, ax=axes,
-                               above_threshold_color='#bcbddc',
-                               orientation='right')
-    hierarchy.set_link_color_palette(None)  # reset to default after use
-    plt.savefig(dendrogram_plot_file_png)
-    plt.savefig(dendrogram_plot_file_eps)
-    plt.close()
+    # Z = hierarchy.linkage(sample_breath_matrix, method='weighted', metric='euclidean')
+    # plt.figure()
+    # dn = hierarchy.dendrogram(Z)
+    # hierarchy.set_link_color_palette(['m', 'c', 'y', 'k'])
+    # fig, axes = plt.subplots(1, 1, figsize=(30, 10), dpi=my_dpi)
+    # #dn1 = hierarchy.dendrogram(Z, ax=axes[0], above_threshold_color='y',
+    # #                           orientation='top')
+    # dn2 = hierarchy.dendrogram(Z, ax=axes,
+    #                            above_threshold_color='#bcbddc',
+    #                            orientation='right')
+    # #hierarchy.set_link_color_palette(None)  # reset to default after use
+    # #axes.set_yticks(np.arange(len(sns_grid.dendrogram_row.reordered_ind)) + 0.5)
+    # axes.set_yticklabels(df_breath.columns.tolist()[1:])
+    # fig.tight_layout()
+    # plt.savefig(dendrogram_plot_file_png)
+    # plt.savefig(dendrogram_plot_file_eps)
+    # plt.close()
 
 
 
