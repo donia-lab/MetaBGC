@@ -1,0 +1,78 @@
+# Snakefile
+
+# Define parameters to pass
+N = 1800  # number of splits
+PROT_FAMILY="ere-homologs"
+HIPERF_HMM_DIR = "./ere-homologs/output/build/HiPer_spHMMs"
+SPIT_OUTPUT_DIR = "hmmersearch_splits"
+IDENTIFY_DIR = "./ere-homologs/output/identify_result"
+
+# THe rules to split and run the hmmer searches produce the text files with the merged hmmer records
+localrules: generate_commands, split_commands, merge
+
+rule all:
+    input:
+        "merged.done"
+
+# Step 1: Generate hmmsearch_cmds.txt
+rule generate_commands:
+    output:
+        "hmmsearch_cmds.txt"
+    params:
+        hmm_dir=HIPERF_HMM_DIR,
+        split_outdir=SPIT_OUTPUT_DIR
+    shell:
+        """
+        python /scratch/gpfs/DONIA/abiswas/tools/MetaBGC/parallel_identify/identify_cmds.py {params.hmm_dir} {params.split_outdir}
+        """
+
+# Step 2: Split hmmsearch_cmds.txt into N smaller files
+rule split_commands:
+    input:
+        "hmmsearch_cmds.txt"
+    params:
+        process_counts = N
+    output:
+        expand("hmmersearch_splits/split_{i:04d}.txt", i=range(1, N+1))
+    run:
+        import os
+        process_counts = int(process_counts)
+        os.makedirs("hmmersearch_splits", exist_ok=True)
+        with open(input[0]) as f:
+            lines = [l.strip() for l in f if l.strip()]
+        chunk_size = len(lines) // process_counts + (len(lines) % N > 0)
+        for i in range(N):
+            chunk_lines = lines[i * chunk_size:(i + 1) * chunk_size]
+            if not chunk_lines:
+                break
+            with open(f"hmmersearch_splits/split_{i+1:04d}.txt", "w") as out:
+                out.write("\n".join(chunk_lines) + "\n")
+
+# Step 3: Run each chunk as a SLURM job
+rule run_chunk:
+    input:
+        "hmmersearch_splits/split_{i:04d}.txt"
+    output:
+        "logs/chunk_{i:04d}.done"
+    shell:
+        """
+        mkdir -p logs
+        bash /scratch/gpfs/DONIA/abiswas/tools/MetaBGC/parallel_identify/run_commands.sh {input}
+        touch {output}
+        """
+
+# Step 4: Merge once all chunks complete
+rule merge:
+    input:
+        expand("logs/chunk_{i:04d}.done", i=range(1, N+1))
+    params:
+        split_outdir=SPIT_OUTPUT_DIR
+        identify_directory=IDENTIFY_DIR
+        prot_family_name=PROT_FAMILY
+    output:
+        "merged.done"
+    shell:
+        ""
+        python parseHMM.py {params.prot_family_name} {params.split_outdir} {params.identify_directory}
+        touch {output}
+        """

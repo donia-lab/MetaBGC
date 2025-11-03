@@ -28,7 +28,7 @@ def to_newick(node, parent_dist, leaf_names, newick=''):
         newick = f"({newick}"
         return newick
 
-def plot_pca(df_breath, sample_breath_matrix, version):
+def plot_pca(df_breath, sample_breath_matrix, version, working_dir):
     pca = PCA()
     pipe = Pipeline([('scaler', StandardScaler()), ('pca', pca)])
     X = np.array(sample_breath_matrix)
@@ -47,7 +47,7 @@ def plot_pca(df_breath, sample_breath_matrix, version):
     plt.close()
 
 
-def plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, version):
+def plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, version, working_dir):
 
     x1 = []
     x2 = []
@@ -68,22 +68,22 @@ def plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, ve
     plt.savefig(bar_file_eps)
     plt.close()
 
-    df_categories = df_detailed_gene_annot.groupby(by=["COG Category"])['COG Category'].count().reset_index(name='n_category')
+    df_categories = df_detailed_gene_annot.groupby(by=["COG leter"])['COG leter'].count().reset_index(name='n_category')
     df_categories = df_categories.sort_values("n_category", ascending=True)
     # df_categories.drop(df_categories[df_categories['COG Category'] == 'none'].index, inplace=True)
     x_all = {}
-    for cat in df_categories["COG Category"]:
+    for cat in df_categories["COG leter"]:
         x_all[cat] = []
     x_all['Not Detected'] = []
     y = []
     for idx, sample_col in enumerate(df_breath.columns[1:]):
-        for cat in df_categories["COG Category"]:
-            cat_genes = df_detailed_gene_annot[df_detailed_gene_annot["COG Category"] == cat]["Locus_tag"].tolist()
+        for cat in df_categories["COG leter"]:
+            cat_genes = df_detailed_gene_annot[df_detailed_gene_annot["COG leter"] == cat]["Locus_tag"].tolist()
             cat_sum = 0
             for g_idx, gene in enumerate(df_breath["locus_tag"]):
                 if gene in cat_genes and sample_breath_matrix[idx][g_idx] == 1.0:
                     cat_sum = cat_sum + 1
-            cat_pct = cat_sum / df_categories[df_categories['COG Category'] == cat]['n_category'].iloc[0] * 100.0
+            cat_pct = cat_sum / df_categories[df_categories['COG leter'] == cat]['n_category'].iloc[0] * 100.0
             x_all[cat].append(cat_sum)
         x_all['Not Detected'].append(len(sample_breath_matrix[idx]) - sum(sample_breath_matrix[idx]))
         y.append(idx)
@@ -105,7 +105,7 @@ def plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, ve
                       legend=False, figsize=(40, 30))
     ax.set_xlabel("# of Genes", fontsize="30")
     ax.set_ylabel("Genomes", fontsize="30")
-    labels_legend = df_categories["COG Category"].tolist()
+    labels_legend = df_categories["COG leter"].tolist()
     labels_legend.append('Not Detected')
     ax.legend(labels=labels_legend, fontsize="20", loc='center left', bbox_to_anchor=(1, 0.5))
     plt.tight_layout()
@@ -145,7 +145,7 @@ def plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, ve
                 e = 0
             else:
                 e = -p * math.log2(p) - (1-p) * math.log2(1-p)
-            f_out.write(df_breath['locus_tag'][idx_1] + ',' + str(sum_genomes) + ',' + str(e) + '\n')
+            f_out.write(df_breath['locus_tag'].iloc[idx_1] + ',' + str(sum_genomes) + ',' + str(e) + '\n')
             y.append(idx_1)
             x.append(e)
     x.sort()
@@ -157,7 +157,7 @@ def plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, ve
     plt.close()
 
 
-def plot_percentile(df_breath, sample_breath_matrix, version):
+def plot_percentile(df_breath, sample_breath_matrix, version, working_dir):
     x = np.arange(0, 1, 0.1)
     y = []
     # Loop over each gene
@@ -195,7 +195,7 @@ def plot_percentile(df_breath, sample_breath_matrix, version):
     plt.close()
 
 
-def plot_scatter(df_breath, df_gene_annot, sample_breath_matrix, version):
+def plot_scatter(df_breath, df_gene_annot, sample_breath_matrix, version, working_dir):
     x = []
     y = []
     for idx, sample_col in enumerate(df_breath.columns[1:]):
@@ -298,25 +298,26 @@ def plot_scatter(df_breath, df_gene_annot, sample_breath_matrix, version):
 if __name__ == '__main__':
 
     working_dir = r'C:\Users\ab50\Documents\data\DoniaLab\cEK_quantify'
+    output_dir = os.path.join(working_dir, 'output')
     seq_file = os.path.join(working_dir, 'Ga0609724_genes.fna')
-    version = "19.1"
-    df_breath_file = os.path.join(working_dir, 'final_data\Ga0609724_quantified_breath_104-samples.txt')
+    version = "20"
+    df_breath_file = os.path.join(working_dir, 'sample_105_data\Ga0609724_genes_quantified_breath_n105.csv')
     #gene_annot_file = os.path.join(working_dir, 'broad_gene_annotation_LI_230417.csv')
-    detailed_gene_annot_file = os.path.join(working_dir, 'Ga0609724_01_Annotations.tsv')
-    sample_ordering_file = os.path.join(working_dir, 'final_data\samples_104_new_names_phyloorder.txt')
-    sample_ordering = True
+    detailed_gene_annot_file = os.path.join(working_dir, 'Ga0609724_01_Annotations_v2.tsv')
+    sample_ordering_file = os.path.join(working_dir, 'sample_105_data\cEK_heatmap_samples_name.txt')
+    sample_ordering = False
     file_prefix = 'Ga0609724_01_quantified_breath_v'
     file_prefix_dendo = 'Ga0609724_01_quantified_breath_dendrogram_v'
     file_prefix_tree = 'Ga0609724_01_quantified_breath_tree_v'
     my_dpi = 300
     my_linewidth=my_dpi/(1024*32)
-    heatmap_plot_file_png = os.path.join(working_dir, file_prefix + version + '.png')
-    heatmap_plot_file_svg = os.path.join(working_dir, file_prefix + version + '.svg')
-    heatmap_plot_file_pdf = os.path.join(working_dir, file_prefix + version + '.pdf')
-    heatmap_plot_file_eps = os.path.join(working_dir, file_prefix + version + '.eps')
-    dendrogram_plot_file_png = os.path.join(working_dir, file_prefix_dendo + version + '.png')
-    dendrogram_plot_file_eps = os.path.join(working_dir, file_prefix_dendo + version + '.eps')
-    newick_file = os.path.join(working_dir, file_prefix_tree + version + '.newick')
+    heatmap_plot_file_png = os.path.join(output_dir, file_prefix + version + '.png')
+    heatmap_plot_file_svg = os.path.join(output_dir, file_prefix + version + '.svg')
+    heatmap_plot_file_pdf = os.path.join(output_dir, file_prefix + version + '.pdf')
+    heatmap_plot_file_eps = os.path.join(output_dir, file_prefix + version + '.eps')
+    dendrogram_plot_file_png = os.path.join(output_dir, file_prefix_dendo + version + '.png')
+    dendrogram_plot_file_eps = os.path.join(output_dir, file_prefix_dendo + version + '.eps')
+    newick_file = os.path.join(output_dir, file_prefix_tree + version + '.newick')
 
     gene_len_dict = {}
     short_gene_list = []
@@ -330,20 +331,17 @@ if __name__ == '__main__':
             short_gene_list.append(gene_name)
 
     # Load breath data file
-    df_breath = pd.read_csv(df_breath_file, sep='\t')
+    df_breath = pd.read_csv(df_breath_file, sep=',')
 
     # Load sample ordering and short names file
     df_sample_order = pd.read_csv(sample_ordering_file, sep='\t')
-    df_sample_order = df_sample_order.sort_values(by="phylo_order")
+    if sample_ordering:
+        df_sample_order = df_sample_order.sort_values(by="phylo_order")
     short_sample_name_dict = df_sample_order.set_index("name_path")["new_name"].to_dict()
 
     # Remove any short genes
     df_breath = df_breath[~df_breath["locus_tag"].isin(short_gene_list)]
     # Replace long sample column names with short names
-    # Replace '-' with '_' in column names
-    df_breath.columns = df_breath.columns.str.replace("-", "_")
-    df_breath.columns = df_breath.columns.str.replace(".", "_")
-    df_breath.columns = df_breath.columns.str.replace("+", "_")
     df_breath = df_breath.rename(columns=short_sample_name_dict)
 
     # Sort the DataFrame by the start coordinate in the locus_tag (3rd token)
@@ -390,12 +388,12 @@ if __name__ == '__main__':
     #plot_pca(df_breath, sample_breath_matrix, version)
 
     # Generate scatter plots
-    #plot_scatter(df_breath, df_gene_annot, sample_breath_matrix, version)
+    #plot_scatter(df_breath, df_detailed_gene_annot, sample_breath_matrix, version, output_dir)
 
-    #plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, version)
+    plot_stacked_bar(df_breath, df_detailed_gene_annot, sample_breath_matrix, version, output_dir)
 
     # Generate percentile plot
-    #plot_percentile(df_breath, sample_breath_matrix, version)
+    plot_percentile(df_breath, sample_breath_matrix, version, output_dir)
 
     sns_grid = sns.clustermap(sample_breath_matrix, col_cluster=False, cbar=False, method='weighted')
 
