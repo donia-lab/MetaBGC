@@ -73,6 +73,6 @@ rule merge:
         "merged.done"
     shell:
         ""
-        python parseHMM.py {params.prot_family_name} {params.split_outdir} {params.identify_directory}
+        python /scratch/gpfs/DONIA/abiswas/tools/MetaBGC/parallel_identify/parseHMM.py {params.prot_family_name} {params.split_outdir} {params.identify_directory}
         touch {output}
         """
