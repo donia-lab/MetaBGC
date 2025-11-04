@@ -24,7 +24,7 @@ if len(sys.argv) > 3:
                         f_out.write('hmmsearch --cpu 1 --F1 0.02 --F2 0.02 --F3 0.02 --tblout ' + output_filepath + ' ' + hmm_filepath + ' ' + fa_filepath + ' > /dev/null\n')
     # Create the splits
     os.makedirs("hmmersearch_splits", exist_ok=True)
-    with open(input[0]) as f:
+    with open('hmmsearch_cmds.txt', 'r') as f:
         lines = [l.strip() for l in f if l.strip()]
     chunk_size = len(lines) // process_count + (len(lines) % process_count > 0)
     for i in range(process_count):
