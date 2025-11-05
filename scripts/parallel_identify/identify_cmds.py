@@ -30,9 +30,11 @@ if len(sys.argv) > 3:
     for i in range(process_count):
         chunk_lines = lines[i * chunk_size:(i + 1) * chunk_size]
         if not chunk_lines:
-            break
-        with open(f"hmmersearch_splits/split_{i + 1:04d}.txt", "w") as out:
-            out.write("\n".join(chunk_lines) + "\n")
+            with open(f"hmmersearch_splits/split_{i + 1:04d}.txt", "w") as out:
+                out.write("echo No Commands \n")
+        else:
+            with open(f"hmmersearch_splits/split_{i + 1:04d}.txt", "w") as out:
+                out.write("\n".join(chunk_lines) + "\n")
 else:
    print("Not all parameters provided. Three parameters are required. The directory with " + \
           "spHMM models, the output directory of the search results, and the number od splits.")
