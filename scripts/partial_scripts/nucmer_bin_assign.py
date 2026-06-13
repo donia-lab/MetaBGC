@@ -63,6 +63,7 @@ if __name__ == '__main__':
 
     # Load read counts
     read_length = 100.0
+    number_of_reads = 20000000
     contig_read_count_file = os.path.join(base_dir,sample_name,sample_name + '_abundance.csv')
     contig_read_counts = {}
     with open(contig_read_count_file , 'r') as f:
@@ -79,6 +80,7 @@ if __name__ == '__main__':
     # Load sequence length metadata
     ref_len_dict = {}
     ref_coverage_dict = {}
+    ref_count_ratio = {}
     for ref_file in os.listdir(ref_genomes_dir):
         ref_file_path = os.path.join(ref_genomes_dir,ref_file)
         ref_total_len = 0
@@ -87,6 +89,7 @@ if __name__ == '__main__':
             ref_total_len = ref_total_len + len(record)
             if record.id in contig_read_counts:
                 ref_total_read_count = ref_total_read_count + contig_read_counts[record.id]
+        ref_count_ratio[os.path.splitext(ref_file)[0]] = ref_total_read_count / number_of_reads
         ref_coverage_dict[os.path.splitext(ref_file)[0]] = ref_total_read_count*read_length / ref_total_len
         ref_len_dict[os.path.splitext(ref_file)[0]] = ref_total_len
 

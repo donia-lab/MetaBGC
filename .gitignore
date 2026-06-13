@@ -3,9 +3,8 @@
 .git
 .idea
 metabgc/test/AbcK/*
-metabgc/test/OxyN_Toy_Build/
-metabgc/test/OxyN_Toy_Build.zip
-metabgc/test/.Rhistory
+metabgc/test/AbcK_2/*
+metabgc/test/RdhA/*
 metabgc/metadata_donia
 metabgc/**/__pycache__
 metabgc/__pycache__

@@ -4,6 +4,7 @@ from metabgc.src.blastrunlib import *
 import metabgc.src.createsphmms as createhmm
 import metabgc.src.evaluate_sphmms as evaluate
 import os
+import logging
 
 def ungappedseqsearch(reference_str, query_str):
     for i in range(0, len(reference_str)):
@@ -158,6 +159,7 @@ def mbgcbuild(prot_alignment, prot_family_name, cohort_name,
         secs = int(timeTaken) % 60
         print("\nTotal time taken : " + str(mins) + " mins " + str(secs) + " seconds")
         return hp_hmm_directory
-    except:
+    except Exception as e:
+        logging.exception(e)
         print("Metabgc-build has failed. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
         exit()

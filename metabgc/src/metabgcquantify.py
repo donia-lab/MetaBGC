@@ -73,7 +73,7 @@ def mbgcquantify(identify_fasta, prot_family_name, cohort_name, nucl_seq_directo
 
 			blastCount = combine_blast_results(blastn_search_directory, combinedBLASTFile, cohort_name)
 			if blastCount == 0:
-				print("Metabgc-quantify could not find any reads during quanify BLAST search.")
+				print("Metabgc-quantify could not find any reads during quantify BLAST search.")
 			else:
 				print("Metabgc-quantify found " + str(blastCount) + " BLAST hits.")
 			create_clustering_file(combinedBLASTFile, abundFile, abundWideFile)

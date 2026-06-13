@@ -95,7 +95,7 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory, prot_seq_dire
                 for filename in os.listdir(sphmm_directory):
                     fileBase = Path(filename).resolve().stem
                     if filename.endswith(".hmm"):
-                        hmmInterval = fileBase.split("__")[2]
+                        hmmInterval = fileBase.split('__')[-1]
                         hmmfilename = os.path.join(sphmm_directory, filename)
                         RunPCHMMDirectoryParallel(prot_seq_directory, hmmfilename, cohort_name, prot_family_name, "30_10",
                                                 hmmInterval,

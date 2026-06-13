@@ -35,16 +35,19 @@ def MakeDB_BLASTN(dbFileList, existing_map_dict, dbOpPath, searchFileList, blast
             dbOutDict[dbInputFile] = dbOut
             logging.info("Found existing database path:" + dbOut)
 
-        if not os.path.isfile(dbOut):
+        if not os.path.isdir(os.path.dirname(dbOut)):
             logging.info("Constructing BLAST DB for:" + dbInputFile)
-            makeDBOpPath = dbOpPath + os.sep + sample_basename
+            makeDBOpPath = os.path.join(dbOpPath, sample_basename)
             os.makedirs(makeDBOpPath, 0o777, True)
             dbName = os.path.splitext(sample_basename)[0]
-            dbOut = makeDBOpPath + os.sep + dbName
-            cmd = "makeblastdb -in " + dbInputFile + " -title " + dbName + " -dbtype nucl -out " + dbOut
-            dbOutDict[dbInputFile] = dbOut
-            makeDBCmdList.append(cmd)
-            logging.info(cmd)
+            dbOut = os.path.join(makeDBOpPath, dbName)
+            if not os.path.exists(dbOut+'.nal') or not os.path.exists(dbOut+'.nhr'):
+                cmd = "makeblastdb -in " + dbInputFile + " -title " + dbName + " -dbtype nucl -out " + dbOut + " &> /dev/null"
+                dbOutDict[dbInputFile] = dbOut
+                makeDBCmdList.append(cmd)
+                logging.info(cmd)
+            else:
+                logging.info("Found existing database path:" + dbOut)
     if makeDBCmdList:
         invoke_producer_consumer(makeDBCmdList, ncpus - 1)
     logging.info("Done creating BLAST databases if any were needed.")
@@ -94,7 +97,7 @@ def RunPCMakeDBandBlastN(dbDir, existingDbDirMapFile, queryFile, blastCmdString,
                 outFileList.append(outputFilePath)
 
     logging.info("Created search list. # of BLAST searches:" + str(len(outFileList)))
-    MakeDB_BLASTN(dbFileList,existing_map_dict,
+    MakeDB_BLASTN(dbFileList, existing_map_dict,
                   ouputDir, searchFileList, blastCmdString, blastParamStr, outFileList,ncpus)
 
 """

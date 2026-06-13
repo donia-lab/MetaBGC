@@ -1,7 +1,8 @@
-Click
+click
 numpy
 pytest
 pandas
 matplotlib
-biopython >= 1.72, < 1.78
+biopython
 scikit_learn
+scipy

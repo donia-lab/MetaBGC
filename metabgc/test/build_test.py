@@ -18,7 +18,7 @@ def test_GenerateSpHMM():
     build.gensphmmfiles(prot_family_name, prot_aln_file, tp_prot_file, hmm_directory, gene_pos_file, gene_pos_file_aa)
 
 
-def test_evaluate_sphmm():
+def test_evaluate_sphmm_1():
     HMMRunFile = "AbcK/data/CombinedHmmSearch.txt"
     BLAST_TP_NoCov_File = "AbcK/data/CombinedBLASTSearch.txt"
     GeneIntervalPosFile = "AbcK/output/build/Gene_Interval_Pos.txt"
@@ -33,3 +33,20 @@ def test_evaluate_sphmm():
                              F1_Threshold,
                              HMMOutDir,
                              HMMHighPerfOutDir)
+
+def test_evaluate_sphmm_2():
+    HMMRunFile = "RdhA/build/CombinedHmmSearch.txt"
+    BLAST_TP_NoCov_File = "RdhA/build/CombinedBLASTSearch.txt"
+    GeneIntervalPosFile = "RdhA/build/Gene_Interval_Pos.txt"
+    HMM_Model_Name = 'RdhA'
+    F1_Threshold = 0.50
+    HMMOutDir = "RdhA/build/spHMMs"
+    HMMHighPerfOutDir = "RdhA/build/HiPer_spHMMs"
+    evaluate.evaluate_sphmms(HMMRunFile,
+                             BLAST_TP_NoCov_File,
+                             GeneIntervalPosFile,
+                             HMM_Model_Name,
+                             F1_Threshold,
+                             HMMOutDir,
+                             HMMHighPerfOutDir)
+

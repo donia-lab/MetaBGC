@@ -166,7 +166,7 @@ def BinSubjectCount(subjectTableAbundance, cohortMetadataFile, output_dir):
                                       (df_subject_bin_counts['Country'] == row['Country']) &
                                       (df_subject_bin_counts['Bodysite'] == row['Bodysite']) &
                                       (df_subject_bin_counts['BodyAggSite'] == row['BodyAggSite']) &
-                                      (df_subject_bin_counts['Subject_Status'] == row['Subject_Status']),bin] = len(bin_ctr)
+                                      (df_subject_bin_counts['Subject_Status'] == row['Subject_Status']), bin] = len(bin_ctr)
 
     cols = list(df_subject_bin_counts.columns)
     cols.remove('Subject_Count')
@@ -560,6 +560,7 @@ def mbgcanalytics(metabgc_op_dir,cohort_metadata_file,assembly_metadata_file,out
 
         #Sample abundance pivot table
         SampleStacked(sampleTableAbundance, cohort_metadata_file, output_dir)
-    except:
+    except Exception as e:
+        logging.exception(e)
         print("Metabgc-analytics has failed. Please check your paths are correct and contact support on : https://github.com/donia-lab/MetaBGC")
         exit()
