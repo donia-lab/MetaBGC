@@ -135,6 +135,7 @@ def mbgcidentify(sphmm_directory, cohort_name, nucl_seq_directory, prot_seq_dire
         else:
             print("Metabgc-identify is returning the existing identified reads found.")
         return multiFastaFile
-    except:
-        print("Metabgc-identify has failed. Please check your inputs and contact support on : https://github.com/donia-lab/MetaBGC")
+    except Exception as e:
+        logging.exception(e)
+        print("Metabgc-identify has failed. Please check your inputs, log and contact support on : https://github.com/donia-lab/MetaBGC")
         exit()

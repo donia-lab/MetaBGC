@@ -10,7 +10,7 @@ from metabgc.src.metabgcanalytics import mbgcanalytics
 from metabgc.src.metabgcsynthesize import mbgcsynthesize
 from metabgc.src.metabgcfindTP import mbgcfindtp
 
-__version__ = "2.1.1"
+__version__ = "2.1.2"
 
 @click.group()
 def cli():
