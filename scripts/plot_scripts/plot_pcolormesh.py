@@ -298,19 +298,21 @@ def plot_scatter(df_breath, df_gene_annot, sample_breath_matrix, version, workin
 if __name__ == '__main__':
 
     working_dir = r'C:\Users\ab50\Documents\data\DoniaLab\cEK_quantify'
-    output_dir = os.path.join(working_dir, 'output')
-    seq_file = os.path.join(working_dir, 'Ga0609724_genes.fna')
+    reference_name = 'Ga0684294'
+    output_dir = os.path.join(working_dir, f"{reference_name}_reference_plot")
+    seq_file = os.path.join(working_dir, f"{reference_name}_plot\{reference_name}_genes.fna")
     version = "20"
-    df_breath_file = os.path.join(working_dir, 'sample_105_data\Ga0609724_genes_quantified_breath_n105.csv')
+    df_breath_file = os.path.join(working_dir, f"{reference_name}_plot\{reference_name}_genes_quantified_breath.csv")
     #gene_annot_file = os.path.join(working_dir, 'broad_gene_annotation_LI_230417.csv')
-    detailed_gene_annot_file = os.path.join(working_dir, 'Ga0609724_01_Annotations_v2.tsv')
-    sample_ordering_file = os.path.join(working_dir, 'sample_105_data\cEK_heatmap_samples_name.txt')
-    sample_ordering = False
-    file_prefix = 'Ga0609724_01_quantified_breath_v'
-    file_prefix_dendo = 'Ga0609724_01_quantified_breath_dendrogram_v'
-    file_prefix_tree = 'Ga0609724_01_quantified_breath_tree_v'
+    detailed_gene_annot_file = os.path.join(working_dir, f"{reference_name}_plot\{reference_name}_01_Annotations.tsv")
+    sample_ordering_file = os.path.join(working_dir, f"{reference_name}_plot\cEK_heatmap_samples_name.txt")
+    sample_ordering = True
+    file_prefix = f"{reference_name}_01_quantified_breath_v"
+    file_prefix_dendo = f"{reference_name}_01_quantified_breath_dendrogram_v"
+    file_prefix_tree = f"{reference_name}_01_quantified_breath_tree_v"
     my_dpi = 300
     my_linewidth=my_dpi/(1024*32)
+    os.makedirs(output_dir, exist_ok=True)
     heatmap_plot_file_png = os.path.join(output_dir, file_prefix + version + '.png')
     heatmap_plot_file_svg = os.path.join(output_dir, file_prefix + version + '.svg')
     heatmap_plot_file_pdf = os.path.join(output_dir, file_prefix + version + '.pdf')
@@ -318,6 +320,7 @@ if __name__ == '__main__':
     dendrogram_plot_file_png = os.path.join(output_dir, file_prefix_dendo + version + '.png')
     dendrogram_plot_file_eps = os.path.join(output_dir, file_prefix_dendo + version + '.eps')
     newick_file = os.path.join(output_dir, file_prefix_tree + version + '.newick')
+    sample_name_order_file = os.path.join(output_dir, file_prefix + version + '_sample_order.csv')
 
     gene_len_dict = {}
     short_gene_list = []
@@ -336,7 +339,8 @@ if __name__ == '__main__':
     # Load sample ordering and short names file
     df_sample_order = pd.read_csv(sample_ordering_file, sep='\t')
     if sample_ordering:
-        df_sample_order = df_sample_order.sort_values(by="phylo_order")
+        df_sample_order['sample_order'] = df_sample_order['sample_order'].astype(int)
+        df_sample_order = df_sample_order.sort_values(by="sample_order")
     short_sample_name_dict = df_sample_order.set_index("name_path")["new_name"].to_dict()
 
     # Remove any short genes
@@ -351,7 +355,8 @@ if __name__ == '__main__':
     # Pivot the table to get sample names as columns
     # df_breath = df_breath.pivot(index='locus_tag', columns='code', values='breath').reset_index()
     #df_gene_annot = pd.read_csv(gene_annot_file)
-    df_detailed_gene_annot = pd.read_csv(detailed_gene_annot_file, sep='\t')
+    if os.path.exists(detailed_gene_annot_file):
+        df_detailed_gene_annot = pd.read_csv(detailed_gene_annot_file, sep='\t')
 
     # Setup the non-uniform columns based on the length of the genes
     bounds_col = [0]
@@ -411,6 +416,9 @@ if __name__ == '__main__':
         for row_idx in sns_grid.dendrogram_row.reordered_ind:
             clustered_breath_matrix.append(sample_breath_matrix[row_idx])
             reordered_sample_names.append(df_breath.columns.tolist()[1:][row_idx])
+        # Write the clustered ordering
+        with open(sample_name_order_file, 'w') as file:
+            file.write('\n'.join(reordered_sample_names))
         # Extract the linkage matrix and print in linkage matrix
         linkage_matrix = sns_grid.dendrogram_row.linkage
         # Convert to tree and then to Newick format

@@ -1,0 +1,47 @@
+topology: linear
+comment: 'AAC6__III-homologs'
+consortium: 'PURC'
+sra:
+    - accession: 'ERR2193926'
+tp_assembly: true
+organism:
+    genus_species: 'Escherichia'
+    strain: 'replaceme'
+contact_info:
+    last_name: 'Mohamed'
+    first_name: 'Donia'
+    email: 'mdonia@gmail.com'
+    organization: 'Princeton University'
+    department: 'Department Melecular Biology'
+    phone: '555-555-5555'
+    street: '1234 Main St'
+    city: 'Docker'
+    postal_code: '12345'
+    country: 'Lappland'
+    
+authors:
+    -     author:
+            first_name: 'Mohamed'
+            last_name: 'Donia'
+    -     author:
+            first_name: 'Paola'
+            last_name: 'Estrada'
+bioproject: 'PRJNA9999999'
+biosample: 'SAMN99999999'      
+# -- Locus tag prefix - optional. Limited to 9 letters. Unless the locus tag prefix was officially assigned by NCBI, ENA, or DDBJ, it will be replaced upon submission of the annotation to NCBI and is therefore temporary and not to be used in publications. If not provided, pgaptmp will be used.
+locus_tag_prefix: 'tmp'
+publications:
+    - publication:
+        pmid: 16397293
+        title: 'TBD'
+        status: published  # this is enum: controlled vocabulary
+        authors:
+            - author:
+                first_name: 'Mohamed'
+                last_name: 'Donia'
+                middle_initial: 'T'
+            - author:
+                  first_name: 'Catherine'
+                  last_name: 'Day'
+                  middle_initial: ''
+

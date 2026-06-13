@@ -1,0 +1,13 @@
+name: pgap_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - biopython
+  - pip
+  - pip:
+      # Install mpi4py via pip so it links against the system MPI
+      # loaded by "module load openmpi" rather than a conda-bundled MPI.
+      # Build flag tells pip to compile from source against the active mpicc.
+      - mpi4py
