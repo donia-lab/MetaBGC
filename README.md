@@ -32,7 +32,8 @@ These instructions will get you setup to run MetaBGC on your local Linux or Appl
 
 MetaBGC can be installed using Bioconda too. The following commands install the dependencies and then install PyPI metabgc from PyPI:
 ```
-conda create --name metabgc_env python=3.7
+conda create --name metabgc_env python=3.11
+conda activate metabgc_env
 conda install -c bioconda muscle=3.8.31
 conda install -c bioconda hmmer=3.1b2 cd-hit=4.8.1-0 blast=2.10.1-0 emboss=6.5.7
 pip install metabgc
@@ -42,24 +43,25 @@ pip install metabgc
 To install metabgc using Docker, please install Docker for your operating system. Once Docker is up follow the steps below:
 
 ### Download Source Code
-Docker container files are provided for releases > 2.0.0. Go to the latest release on GitHub and download the source code tar ball and uncompress it.
+Clone the repository (or download and extract a release tarball from GitHub).
 ```
-wget https://github.com/donia-lab/MetaBGC/archive/2.0.0.tar.gz
-tar -zxvf 2.0.0.tar.gz
+git clone https://github.com/donia-lab/MetaBGC.git
+cd MetaBGC
 ```
 
 ### Build the Docker Image
-Change to the source code directory and build the container. Then you can run the container from commandline to view metabgc help.
+The `Dockerfile` at the repository root is self-contained: it installs the required
+bioinformatics tool-chain (MUSCLE, HMMER, BLAST+, CD-HIT, EMBOSS, ART) and the
+`metabgc` package. Build it and view the help:
 ```
-cd 2.0.0/MetaBGC-Development
 docker build --tag metabgc .
+docker run --rm metabgc --help
 ```
 
 ### Run from the Docker Image
-A script ```docker/metabgc_docker_run``` can be used to run metabgc using the container from commandline with bash shell. The first 2 parameters to the script are the input and output directories for the container to use. The remaining parameters are standard metabgc inputs.
+A script ```docker-metabgc/metabgc_docker_run``` can be used to run metabgc using the container from commandline with bash shell. The first 2 parameters to the script are the input and output directories for the container to use. The remaining parameters are standard metabgc inputs.
 ```
-cd docker
-metabgc_docker_run /metabgc-test/input /metabgc-test/output search --sphmm_directory /input/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory /input/nucl --seq_fmt FASTA --pair_fmt interleaved --output_directory /output --cpu 1
+docker-metabgc/metabgc_docker_run /metabgc-test/input /metabgc-test/output search --sphmm_directory /input/build/HiPer_spHMMs --prot_family_name Cyclase_OxyN --cohort_name OxyN --nucl_seq_directory /input/nucl --seq_fmt FASTA --pair_fmt interleaved --output_directory /output --cpu 1
 ```
 
 The docker run can be directly on Windows by running docker run:
@@ -74,7 +76,7 @@ docker run --volume C:\metabgc-input:/input:ro --volume C:\metabgc-output:/outpu
 
 To run MetaBGC, please make sure you have the following dependencies installed and in PATH.
 
-* [Python](https://www.python.org/downloads/) (version >= 3.6)
+* [Python](https://www.python.org/downloads/) (version >= 3.8)
 * [MUSCLE 3.8.31](https://www.drive5.com/muscle/downloads.htm)
 * [HMMER](http://hmmer.org/download.html) version 3.1b2
 * [CD-HIT-EST](https://github.com/weizhongli/cdhit/releases) version 4.8.1-0
@@ -88,10 +90,38 @@ All general purpose users should obtain the package from PyPI:
 ```
 pip install metabgc
 ```
-All the internal python dependencies are specified in the setup will be installed. Help on the commandline parameters is provided.
+All the internal python dependencies are specified in `pyproject.toml` and will be installed automatically. Help on the commandline parameters is provided.
 ```
 metabgc --help
+metabgc --version
 ```
+
+### Installing from Source (for Development)
+
+The project uses a standard [PEP 621](https://peps.python.org/pep-0621/) `pyproject.toml` build. To install an editable copy from a clone of this repository:
+```
+git clone https://github.com/donia-lab/MetaBGC.git
+cd MetaBGC
+python -m pip install -e ".[dev]"
+```
+
+To build the distribution artifacts (sdist + wheel) for publishing to PyPI:
+```
+python -m build
+twine upload dist/*
+```
+
+### Running the Tests
+
+Unit tests use `pytest` and are self-contained (they do not require the external
+bioinformatics binaries or the large example datasets):
+```
+python -m pip install -e ".[test]"
+pytest
+```
+The heavier integration tests in `metabgc/test/*_test.py` are skipped automatically
+unless their example datasets (the `AbcK` / `RdhA` / `OxyN` archives in that folder)
+are extracted and the external tools are on `PATH`.
 
 ## Quick Start
 The quick start guide provides 2 sample datasets for building a new database and searching an existing database. The example commands are provided to run the processes and can be used as a template.

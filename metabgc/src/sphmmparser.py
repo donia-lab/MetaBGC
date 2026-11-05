@@ -22,7 +22,7 @@ class readID():
 		self.interval = interval
 
 def parseHMM(hmmFile, hmmDir, sampleType, sampleID, protType, window, interval):
-	with open(os.path.join(hmmDir,hmmFile), 'rU') as handle:
+	with open(os.path.join(hmmDir,hmmFile), 'r') as handle:
 		results_dict = {}
 		try:
 			for record in SearchIO.parse(handle, 'hmmer3-tab'):
@@ -44,13 +44,12 @@ def parseHMM(hmmFile, hmmDir, sampleType, sampleID, protType, window, interval):
 
 def createPandaDF(cyclase_dict, outdir, outfile):
 	os.chdir(outdir)
-	outputDF = pd.DataFrame()
+	columns = ["readID", "sampleType", "sampleID", "protType", "HMMScore", "window", "interval"]
 	if len(cyclase_dict) != 0:  # check if counter dict is not empty to add to df
 		df = [(k, v.sampleType, v.sampleID, v.protType, v.bitscore, v.window, v.interval) for k, v in
 			  list(cyclase_dict.items())]  # convert dictionary to list
 
-		outputDF = outputDF.append(df)  # append list to our initalized dataframe
-		outputDF.columns = ["readID", "sampleType", "sampleID", "protType", "HMMScore", "window","interval"]  # rename column names
+		outputDF = pd.DataFrame(df, columns=columns)
 		sorted_outputDF = outputDF.sort_values(by=['HMMScore'],
 											   ascending=[False])  # sort in decending order by Hit.counts column
 		sorted_outputDF.to_csv(outfile, index=False, sep='\t', header=False)

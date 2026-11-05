@@ -2,6 +2,7 @@ import click
 import logging
 from time import time
 import os
+from metabgc import __version__
 from metabgc.src.metabgcbuild import mbgcbuild
 from metabgc.src.metabgcidentify import mbgcidentify
 from metabgc.src.metabgcquantify import mbgcquantify
@@ -10,9 +11,8 @@ from metabgc.src.metabgcanalytics import mbgcanalytics
 from metabgc.src.metabgcsynthesize import mbgcsynthesize
 from metabgc.src.metabgcfindTP import mbgcfindtp
 
-__version__ = "2.1.3"
-
 @click.group()
+@click.version_option(__version__, prog_name="metabgc")
 def cli():
     pass
 

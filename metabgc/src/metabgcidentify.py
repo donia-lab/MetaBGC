@@ -15,14 +15,16 @@ import logging
 
 # Filter HMM results using predetermined spHMM models score cutoffs
 def filter_spHMM_data(spHMM_df, cutoff_df):
-    filter_spHMM_df = pd.DataFrame()
+    filtered_frames = []
     for index, row in cutoff_df.iterrows():
         model_interval = cutoff_df.at[index, 'interval']
         cutoff = cutoff_df.at[index, 'cutoff']
         # filter spHMM dataframe with designated cutoffs
         filter_df = spHMM_df.query("HMMScore >= @cutoff & interval == @model_interval").reset_index(drop=True)
-        filter_spHMM_df = filter_spHMM_df.append(filter_df)
-    return (filter_spHMM_df)
+        filtered_frames.append(filter_df)
+    if filtered_frames:
+        return pd.concat(filtered_frames, ignore_index=True)
+    return spHMM_df.iloc[0:0].copy()
 
 
 def runidentify(hmm_file, cutoff_file, filteredTableFile, identifyReadIdFile):

@@ -3,12 +3,10 @@ Created on Tues Oct 10 03:08:34 2017
 Updated on Mon Feb 5 18:40:09 2018
 @author: francinecamacho
 """
-from __future__ import division
 from Bio import AlignIO
 from Bio import SeqIO
-from Bio.Alphabet import IUPAC, Gapped
 from Bio.Align import MultipleSeqAlignment
-import os 
+import os
 import subprocess
 from metabgc.src.hmmrecord import HMMFile
 
@@ -74,7 +72,7 @@ def getKmers(k, interval, outdir, msaFile, tp_prot_file, modelName, start, end, 
         endPos = j+k
         if endPos <= seqCtr:
             kmer = alignment[:,startPos:endPos] #[ rows (different domains),columns (Amino Acids)]
-            spHMMAlign = MultipleSeqAlignment([],Gapped(IUPAC.extended_protein, "-"))
+            spHMMAlign = MultipleSeqAlignment([])
 
             if str(kmer[0].seq).count("-") <= 15:
                 # Remove the TP genes

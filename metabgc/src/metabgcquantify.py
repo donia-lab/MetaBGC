@@ -14,7 +14,7 @@ def combine_blast_results(blast_dir_path, combinedBLASTFile, cohort_name):
 	filenames = [os.path.join(blast_dir_path, f) for f in os.listdir(blast_dir_path) if os.path.isfile(os.path.join(blast_dir_path, f)) and os.path.getsize(os.path.join(blast_dir_path, f)) > 0]
 	tabular_colnames = "sseqid slen sstart send qseqid qlen qstart qend qcovs pident evalue"
 	df_colnames = tabular_colnames.split()
-	list_of_dfs = [pd.read_csv(filename, names=df_colnames, header=None, delim_whitespace=True) for filename in filenames]
+	list_of_dfs = [pd.read_csv(filename, names=df_colnames, header=None, sep=r'\s+') for filename in filenames]
 	for dataframe, filename in zip(list_of_dfs, filenames):
 		dataframe['Sample'] = os.path.basename(filename).split(".txt")[0]
 		dataframe['cohort'] = cohort_name

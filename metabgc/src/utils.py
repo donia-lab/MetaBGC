@@ -234,11 +234,10 @@ def parseHMM(hmmPathFile, hmm_string_fmt, sampleType, sampleID, protType, window
 
 
 def createPandaDF(hmm_dict, outfile):
-    outputDF = pd.DataFrame()
+    columns = ["readID", "sampleType", "sampleID", "protType", "HMMScore", "window", "interval"]
     if len(hmm_dict) != 0:  # check if counter dict is not empty to add to df
         df = [(k, v.sampleType, v.sampleID, v.protType, v.bitscore, v.window, v.interval) for k, v in list(hmm_dict.items())]  # convert dictionary to list
-        outputDF = outputDF.append(df)  # append list to our initalized dataframe
-        outputDF.columns = ["readID", "sampleType", "sampleID", "protType", "HMMScore", "window","interval"]  # rename column names
+        outputDF = pd.DataFrame(df, columns=columns)
         sorted_outputDF = outputDF.sort_values(by=['HMMScore'],ascending=[False])  # sort in decending order by Hit.counts column
         sorted_outputDF.to_csv(outfile, index=False, sep='\t', header=False)
     else:
@@ -287,8 +286,8 @@ def interleave(iter1, iter2) :
         yield reverse
 
 def InterleaveReads(out_seq_directory, sampleName, r1FilePath,r2FilePath,seq_fmt):
-    records_f = SeqIO.parse(open(r1FilePath, "rU"), seq_fmt)
-    records_r = SeqIO.parse(open(r2FilePath, "rU"), seq_fmt)
+    records_f = SeqIO.parse(open(r1FilePath, "r"), seq_fmt)
+    records_r = SeqIO.parse(open(r2FilePath, "r"), seq_fmt)
     file_out = os.path.join(out_seq_directory, sampleName + ".fasta")
     handle = open(file_out, "w")
     count = SeqIO.write(interleave(records_f, records_r), handle, "fasta")
@@ -438,8 +437,8 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
                     sampleName = file.split(R1_file_suffix)[0]
                     r2FilePath = os.path.join(subdir, sampleName + R2_file_suffix)
                     file_out = os.path.join(out_seq_directory, sampleName + ".fasta")
-                    records_f = SeqIO.parse(open(filePath, "rU"), seq_fmt.lower())
-                    records_r = SeqIO.parse(open(r2FilePath, "rU"), seq_fmt.lower())
+                    records_f = SeqIO.parse(open(filePath, "r"), seq_fmt.lower())
+                    records_r = SeqIO.parse(open(r2FilePath, "r"), seq_fmt.lower())
                     handle = open(file_out, "w")
                     count = SeqIO.write(interleave(records_f, records_r), handle, "fasta")
                     handle.close()
@@ -465,8 +464,8 @@ def PreProcessReads(nucl_seq_directory,seq_fmt,pair_fmt,R1_file_suffix,R2_file_s
                         sampleName = file.split(R1_file_suffix)[0]
                         r2FilePath = os.path.join(subdir,sampleName + R2_file_suffix)
                         file_out = os.path.join(out_seq_directory,sampleName + ".fasta")
-                        records_f = SeqIO.parse(open(filePath, "rU"), seq_fmt.lower())
-                        records_r = SeqIO.parse(open(r2FilePath, "rU"), seq_fmt.lower())
+                        records_f = SeqIO.parse(open(filePath, "r"), seq_fmt.lower())
+                        records_r = SeqIO.parse(open(r2FilePath, "r"), seq_fmt.lower())
                         handle = open(file_out, "w")
                         count = SeqIO.write(interleave(records_f, records_r), handle, "fasta")
                         handle.close()

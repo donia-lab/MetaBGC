@@ -1,8 +1,0 @@
-click
-numpy
-pytest
-pandas
-matplotlib
-biopython
-scikit_learn
-scipy

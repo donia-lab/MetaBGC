@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metabgc"
+description = "Metagenomic identifier of Biosynthetic Gene Clusters."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+    { name = "MetaBGC development team", email = "ab50@princeton.edu" },
+]
+keywords = ["bioinformatics", "metagenomics", "biosynthetic gene clusters", "BGC", "HMM"]
+dynamic = ["version"]
+
+dependencies = [
+    "click>=8.0",
+    "numpy>=1.21",
+    "scipy>=1.7",
+    "matplotlib>=3.5",
+    "biopython>=1.78",
+    "scikit-learn>=1.0",
+    "pandas>=1.5",
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "build", "twine"]
+
+[project.urls]
+Homepage = "https://github.com/donia-lab/MetaBGC"
+Repository = "https://github.com/donia-lab/MetaBGC"
+Issues = "https://github.com/donia-lab/MetaBGC/issues"
+
+[project.scripts]
+metabgc = "metabgc.src.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "metabgc.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["metabgc*"]
+exclude = ["metabgc.test*", "scripts*", "Models*"]
+
+[tool.setuptools.package-data]
+metabgc = ["metadata/*.csv"]
+
+[tool.pytest.ini_options]
+testpaths = ["metabgc/test"]
+python_files = ["*_test.py", "test_*.py"]
+addopts = "-ra"
